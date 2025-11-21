@@ -55,6 +55,22 @@
         <!-- Auto Mode Settings -->
         <div id="autoModeSettings" class="auto-settings" style="display: none;">
             <h3>Auto Mode Settings</h3>
+            
+            <!-- Auto Mode Type Selection -->
+            <div class="control-group">
+                <label>Detection Method:</label>
+                <div class="auto-mode-type">
+                    <label class="radio-label">
+                        <input type="radio" name="autoModeType" value="listen" checked>
+                        <span>Listen (Microphone)</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="autoModeType" value="vibrate">
+                        <span>Vibrate (Accelerometer)</span>
+                    </label>
+                </div>
+            </div>
+            
             <div class="control-group">
                 <label for="sensitivitySlider">Sensitivity:</label>
                 <input type="range" id="sensitivitySlider" min="1" max="10" value="5" step="1">
@@ -65,7 +81,7 @@
                 <p><strong>Detected BPM:</strong> <span id="detectedBpm">--</span></p>
                 <p><strong>Beat Accuracy:</strong> <span id="beatAccuracy">--</span></p>
             </div>
-            <button id="startListening" class="btn btn-secondary">Start Listening</button>
+            <button id="startListening" class="btn btn-secondary">Start</button>
         </div>
 
         <!-- Info Section -->
@@ -74,7 +90,8 @@
             <ul>
                 <li><strong>Regular Mode:</strong> Visual pulse with customizable sound (choose from 6 sound options)</li>
                 <li><strong>Silent Mode:</strong> Visual pulse only, no sound</li>
-                <li><strong>Auto Mode:</strong> Listens to your playing and beeps only when you go off-beat</li>
+                <li><strong>Auto Mode (Listen):</strong> Listens to your playing via microphone and beeps only when you go off-beat</li>
+                <li><strong>Auto Mode (Vibrate):</strong> Detects your beat via device motion/tapping and beeps only when you go off-beat</li>
             </ul>
         </div>
     </div>

@@ -12,13 +12,22 @@ A full-featured JavaScript metronome with intelligent practice assistance for mu
 
 ### 🎻 Auto Mode Highlights
 
-The Auto Mode is designed specifically for practicing violin, cello, or other acoustic instruments:
+The Auto Mode is designed specifically for practicing violin, cello, or other acoustic instruments with two detection methods:
 
+#### Listen Mode (Microphone)
 - **Real-time Beat Detection**: Uses your microphone to detect when you play
 - **BPM Calculation**: Automatically calculates your playing tempo
 - **Beat Accuracy Tracking**: Shows how closely you're staying on beat
 - **Intelligent Alerting**: Only beeps when you drift off-beat, staying silent when you're on tempo
 - **Adjustable Sensitivity**: Fine-tune detection and tolerance to match your playing style and instrument volume
+
+#### Vibrate Mode (Accelerometer)
+- **Motion-based Beat Detection**: Uses your device's accelerometer to detect tapping or physical beats
+- **Perfect for Silent Practice**: Tap the beat on your device or instrument without sound
+- **BPM Calculation**: Automatically calculates tempo from detected motion
+- **Beat Accuracy Tracking**: Shows how closely your taps match the metronome
+- **Intelligent Alerting**: Only beeps when you drift off-beat
+- **Adjustable Sensitivity**: Control how responsive the motion detection is
 
 ### 🎚️ Controls
 
@@ -54,17 +63,21 @@ The Auto Mode is designed specifically for practicing violin, cello, or other ac
 ### Auto Mode
 
 1. Click the "Auto" button to switch to Auto Mode
-2. Click "Start Listening" (you'll be prompted to grant microphone access)
-3. Adjust the sensitivity slider based on your needs:
-   - **Lower sensitivity (1-3)**: More forgiving timing, higher volume threshold
+2. Choose your detection method:
+   - **Listen**: Uses your device's microphone (requires microphone permission)
+   - **Vibrate**: Uses your device's accelerometer (works great on mobile devices)
+3. Click "Start" to begin detection (you may be prompted to grant permissions)
+4. Adjust the sensitivity slider based on your needs:
+   - **Lower sensitivity (1-3)**: More forgiving timing, higher detection threshold
    - **Medium sensitivity (4-7)**: Balanced for most practice sessions
-   - **Higher sensitivity (8-10)**: Strict timing, sensitive to quieter sounds
-4. Start playing your instrument
-5. Watch the status display for real-time feedback:
-   - **Detected BPM**: Shows your current playing tempo
+   - **Higher sensitivity (8-10)**: Strict timing, sensitive to quieter sounds or subtle motions
+5. For Listen mode: Start playing your instrument
+   For Vibrate mode: Tap on your device or instrument to create motion
+6. Watch the status display for real-time feedback:
+   - **Detected BPM**: Shows your current playing/tapping tempo
    - **Beat Accuracy**: Displays how closely you match the metronome
    - **Status**: Indicates if you're "On beat" or "Off beat"
-6. The metronome will stay silent while you're on beat, and beep to alert you when you drift off
+7. The metronome will stay silent while you're on beat, and beep to alert you when you drift off
 
 ## Technical Details
 
@@ -78,7 +91,8 @@ The Auto Mode is designed specifically for practicing violin, cello, or other ac
 
 - Modern web browser with support for:
   - Web Audio API
-  - MediaDevices API (for Auto Mode)
+  - MediaDevices API (for Auto Mode - Listen)
+  - DeviceMotion API (for Auto Mode - Vibrate)
   - ES6 JavaScript
 
 Tested on:
@@ -89,11 +103,19 @@ Tested on:
 
 ## Tips for Best Results in Auto Mode
 
+### Listen Mode (Microphone)
 1. **Quiet Environment**: Background noise can interfere with beat detection
 2. **Microphone Placement**: Position your microphone to clearly capture your instrument
 3. **Start Simple**: Begin with medium sensitivity and adjust as needed
 4. **Consistent Playing**: The more consistently you play, the more accurate the feedback
 5. **Match the BPM**: Set the metronome to match your intended practice tempo
+
+### Vibrate Mode (Accelerometer)
+1. **Stable Surface**: Place your device on a stable surface or hold it firmly
+2. **Clear Taps**: Make distinct tapping motions for best detection
+3. **Consistent Motion**: Maintain consistent tap intensity for accurate BPM calculation
+4. **Mobile Friendly**: Works best on smartphones and tablets with built-in accelerometers
+5. **Practice Anywhere**: Perfect for silent practice without needing audio detection
 
 ## License
 

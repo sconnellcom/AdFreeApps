@@ -4,6 +4,7 @@ class Metronome {
         this.bpm = 120;
         this.isRunning = false;
         this.mode = 'regular'; // 'regular', 'silent', 'auto'
+        this.autoModeType = 'listen'; // 'listen' or 'vibrate'
         this.intervalId = null;
         this.audioContext = null;
         this.beatTimes = [];
@@ -12,6 +13,7 @@ class Metronome {
         
         // Auto mode properties
         this.isListening = false;
+        this.isVibrating = false;
         this.mediaStream = null;
         this.analyser = null;
         this.detectedBeats = [];
@@ -20,12 +22,20 @@ class Metronome {
         this.lastBeatTime = 0;
         this.detectedBPM = null;
         
+        // Accelerometer properties
+        this.lastAcceleration = 0;
+        this.motionHandler = null;
+        
         // Constants for beat detection
         this.BEAT_DEBOUNCE_MS = 200;
         this.BASE_VOLUME_THRESHOLD = 50;
         this.SENSITIVITY_MULTIPLIER = 5;
         this.MAX_SENSITIVITY = 10;
         this.LOW_FREQUENCY_DIVISOR = 4;
+        
+        // Constants for accelerometer beat detection
+        this.BASE_ACCELERATION_THRESHOLD = 5;
+        this.ACCELERATION_SENSITIVITY_MULTIPLIER = 1;
         
         // Constants for off-beat threshold calculation
         this.BASE_OFF_BEAT_THRESHOLD = 6;
@@ -55,6 +65,7 @@ class Metronome {
         
         // Auto mode elements
         this.autoModeSettings = document.getElementById('autoModeSettings');
+        this.autoModeTypeRadios = document.querySelectorAll('input[name="autoModeType"]');
         this.sensitivitySlider = document.getElementById('sensitivitySlider');
         this.sensitivityValue = document.getElementById('sensitivityValue');
         this.startListeningBtn = document.getElementById('startListening');
@@ -102,12 +113,23 @@ class Metronome {
             this.consecutiveOffBeatsThreshold = Math.max(1, this.BASE_OFF_BEAT_THRESHOLD - Math.floor(this.sensitivity / this.SENSITIVITY_DIVISOR));
         });
 
+        // Auto mode type radio buttons
+        this.autoModeTypeRadios.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                this.autoModeType = e.target.value;
+                // Stop current detection if active
+                if (this.isListening || this.isVibrating) {
+                    this.stopDetection();
+                }
+            });
+        });
+
         // Start listening button
         this.startListeningBtn.addEventListener('click', () => {
-            if (this.isListening) {
-                this.stopListening();
+            if (this.isListening || this.isVibrating) {
+                this.stopDetection();
             } else {
-                this.startListening();
+                this.startDetection();
             }
         });
     }
@@ -132,8 +154,8 @@ class Metronome {
         }
         
         // Stop listening if switching away from auto mode
-        if (mode !== 'auto' && this.isListening) {
-            this.stopListening();
+        if (mode !== 'auto' && (this.isListening || this.isVibrating)) {
+            this.stopDetection();
         }
     }
 
@@ -248,6 +270,19 @@ class Metronome {
         oscillator.stop(this.audioContext.currentTime + 0.1);
     }
 
+    async startDetection() {
+        if (this.autoModeType === 'listen') {
+            await this.startListening();
+        } else if (this.autoModeType === 'vibrate') {
+            await this.startVibrating();
+        }
+    }
+
+    stopDetection() {
+        if (this.isListening) {
+            this.stopListening();
+        } else if (this.isVibrating) {
+            this.stopVibrating();
     playBassDrum() {
         if (!this.audioContext) return;
         
@@ -415,7 +450,7 @@ class Metronome {
             source.connect(this.analyser);
             
             this.isListening = true;
-            this.startListeningBtn.textContent = 'Stop Listening';
+            this.startListeningBtn.textContent = 'Stop';
             this.startListeningBtn.classList.add('active');
             this.autoStatus.textContent = 'Listening...';
             this.autoStatus.classList.add('listening');
@@ -477,7 +512,7 @@ class Metronome {
 
     stopListening() {
         this.isListening = false;
-        this.startListeningBtn.textContent = 'Start Listening';
+        this.startListeningBtn.textContent = 'Start';
         this.startListeningBtn.classList.remove('active');
         this.autoStatus.textContent = 'Inactive';
         this.autoStatus.classList.remove('listening', 'alert');
@@ -491,6 +526,114 @@ class Metronome {
         this.offBeatCount = 0;
         this.detectedBpmDisplay.textContent = '--';
         this.beatAccuracy.textContent = '--';
+    }
+
+    async startVibrating() {
+        try {
+            // Check if device motion is supported
+            if (!window.DeviceMotionEvent) {
+                alert('Device motion is not supported on this device or browser. Please use the "Listen (Microphone)" mode instead.');
+                return;
+            }
+
+            // Request permission for iOS 13+
+            if (typeof DeviceMotionEvent.requestPermission === 'function') {
+                const permission = await DeviceMotionEvent.requestPermission();
+                if (permission !== 'granted') {
+                    alert('Permission to access device motion was denied. Please enable motion permissions in your browser settings or use the "Listen (Microphone)" mode instead.');
+                    return;
+                }
+            }
+
+            this.isVibrating = true;
+            this.startListeningBtn.textContent = 'Stop';
+            this.startListeningBtn.classList.add('active');
+            this.autoStatus.textContent = 'Detecting motion...';
+            this.autoStatus.classList.add('listening');
+            
+            this.detectedBeats = [];
+            this.offBeatCount = 0;
+            
+            // Start the metronome if not already running
+            if (!this.isRunning) {
+                this.start();
+            }
+            
+            // Set up motion event listener
+            this.motionHandler = (event) => this.handleMotion(event);
+            window.addEventListener('devicemotion', this.motionHandler);
+            
+        } catch (error) {
+            console.error('Error accessing device motion:', error);
+            alert('Could not access device motion. Please ensure your device has an accelerometer and try again, or use the "Listen (Microphone)" mode instead.');
+        }
+    }
+
+    stopVibrating() {
+        this.isVibrating = false;
+        this.startListeningBtn.textContent = 'Start';
+        this.startListeningBtn.classList.remove('active');
+        this.autoStatus.textContent = 'Inactive';
+        this.autoStatus.classList.remove('listening', 'alert');
+        
+        if (this.motionHandler) {
+            window.removeEventListener('devicemotion', this.motionHandler);
+            this.motionHandler = null;
+        }
+        
+        this.detectedBeats = [];
+        this.offBeatCount = 0;
+        this.detectedBpmDisplay.textContent = '--';
+        this.beatAccuracy.textContent = '--';
+    }
+
+    handleMotion(event) {
+        if (!this.isVibrating) return;
+        
+        const acceleration = event.accelerationIncludingGravity;
+        if (!acceleration) return;
+        
+        // Calculate total acceleration magnitude
+        const x = acceleration.x || 0;
+        const y = acceleration.y || 0;
+        const z = acceleration.z || 0;
+        const totalAcceleration = Math.sqrt(x * x + y * y + z * z);
+        
+        // Calculate change in acceleration
+        const accelerationChange = Math.abs(totalAcceleration - this.lastAcceleration);
+        this.lastAcceleration = totalAcceleration;
+        
+        // Detect beat based on acceleration threshold
+        // Lower sensitivity = higher threshold (harder to detect)
+        const threshold = this.BASE_ACCELERATION_THRESHOLD + ((this.MAX_SENSITIVITY - this.sensitivity) * this.ACCELERATION_SENSITIVITY_MULTIPLIER);
+        
+        if (accelerationChange > threshold) {
+            const now = Date.now();
+            
+            // Avoid detecting the same beat multiple times
+            if (this.detectedBeats.length === 0 || (now - this.detectedBeats[this.detectedBeats.length - 1]) > this.BEAT_DEBOUNCE_MS) {
+                this.detectedBeats.push(now);
+                
+                // Keep only recent beats
+                if (this.detectedBeats.length > 10) {
+                    this.detectedBeats.shift();
+                }
+                
+                // Calculate detected BPM
+                if (this.detectedBeats.length >= 3) {
+                    const intervals = [];
+                    for (let i = 1; i < this.detectedBeats.length; i++) {
+                        intervals.push(this.detectedBeats[i] - this.detectedBeats[i - 1]);
+                    }
+                    const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+                    this.detectedBPM = Math.round(60000 / avgInterval);
+                    this.detectedBpmDisplay.textContent = this.detectedBPM;
+                }
+                
+                // Check if beat is on time with metronome
+                this.checkBeatAccuracy(now);
+            }
+        }
     }
 
     detectBeats() {
