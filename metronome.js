@@ -210,6 +210,32 @@ class Metronome {
 
     async startListening() {
         try {
+            // Check if mediaDevices API is available
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                alert('Your browser does not support microphone access. Please use a modern browser like Chrome, Firefox, Safari, or Edge.');
+                return;
+            }
+
+            // Check current permission state if the API is available
+            if (navigator.permissions && navigator.permissions.query) {
+                try {
+                    const permissionStatus = await navigator.permissions.query({ name: 'microphone' });
+                    
+                    if (permissionStatus.state === 'denied') {
+                        alert('Microphone access was denied. Please allow microphone access in your browser settings:\n\n' +
+                              '• Chrome/Edge: Click the lock/info icon in the address bar\n' +
+                              '• Firefox: Click the lock icon in the address bar\n' +
+                              '• Safari: Go to Settings > Websites > Microphone');
+                        return;
+                    }
+                } catch (permError) {
+                    // Permission query not supported in this browser, continue with getUserMedia
+                    console.log('Permission query not supported:', permError);
+                }
+            }
+
+            // Request microphone access
+            this.autoStatus.textContent = 'Requesting microphone access...';
             this.mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
             
             if (!this.audioContext) {
@@ -241,7 +267,31 @@ class Metronome {
             
         } catch (error) {
             console.error('Error accessing microphone:', error);
-            alert('Could not access microphone. Please grant permission and try again.');
+            
+            // Reset status
+            this.autoStatus.textContent = 'Inactive';
+            
+            // Provide specific error messages based on error type
+            if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+                alert('Microphone access was denied. Please allow microphone access and try again.\n\n' +
+                      'To enable microphone access:\n' +
+                      '• Chrome/Edge: Click the lock/info icon in the address bar\n' +
+                      '• Firefox: Click the lock icon in the address bar\n' +
+                      '• Safari: Go to Settings > Websites > Microphone');
+            } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+                alert('No microphone found. Please connect a microphone and try again.');
+            } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
+                alert('Microphone is already in use by another application. Please close other applications using the microphone and try again.');
+            } else if (error.name === 'OverconstrainedError') {
+                alert('Could not access microphone due to constraints. Please try again.');
+            } else if (error.name === 'TypeError') {
+                alert('Browser error: Please make sure you are using HTTPS or localhost, as microphone access requires a secure connection.');
+            } else {
+                alert('Could not access microphone: ' + error.message + '\n\nPlease make sure:\n' +
+                      '• You have a microphone connected\n' +
+                      '• You are using HTTPS or localhost\n' +
+                      '• You grant permission when prompted');
+            }
         }
     }
 
