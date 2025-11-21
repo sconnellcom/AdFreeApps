@@ -216,6 +216,26 @@ class Metronome {
                 return;
             }
 
+            // Check if any audio input devices are available
+            try {
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const audioInputs = devices.filter(device => device.kind === 'audioinput');
+                
+                if (audioInputs.length === 0) {
+                    alert('No microphone detected. Please check:\n\n' +
+                          '• Your microphone is properly connected\n' +
+                          '• Your microphone is enabled in system settings\n' +
+                          '• Your browser has permission to access audio devices at the OS level\n\n' +
+                          'Windows: Settings > Privacy > Microphone\n' +
+                          'Mac: System Preferences > Security & Privacy > Microphone\n' +
+                          'Linux: Check PulseAudio/ALSA settings');
+                    return;
+                }
+            } catch (enumError) {
+                console.log('Could not enumerate devices:', enumError);
+                // Continue anyway - some browsers may restrict enumeration before permission
+            }
+
             // Check current permission state if the API is available
             if (navigator.permissions && navigator.permissions.query) {
                 try {
@@ -272,16 +292,30 @@ class Metronome {
             this.autoStatus.textContent = 'Inactive';
             
             // Provide specific error messages based on error type
-            if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+            if (error.name === 'NotAllowedError') {
                 alert('Microphone access was denied. Please allow microphone access and try again.\n\n' +
                       'To enable microphone access:\n' +
                       '• Chrome/Edge: Click the lock/info icon in the address bar\n' +
                       '• Firefox: Click the lock icon in the address bar\n' +
                       '• Safari: Go to Settings > Websites > Microphone');
-            } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
-                alert('No microphone found. Please connect a microphone and try again.');
-            } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
-                alert('Microphone is already in use by another application. Please close other applications using the microphone and try again.');
+            } else if (error.name === 'NotFoundError') {
+                alert('No microphone found or microphone cannot be accessed.\n\n' +
+                      'Please check:\n' +
+                      '• Your microphone is properly connected and powered on\n' +
+                      '• Your microphone is not being used by another application\n' +
+                      '• Your microphone is enabled in system settings:\n' +
+                      '  - Windows: Settings > Privacy > Microphone\n' +
+                      '  - Mac: System Preferences > Security & Privacy > Microphone\n' +
+                      '  - Linux: Check PulseAudio/ALSA settings\n' +
+                      '• Your browser has OS-level permission to access the microphone\n' +
+                      '• Try restarting your browser after enabling permissions');
+            } else if (error.name === 'NotReadableError') {
+                alert('Microphone is already in use by another application or cannot be accessed.\n\n' +
+                      'Please try:\n' +
+                      '• Close other applications that might be using the microphone (Zoom, Skype, Discord, etc.)\n' +
+                      '• Close other browser tabs that might be using the microphone\n' +
+                      '• Restart your browser\n' +
+                      '• Check if your microphone works in other applications');
             } else if (error.name === 'OverconstrainedError') {
                 alert('Could not access microphone due to constraints. Please try again.');
             } else if (error.name === 'TypeError') {
@@ -290,7 +324,8 @@ class Metronome {
                 alert('Could not access microphone: ' + error.message + '\n\nPlease make sure:\n' +
                       '• You have a microphone connected\n' +
                       '• You are using HTTPS or localhost\n' +
-                      '• You grant permission when prompted');
+                      '• You grant permission when prompted\n' +
+                      '• Your browser and OS allow microphone access');
             }
         }
     }
