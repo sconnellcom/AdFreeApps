@@ -15,7 +15,6 @@ class Metronome {
         this.detectedBeats = [];
         this.sensitivity = 5;
         this.offBeatCount = 0;
-        this.consecutiveOffBeatsThreshold = 6;
         this.lastBeatTime = 0;
         this.detectedBPM = null;
         
@@ -29,6 +28,7 @@ class Metronome {
         // Constants for off-beat threshold calculation
         this.BASE_OFF_BEAT_THRESHOLD = 6;
         this.SENSITIVITY_DIVISOR = 2;
+        this.consecutiveOffBeatsThreshold = this.BASE_OFF_BEAT_THRESHOLD;
         
         // Constants for timing tolerance
         this.BASE_TOLERANCE_PERCENTAGE = 0.20;
