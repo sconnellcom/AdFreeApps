@@ -283,6 +283,9 @@ class Metronome {
             this.stopListening();
         } else if (this.isVibrating) {
             this.stopVibrating();
+        }
+    }
+
     playBassDrum() {
         if (!this.audioContext) return;
         
