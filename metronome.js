@@ -15,9 +15,14 @@ class Metronome {
         this.detectedBeats = [];
         this.sensitivity = 5;
         this.offBeatCount = 0;
-        this.consecutiveOffBeatsThreshold = 3;
+        this.consecutiveOffBeatsThreshold = 6;
         this.lastBeatTime = 0;
         this.detectedBPM = null;
+        
+        // Constants for beat detection
+        this.BEAT_DEBOUNCE_MS = 200;
+        this.BASE_VOLUME_THRESHOLD = 50;
+        this.SENSITIVITY_MULTIPLIER = 5;
         
         this.initializeUI();
         this.setupEventListeners();
@@ -74,7 +79,8 @@ class Metronome {
         this.sensitivitySlider.addEventListener('input', (e) => {
             this.sensitivity = parseInt(e.target.value);
             this.sensitivityValue.textContent = this.sensitivity;
-            this.consecutiveOffBeatsThreshold = 11 - this.sensitivity; // Higher sensitivity = lower threshold
+            // Higher sensitivity = fewer consecutive beats required to trigger alert
+            this.consecutiveOffBeatsThreshold = Math.max(1, 6 - Math.floor(this.sensitivity / 2));
         });
 
         // Start listening button
@@ -263,13 +269,14 @@ class Metronome {
         const average = sum / lowFreqRange;
         
         // Detect beat based on volume threshold
-        const threshold = 50 + (this.sensitivity * 5); // Adjust threshold based on sensitivity
+        // Higher sensitivity = lower threshold (easier to detect beats)
+        const threshold = this.BASE_VOLUME_THRESHOLD + ((10 - this.sensitivity) * this.SENSITIVITY_MULTIPLIER);
         
         if (average > threshold) {
             const now = Date.now();
             
             // Avoid detecting the same beat multiple times
-            if (this.detectedBeats.length === 0 || (now - this.detectedBeats[this.detectedBeats.length - 1]) > 200) {
+            if (this.detectedBeats.length === 0 || (now - this.detectedBeats[this.detectedBeats.length - 1]) > this.BEAT_DEBOUNCE_MS) {
                 this.detectedBeats.push(now);
                 
                 // Keep only recent beats
@@ -301,7 +308,10 @@ class Metronome {
         if (this.beatTimes.length === 0) return;
         
         const beatInterval = (60 / this.bpm) * 1000;
-        const tolerance = beatInterval * 0.15; // 15% tolerance (adjustable based on sensitivity)
+        // Adjust tolerance based on sensitivity: higher sensitivity = tighter tolerance
+        const baseTolerance = 0.20; // 20% base tolerance
+        const toleranceAdjustment = (10 - this.sensitivity) * 0.02; // 0-10% adjustment
+        const tolerance = beatInterval * (baseTolerance + toleranceAdjustment);
         
         // Find the closest metronome beat
         let minDiff = Infinity;
