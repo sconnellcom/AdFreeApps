@@ -217,6 +217,9 @@ class Metronome {
             }
 
             // Check if any audio input devices are available
+            // Note: Some browsers may not show device labels until permission is granted,
+            // but they will still show the device kind. We check for zero devices which
+            // indicates a real hardware issue, not just a permission issue.
             try {
                 const devices = await navigator.mediaDevices.enumerateDevices();
                 const audioInputs = devices.filter(device => device.kind === 'audioinput');
