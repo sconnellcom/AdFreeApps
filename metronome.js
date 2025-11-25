@@ -19,7 +19,7 @@ class Metronome {
         this.isDetecting = false;
         this.detectedBeats = [];
         this.sensitivity = 5;
-        this.timingTolerance = 15; // milliseconds tolerance for being "on beat"
+        this.timingTolerance = 100; // milliseconds tolerance for being "on beat"
         this.offBeatCount = 0;
         this.lastBeatTime = 0;
         this.detectedBPM = null;
@@ -45,6 +45,7 @@ class Metronome {
         this.BASE_OFF_BEAT_THRESHOLD = 6;
         this.SENSITIVITY_DIVISOR = 2;
         this.consecutiveOffBeatsThreshold = this.BASE_OFF_BEAT_THRESHOLD;
+        this.consecutiveOnBeatsNeeded = 6; // Number of consecutive on-beats needed to stop the sound
 
         this.initializeUI();
         this.setupEventListeners();
@@ -627,6 +628,9 @@ class Metronome {
             this.beatAccuracyTopDisplay.textContent = `${msOff}ms`;
 
             if (this.offBeatCount >= this.consecutiveOffBeatsThreshold) {
+                // Cap offBeatCount so it doesn't require too many on-beats to recover
+                this.offBeatCount = Math.min(this.offBeatCount, this.consecutiveOffBeatsThreshold + this.consecutiveOnBeatsNeeded - 1);
+
                 this.autoStatus.textContent = 'Off beat - Beeping!';
                 this.autoStatus.classList.remove('listening');
                 this.autoStatus.classList.add('alert');
