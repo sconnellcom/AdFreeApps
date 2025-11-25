@@ -30,7 +30,7 @@ class Metronome {
         // Constants for accelerometer beat detection
         this.BASE_ACCELERATION_THRESHOLD = 5;
         this.ACCELERATION_SENSITIVITY_MULTIPLIER = 1;
-        this.MAX_ACCELERATION_DISPLAY = 30; // For visualization scaling
+        this.MAX_ACCELERATION_DISPLAY = 10; // For visualization scaling
         this.ACCELERATION_HIGH_THRESHOLD = 40; // Percentage for high (orange) color
         this.ACCELERATION_VERY_HIGH_THRESHOLD = 70; // Percentage for very high (red) color
         
