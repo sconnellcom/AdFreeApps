@@ -10,6 +10,11 @@ class Metronome {
         this.soundType = 'beep'; // 'beep', 'bass', 'cymbal', 'tock', 'riff4', 'riff8'
         this.beatCount = 0; // For tracking position in drum riffs
 
+        // Visual synchronization using requestAnimationFrame
+        this.scheduledVisualBeats = [];
+        this.rafId = null;
+        this.isPulseActive = false;
+
         // Auto mode properties
         this.isDetecting = false;
         this.detectedBeats = [];
@@ -182,6 +187,7 @@ class Metronome {
         this.startStopBtn.classList.add('active');
         this.beatTimes = [];
         this.beatCount = 0; // Reset beat counter
+        this.scheduledVisualBeats = [];
 
         // Initialize timing for precise audio sync
         this.nextBeatTime = this.audioContext.currentTime;
@@ -189,8 +195,11 @@ class Metronome {
         this.schedulerInterval = 25; // Check every 25ms
 
         this.scheduleBeat();
-        // Start scheduler loop
+        // Start scheduler loop for audio
         this.intervalId = setInterval(() => this.scheduleBeat(), this.schedulerInterval);
+
+        // Start RAF loop for visual synchronization
+        this.startVisualLoop();
     }
 
     stop() {
@@ -202,6 +211,51 @@ class Metronome {
             clearInterval(this.intervalId);
             this.intervalId = null;
         }
+
+        if (this.rafId) {
+            cancelAnimationFrame(this.rafId);
+            this.rafId = null;
+        }
+
+        this.scheduledVisualBeats = [];
+        if (this.isPulseActive) {
+            this.pulseElement.classList.remove('active');
+            this.isPulseActive = false;
+        }
+    }
+
+    startVisualLoop() {
+        const checkVisuals = () => {
+            if (!this.isRunning) return;
+
+            const currentTime = this.audioContext.currentTime;
+
+            // Check if any scheduled beats should trigger now
+            while (this.scheduledVisualBeats.length > 0 && this.scheduledVisualBeats[0].time <= currentTime) {
+                const beat = this.scheduledVisualBeats.shift();
+
+                // Trigger visual pulse
+                this.pulseElement.classList.add('active');
+                this.isPulseActive = true;
+
+                // Schedule pulse removal
+                setTimeout(() => {
+                    this.pulseElement.classList.remove('active');
+                    this.isPulseActive = false;
+                }, 100);
+
+                // Store beat time for auto mode
+                this.lastBeatTime = Date.now();
+                this.beatTimes.push(this.lastBeatTime);
+                if (this.beatTimes.length > 10) {
+                    this.beatTimes.shift();
+                }
+            }
+
+            this.rafId = requestAnimationFrame(checkVisuals);
+        };
+
+        checkVisuals();
     }
 
     scheduleBeat() {
@@ -217,23 +271,8 @@ class Metronome {
     }
 
     playBeat(time) {
-        // Calculate milliseconds until this beat for visual sync
-        const msUntilBeat = (time - this.audioContext.currentTime) * 1000;
-
-        // Schedule visual pulse to sync with audio
-        setTimeout(() => {
-            this.pulseElement.classList.add('active');
-            setTimeout(() => {
-                this.pulseElement.classList.remove('active');
-            }, 100);
-
-            // Store beat time for auto mode
-            this.lastBeatTime = Date.now();
-            this.beatTimes.push(this.lastBeatTime);
-            if (this.beatTimes.length > 10) {
-                this.beatTimes.shift();
-            }
-        }, Math.max(0, msUntilBeat));
+        // Schedule visual beat to be triggered by RAF loop
+        this.scheduledVisualBeats.push({ time: time });
 
         // Increment beat counter for riffs
         this.beatCount++;
