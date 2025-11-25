@@ -15,6 +15,9 @@ class Metronome {
         this.rafId = null;
         this.isPulseActive = false;
 
+        // Wake Lock to keep screen on
+        this.wakeLock = null;
+
         // Auto mode properties
         this.isDetecting = false;
         this.detectedBeats = [];
@@ -201,6 +204,9 @@ class Metronome {
 
         // Start RAF loop for visual synchronization
         this.startVisualLoop();
+
+        // Request wake lock to keep screen on
+        this.requestWakeLock();
     }
 
     stop() {
@@ -222,6 +228,37 @@ class Metronome {
         if (this.isPulseActive) {
             this.pulseElement.classList.remove('active');
             this.isPulseActive = false;
+        }
+
+        // Release wake lock
+        this.releaseWakeLock();
+    }
+
+    async requestWakeLock() {
+        try {
+            if ('wakeLock' in navigator) {
+                this.wakeLock = await navigator.wakeLock.request('screen');
+                console.log('Wake Lock active');
+
+                // Re-acquire wake lock if page becomes visible again
+                this.wakeLock.addEventListener('release', () => {
+                    console.log('Wake Lock released');
+                });
+            }
+        } catch (err) {
+            console.error(`Wake Lock error: ${err.name}, ${err.message}`);
+        }
+    }
+
+    releaseWakeLock() {
+        if (this.wakeLock !== null) {
+            this.wakeLock.release()
+                .then(() => {
+                    this.wakeLock = null;
+                })
+                .catch((err) => {
+                    console.error(`Wake Lock release error: ${err.name}, ${err.message}`);
+                });
         }
     }
 

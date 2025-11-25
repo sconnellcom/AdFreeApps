@@ -1,18 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Metronome</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <div class="container">
         <div class="header-row">
             <h1>Metronome</h1>
             <button id="infoBtn" class="info-btn" title="How to Use">ⓘ</button>
         </div>
-        
+
         <!-- Visual Pulse Indicator -->
         <div class="pulse-container">
             <div class="pulse-wrapper">
@@ -112,26 +114,31 @@
                     <h4>Modes</h4>
                     <ul>
                         <li><strong>Regular:</strong> Visual pulse with sound. Standard metronome behavior.</li>
-                        <li><strong>Silent:</strong> Visual pulse only, no sound. Practice staying on tempo visually.</li>
-                        <li><strong>Auto:</strong> Motion detection mode. The metronome beeps ONLY when you go off-beat.</li>
+                        <li><strong>Silent:</strong> Visual pulse only, no sound. Practice staying on tempo visually.
+                        </li>
+                        <li><strong>Auto:</strong> Motion detection mode. The metronome beeps ONLY when you go off-beat.
+                        </li>
                     </ul>
-                    
+
                     <h4>Auto Mode (Motion Detection)</h4>
                     <p><strong>How it works:</strong></p>
                     <ul>
                         <li>The metronome runs silently in the background</li>
                         <li>Your device detects when you tap/move (e.g., tapping your phone, moving to the beat)</li>
-                        <li>System checks if your tap is within the "Timing Tolerance" (in milliseconds) of the metronome beat</li>
+                        <li>System checks if your tap is within the "Timing Tolerance" (in milliseconds) of the
+                            metronome beat</li>
                         <li>If you're within tolerance → You're ON BEAT (no sound, green status)</li>
                         <li>If you're outside tolerance → You're OFF BEAT (count increases)</li>
                         <li>After 6 consecutive OFF BEAT detections → Metronome starts beeping to guide you back</li>
                         <li>After 6 consecutive ON BEAT detections → Beeping stops</li>
                     </ul>
-                    
+
                     <h4>Auto Mode Settings</h4>
                     <ul>
-                        <li><strong>Beat Detection (1-10):</strong> How sensitive motion detection is. Higher = easier to detect taps. Default: 5</li>
-                        <li><strong>Timing Tolerance (5-1000ms):</strong> How many milliseconds off you can be and still count as "on beat". 
+                        <li><strong>Beat Detection (1-10):</strong> How sensitive motion detection is. Higher = easier
+                            to detect taps. Default: 5</li>
+                        <li><strong>Timing Tolerance (5-1000ms):</strong> How many milliseconds off you can be and still
+                            count as "on beat".
                             <ul>
                                 <li>100ms = must be within 0.1 seconds of metronome beat</li>
                                 <li>Lower = stricter, harder to stay on beat</li>
@@ -139,14 +146,14 @@
                             </ul>
                         </li>
                     </ul>
-                    
+
                     <h4>Display Info</h4>
                     <ul>
                         <li><strong>Status:</strong> Shows if you're "On beat", "Off beat", or detecting motion</li>
                         <li><strong>Detected BPM:</strong> Your actual tapping tempo (calculated from your beats)</li>
                         <li><strong>Accuracy:</strong> How many milliseconds off you are from the metronome beat</li>
                     </ul>
-                    
+
                     <h4>Sound Options</h4>
                     <p>Choose from Beep, Bass Drum, Cymbal, Tock, or drum riffs (4-count or 8-count patterns)</p>
                 </div>
@@ -156,4 +163,5 @@
 
     <script src="metronome.js"></script>
 </body>
+
 </html>
