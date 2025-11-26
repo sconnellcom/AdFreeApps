@@ -193,6 +193,67 @@ h3 {
     font-weight: bold;
     color: #667eea;
     margin-bottom: 15px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 5px 10px;
+    border-radius: 8px;
+}
+
+.bpm-display:hover {
+    background: #f0f4ff;
+    transform: scale(1.05);
+}
+
+.bpm-display:active {
+    transform: scale(0.98);
+}
+
+/* BPM Preset Menu */
+.bpm-preset-menu {
+    background: white;
+    border: 2px solid #667eea;
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 15px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+}
+
+.bpm-preset-header {
+    text-align: center;
+    font-weight: 600;
+    color: #667eea;
+    margin-bottom: 10px;
+    font-size: 1.1em;
+}
+
+.bpm-preset-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.bpm-preset-btn {
+    padding: 10px;
+    background: #f7fafc;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9em;
+    font-weight: 600;
+    color: #333;
+    transition: all 0.2s ease;
+}
+
+.bpm-preset-btn:hover {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+    transform: translateY(-2px);
+    box-shadow: 0 3px 10px rgba(102, 126, 234, 0.3);
+}
+
+.bpm-preset-btn:active {
+    transform: translateY(0);
 }
 
 /* Control Groups */
@@ -423,7 +484,7 @@ input[type="range"]::-moz-range-thumb:hover {
     color: #333;
 }
 
-.info-modal-content > div:not(.info-modal-header) {
+.info-modal-content>div:not(.info-modal-header) {
     overflow-y: auto;
     flex: 1;
 }
@@ -523,10 +584,5 @@ input[type="range"]::-moz-range-thumb:hover {
         flex-direction: row;
         justify-content: space-between;
         width: 100%;
-    }
-
-    .compact-controls {
-        flex-direction: column;
-        gap: 10px;
     }
 }

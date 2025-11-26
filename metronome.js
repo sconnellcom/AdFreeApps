@@ -60,6 +60,8 @@ class Metronome {
         // DOM elements
         this.bpmSlider = document.getElementById('bpmSlider');
         this.bpmValue = document.getElementById('bpmValue');
+        this.bpmDisplay = document.getElementById('bpmDisplay');
+        this.bpmPresetMenu = document.getElementById('bpmPresetMenu');
         this.startStopBtn = document.getElementById('startStop');
         this.pulseElement = document.getElementById('pulse');
         this.accelerationBar = document.getElementById('accelerationBar');
@@ -100,6 +102,35 @@ class Metronome {
             if (this.isRunning) {
                 this.stop();
                 this.start();
+            }
+        });
+
+        // BPM display click - toggle preset menu
+        this.bpmDisplay.addEventListener('click', () => {
+            const isVisible = this.bpmPresetMenu.style.display === 'block';
+            this.bpmPresetMenu.style.display = isVisible ? 'none' : 'block';
+        });
+
+        // BPM preset buttons
+        const presetButtons = document.querySelectorAll('.bpm-preset-btn');
+        presetButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const newBpm = parseInt(e.target.dataset.bpm);
+                this.bpm = newBpm;
+                this.bpmValue.textContent = this.bpm;
+                this.bpmSlider.value = this.bpm;
+                this.bpmPresetMenu.style.display = 'none';
+                if (this.isRunning) {
+                    this.stop();
+                    this.start();
+                }
+            });
+        });
+
+        // Close preset menu when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!this.bpmDisplay.contains(e.target) && !this.bpmPresetMenu.contains(e.target)) {
+                this.bpmPresetMenu.style.display = 'none';
             }
         });
 

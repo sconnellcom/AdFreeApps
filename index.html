@@ -46,8 +46,23 @@
         </div>
 
         <!-- BPM Display -->
-        <div class="bpm-display">
+        <div class="bpm-display" id="bpmDisplay" title="Click for presets">
             <span id="bpmValue">120</span> BPM
+        </div>
+
+        <!-- BPM Preset Menu -->
+        <div id="bpmPresetMenu" class="bpm-preset-menu" style="display: none;">
+            <div class="bpm-preset-header">Quick Tempo Presets</div>
+            <div class="bpm-preset-grid">
+                <button class="bpm-preset-btn" data-bpm="60">60 - Largo</button>
+                <button class="bpm-preset-btn" data-bpm="72">72 - Adagio</button>
+                <button class="bpm-preset-btn" data-bpm="80">80 - Andante</button>
+                <button class="bpm-preset-btn" data-bpm="92">92 - Moderato</button>
+                <button class="bpm-preset-btn" data-bpm="108">108 - Allegretto</button>
+                <button class="bpm-preset-btn" data-bpm="120">120 - Allegro</button>
+                <button class="bpm-preset-btn" data-bpm="132">132 - Vivace</button>
+                <button class="bpm-preset-btn" data-bpm="144">144 - Presto</button>
+            </div>
         </div>
 
         <!-- BPM Slider -->
@@ -166,7 +181,7 @@
                             </ul>
                         </li>
                     </ul>
-                    
+
                     <p><strong>Tip:</strong> Want to focus on just one metric? Set the other tolerance very high!</p>
                     <ul>
                         <li>Focus on tempo only: Set Timing Tolerance to 1000ms (max)</li>
@@ -180,8 +195,15 @@
                         <li><strong>Accuracy:</strong> How many milliseconds off you are from the metronome beat</li>
                     </ul>
 
+                    <h4>Quick Tempo Selection</h4>
+                    <p>Click the large BPM number to open a menu with common musical tempo presets (Largo, Adagio,
+                        Andante, Moderato, Allegretto, Allegro, Vivace, Presto).</p>
+
                     <h4>Sound Options</h4>
                     <p>Choose from Beep, Bass Drum, Cymbal, Tock, or drum riffs (4-count or 8-count patterns)</p>
+
+                    <h4>Screen Wake Lock</h4>
+                    <p>The screen stays on while the metronome is running to prevent interruptions during practice.</p>
                 </div>
             </div>
         </div>
