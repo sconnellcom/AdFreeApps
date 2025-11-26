@@ -270,7 +270,9 @@ class Metronome {
         });
 
         // Click on acceleration meter to toggle between auto and regular mode
-        this.accelerationMeter.addEventListener('click', () => {
+        const toggleMode = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
             if (this.mode === 'auto') {
                 this.modeSelector.value = 'regular';
                 this.setMode('regular');
@@ -278,10 +280,15 @@ class Metronome {
                 this.modeSelector.value = 'auto';
                 this.setMode('auto');
             }
-        });
+        };
+
+        this.accelerationMeter.addEventListener('touchend', toggleMode);
+        this.accelerationMeter.addEventListener('click', toggleMode);
 
         // Click on pulse (metronome indicator) to start/stop
-        this.pulseElement.addEventListener('click', () => {
+        const toggleMetronome = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
             if (this.isRunning) {
                 this.stop();
                 // Also stop detection if in auto mode
@@ -295,7 +302,10 @@ class Metronome {
                     this.startDetection();
                 }
             }
-        });
+        };
+
+        this.pulseElement.addEventListener('touchend', toggleMetronome);
+        this.pulseElement.addEventListener('click', toggleMetronome);
     }
 
     setMode(mode) {
