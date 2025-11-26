@@ -268,6 +268,34 @@ class Metronome {
                 this.themeDropdown.style.display = 'none';
             }
         });
+
+        // Click on acceleration meter to toggle between auto and regular mode
+        this.accelerationMeter.addEventListener('click', () => {
+            if (this.mode === 'auto') {
+                this.modeSelector.value = 'regular';
+                this.setMode('regular');
+            } else {
+                this.modeSelector.value = 'auto';
+                this.setMode('auto');
+            }
+        });
+
+        // Click on pulse (metronome indicator) to start/stop
+        this.pulseElement.addEventListener('click', () => {
+            if (this.isRunning) {
+                this.stop();
+                // Also stop detection if in auto mode
+                if (this.mode === 'auto' && this.isDetecting) {
+                    this.stopDetection();
+                }
+            } else {
+                this.start();
+                // Auto-start detection if in auto mode
+                if (this.mode === 'auto') {
+                    this.startDetection();
+                }
+            }
+        });
     }
 
     setMode(mode) {

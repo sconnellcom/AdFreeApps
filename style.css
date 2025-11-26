@@ -268,6 +268,11 @@ h3 {
     border-radius: 50%;
     background: var(--primary-color);
     transition: transform 0.1s ease, background 0.1s ease;
+    cursor: pointer;
+}
+
+.pulse:hover {
+    opacity: 0.8;
 }
 
 .pulse.active {
@@ -289,6 +294,12 @@ h3 {
     overflow: hidden;
     position: relative;
     transition: transform 0.1s ease, border-color 0.1s ease, box-shadow 0.1s ease, background 0.3s ease;
+    cursor: pointer;
+}
+
+.acceleration-meter:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 10px var(--pulse-shadow);
 }
 
 .acceleration-meter.beat-detected {
@@ -561,11 +572,11 @@ input[type="range"]::-moz-range-thumb:hover {
 }
 
 .btn-primary.active {
-    background: #ff6b6b;
+    background: var(--pulse-active);
 }
 
 .btn-primary.active:hover {
-    background: #ee5a52;
+    background: var(--primary-hover);
 }
 
 .btn-secondary {
