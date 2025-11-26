@@ -31,7 +31,7 @@ body.theme-light {
     --text-secondary: #4a5568;
     --text-tertiary: #718096;
     --border-color: #E3DE81;
-    --surface-bg: #E3DAB2;
+    --surface-bg: #f1ff72;
     --pulse-active: #89751B;
     --pulse-shadow: rgba(137, 117, 27, 0.6);
 }
@@ -63,7 +63,7 @@ body.theme-warm-light {
     --text-secondary: #5d5d3f;
     --text-tertiary: #7d7d5f;
     --border-color: #E3DAB2;
-    --surface-bg: #F5EED0;
+    --surface-bg: #faedb6;
     --pulse-active: #E49A32;
     --pulse-shadow: rgba(228, 154, 50, 0.6);
 }
