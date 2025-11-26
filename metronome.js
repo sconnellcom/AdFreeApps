@@ -54,6 +54,43 @@ class Metronome {
 
         this.initializeUI();
         this.setupEventListeners();
+        this.initializeTheme();
+    }
+
+    initializeTheme() {
+        // Load saved theme from localStorage or default to 'default'
+        const savedTheme = localStorage.getItem('metronomeTheme') || 'default';
+        this.setTheme(savedTheme);
+    }
+
+    setTheme(theme) {
+        // Remove all theme classes
+        document.body.classList.remove('theme-light', 'theme-dark', 'theme-warm-light', 'theme-warm-dark');
+
+        // Add new theme class (if not default)
+        if (theme === 'light') {
+            document.body.classList.add('theme-light');
+        } else if (theme === 'dark') {
+            document.body.classList.add('theme-dark');
+        } else if (theme === 'warm-light') {
+            document.body.classList.add('theme-warm-light');
+        } else if (theme === 'warm-dark') {
+            document.body.classList.add('theme-warm-dark');
+        }
+
+        // Update active button class in dropdown
+        document.querySelectorAll('.theme-btn').forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.dataset.theme === theme) {
+                btn.classList.add('active');
+            }
+        });
+
+        // Update the main theme button to reflect current theme
+        this.themeBtnActive.className = `theme-btn-active theme-${theme}`;
+
+        // Save to localStorage
+        localStorage.setItem('metronomeTheme', theme);
     }
 
     initializeUI() {
@@ -67,6 +104,10 @@ class Metronome {
         this.accelerationBar = document.getElementById('accelerationBar');
         this.accelerationMeter = this.accelerationBar.parentElement;
         this.soundSelector = document.getElementById('soundSelector');
+
+        // Theme elements
+        this.themeBtnActive = document.querySelector('.theme-btn-active');
+        this.themeDropdown = document.querySelector('.theme-dropdown');
 
         // Beat info displays at the top
         this.beatStatusTop = document.getElementById('beatStatus');
@@ -196,6 +237,29 @@ class Metronome {
         this.infoModal.addEventListener('click', (e) => {
             if (e.target === this.infoModal) {
                 this.infoModal.style.display = 'none';
+            }
+        });
+
+        // Theme switcher - toggle dropdown
+        this.themeBtnActive.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isVisible = this.themeDropdown.style.display === 'flex';
+            this.themeDropdown.style.display = isVisible ? 'none' : 'flex';
+        });
+
+        // Theme selection from dropdown
+        document.querySelectorAll('.theme-dropdown .theme-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.setTheme(btn.dataset.theme);
+                this.themeDropdown.style.display = 'none';
+            });
+        });
+
+        // Close theme dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!this.themeBtnActive.contains(e.target) && !this.themeDropdown.contains(e.target)) {
+                this.themeDropdown.style.display = 'none';
             }
         });
     }
