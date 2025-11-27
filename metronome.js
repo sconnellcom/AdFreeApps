@@ -526,6 +526,9 @@ class Metronome {
     }
 
     playVibrate(time) {
+        // Check if audioContext exists for timing calculation
+        if (!this.audioContext) return;
+
         // Calculate delay from scheduled time to now
         const delay = Math.max(0, (time - this.audioContext.currentTime) * 1000);
 
