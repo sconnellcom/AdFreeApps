@@ -332,14 +332,21 @@ class Metronome {
 
         this.pulseElement.addEventListener('touchend', toggleMetronome);
         this.pulseElement.addEventListener('click', toggleMetronome);
-    } start() {
+    }
+
+    start() {
         if (!this.audioContext) {
             this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
         }
 
         this.isRunning = true;
         this.startStopBtn.textContent = 'Stop';
-        this.startStopBtn.classList.add('active');
+        // Force remove first to ensure clean state, then add
+        this.startStopBtn.classList.remove('active');
+        // Use setTimeout to ensure the removal is processed before adding
+        setTimeout(() => {
+            this.startStopBtn.classList.add('active');
+        }, 0);
         this.beatTimes = [];
         this.beatCount = 0; // Reset beat counter
         this.scheduledVisualBeats = [];
