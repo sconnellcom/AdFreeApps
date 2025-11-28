@@ -341,12 +341,12 @@ class Metronome {
 
         this.isRunning = true;
         this.startStopBtn.textContent = 'Stop';
-        // Force remove first to ensure clean state, then add
-        this.startStopBtn.classList.remove('active');
-        // Use setTimeout to ensure the removal is processed before adding
-        setTimeout(() => {
+        // Ensure active class is set
+        if (!this.startStopBtn.classList.contains('active')) {
             this.startStopBtn.classList.add('active');
-        }, 0);
+        }
+        // Force style update for mobile
+        this.startStopBtn.style.background = 'var(--pulse-active)';
         this.beatTimes = [];
         this.beatCount = 0; // Reset beat counter
         this.scheduledVisualBeats = [];
@@ -370,7 +370,12 @@ class Metronome {
     stop() {
         this.isRunning = false;
         this.startStopBtn.textContent = 'Start';
-        this.startStopBtn.classList.remove('active');
+        // Ensure active class is removed
+        if (this.startStopBtn.classList.contains('active')) {
+            this.startStopBtn.classList.remove('active');
+        }
+        // Force style update for mobile
+        this.startStopBtn.style.background = 'var(--primary-color)';
 
         if (this.intervalId) {
             clearInterval(this.intervalId);

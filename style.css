@@ -831,11 +831,11 @@ input[type="range"]::-moz-range-thumb:hover {
 }
 
 .btn-primary.active {
-    background: var(--pulse-active);
+    background: var(--pulse-active) !important;
 }
 
 .btn-primary.active:hover {
-    background: var(--primary-hover);
+    background: var(--primary-hover) !important;
 }
 
 .btn-secondary {
