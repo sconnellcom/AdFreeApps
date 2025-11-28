@@ -53,6 +53,10 @@ class Metronome {
         this.consecutiveOnBeatsNeeded = 6; // Number of consecutive on-beats needed to stop the sound
         this.minimumBeatsToPlay = 4; // Minimum number of beats to play when off beat
 
+        // Activity log
+        this.activityLog = [];
+        this.loadActivityLog();
+
         this.initializeUI();
         this.setupEventListeners();
         this.initializeTheme();
@@ -151,6 +155,13 @@ class Metronome {
         this.infoBtn = document.getElementById('infoBtn');
         this.infoModal = document.getElementById('infoModal');
         this.closeInfoBtn = document.getElementById('closeInfoBtn');
+
+        // Log modal elements
+        this.logBtn = document.getElementById('logBtn');
+        this.logModal = document.getElementById('logModal');
+        this.closeLogBtn = document.getElementById('closeLogBtn');
+        this.clearLogBtn = document.getElementById('clearLogBtn');
+        this.logEntries = document.getElementById('logEntries');
     }
 
     setupEventListeners() {
@@ -276,6 +287,33 @@ class Metronome {
             }
         });
 
+        // Log button
+        this.logBtn.addEventListener('click', () => {
+            this.displayActivityLog();
+            this.logModal.style.display = 'flex';
+        });
+
+        // Close log modal
+        this.closeLogBtn.addEventListener('click', () => {
+            this.logModal.style.display = 'none';
+        });
+
+        // Close log modal when clicking outside
+        this.logModal.addEventListener('click', (e) => {
+            if (e.target === this.logModal) {
+                this.logModal.style.display = 'none';
+            }
+        });
+
+        // Clear all logs button
+        this.clearLogBtn.addEventListener('click', () => {
+            if (confirm('Are you sure you want to delete all activity logs? This cannot be undone.')) {
+                this.activityLog = [];
+                this.saveActivityLog();
+                this.displayActivityLog();
+            }
+        });
+
         // Theme switcher - toggle dropdown
         this.themeBtnActive.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -340,6 +378,7 @@ class Metronome {
         }
 
         this.isRunning = true;
+        this.logActivity('Started');
         this.startStopBtn.textContent = 'Stop';
         // Ensure active class is set
         if (!this.startStopBtn.classList.contains('active')) {
@@ -369,6 +408,7 @@ class Metronome {
 
     stop() {
         this.isRunning = false;
+        this.logActivity('Stopped');
         this.startStopBtn.textContent = 'Start';
         // Ensure active class is removed
         if (this.startStopBtn.classList.contains('active')) {
@@ -886,6 +926,236 @@ class Metronome {
         setTimeout(() => {
             this.accelerationMeter.classList.remove('beat-detected');
         }, 150);
+    }
+
+    logActivity(action) {
+        const entry = {
+            action: action,
+            timestamp: Date.now()
+        };
+        this.activityLog.push(entry);
+        this.saveActivityLog();
+    }
+
+    saveActivityLog() {
+        try {
+            localStorage.setItem('metronomeActivityLog', JSON.stringify(this.activityLog));
+        } catch (e) {
+            console.error('Failed to save activity log:', e);
+        }
+    }
+
+    loadActivityLog() {
+        try {
+            const saved = localStorage.getItem('metronomeActivityLog');
+            if (saved) {
+                this.activityLog = JSON.parse(saved);
+            }
+        } catch (e) {
+            console.error('Failed to load activity log:', e);
+            this.activityLog = [];
+        }
+    }
+
+    formatDateTime(timestamp) {
+        const date = new Date(timestamp);
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const year = date.getFullYear();
+        let hours = date.getHours();
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const seconds = String(date.getSeconds()).padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12; // 0 should be 12
+        const hoursStr = String(hours).padStart(2, '0');
+        return `${month}/${day}/${year} ${hoursStr}:${minutes}:${seconds} ${ampm}`;
+    }
+
+    displayActivityLog() {
+        this.logEntries.innerHTML = '';
+
+        if (this.activityLog.length === 0) {
+            this.logEntries.innerHTML = '<div class="log-empty">No activity logged yet</div>';
+            return;
+        }
+
+        // Group logs into practice sessions
+        const sessions = this.groupIntoSessions([...this.activityLog].reverse());
+
+        sessions.forEach(session => {
+            // Create session header
+            const sessionHeader = document.createElement('div');
+            sessionHeader.className = 'log-session-header';
+
+            const sessionInfo = document.createElement('div');
+            sessionInfo.className = 'log-session-info';
+
+            const dateSpan = document.createElement('span');
+            dateSpan.className = 'log-session-date';
+            dateSpan.textContent = this.formatDate(session.date);
+
+            const durationSpan = document.createElement('span');
+            durationSpan.className = 'log-session-duration';
+            durationSpan.textContent = session.duration;
+
+            sessionInfo.appendChild(dateSpan);
+            sessionInfo.appendChild(durationSpan);
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'delete-session-btn';
+            deleteBtn.innerHTML = '&times;';
+            deleteBtn.title = 'Delete this session';
+            deleteBtn.addEventListener('click', () => {
+                if (confirm('Delete this practice session?')) {
+                    this.deleteSession(session);
+                }
+            });
+
+            sessionHeader.appendChild(sessionInfo);
+            sessionHeader.appendChild(deleteBtn);
+            this.logEntries.appendChild(sessionHeader);
+
+            // Create session entries
+            const sessionEntries = document.createElement('div');
+            sessionEntries.className = 'log-session-entries';
+
+            session.entries.forEach(entry => {
+                const logEntry = document.createElement('div');
+                logEntry.className = 'log-entry';
+
+                const actionSpan = document.createElement('span');
+                actionSpan.className = `log-action log-action-${entry.action.toLowerCase()}`;
+                actionSpan.textContent = entry.action;
+
+                const timeSpan = document.createElement('span');
+                timeSpan.className = 'log-time';
+                timeSpan.textContent = this.formatTime(entry.timestamp);
+
+                logEntry.appendChild(actionSpan);
+                logEntry.appendChild(timeSpan);
+                sessionEntries.appendChild(logEntry);
+            });
+
+            this.logEntries.appendChild(sessionEntries);
+        });
+    }
+
+    groupIntoSessions(reversedLog) {
+        if (reversedLog.length === 0) return [];
+
+        const sessions = [];
+        let currentSession = null;
+        const SESSION_GAP_MS = 30 * 60 * 1000; // 30 minutes gap indicates new session
+
+        reversedLog.forEach((entry, index) => {
+            const entryDate = new Date(entry.timestamp);
+            const dateKey = entryDate.toDateString();
+
+            // Check if we need a new session
+            if (!currentSession ||
+                currentSession.dateKey !== dateKey ||
+                (index > 0 && entry.timestamp - reversedLog[index - 1].timestamp > SESSION_GAP_MS)) {
+
+                if (currentSession) {
+                    sessions.push(currentSession);
+                }
+
+                currentSession = {
+                    dateKey: dateKey,
+                    date: entry.timestamp,
+                    entries: [],
+                    startTime: null,
+                    endTime: null
+                };
+            }
+
+            currentSession.entries.push(entry);
+
+            // Track start and end times for duration calculation
+            if (entry.action === 'Started') {
+                if (!currentSession.startTime) {
+                    currentSession.startTime = entry.timestamp;
+                }
+            } else if (entry.action === 'Stopped') {
+                currentSession.endTime = entry.timestamp;
+            }
+        });
+
+        if (currentSession) {
+            sessions.push(currentSession);
+        }
+
+        // Calculate durations
+        sessions.forEach(session => {
+            if (session.startTime && session.endTime) {
+                const durationMs = session.endTime - session.startTime;
+                session.duration = this.formatDuration(durationMs);
+            } else if (session.startTime) {
+                session.duration = 'In progress';
+            } else {
+                session.duration = '--';
+            }
+        });
+
+        return sessions;
+    }
+
+    formatDate(timestamp) {
+        const date = new Date(timestamp);
+        const today = new Date();
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+
+        const dateStr = date.toDateString();
+        const todayStr = today.toDateString();
+        const yesterdayStr = yesterday.toDateString();
+
+        if (dateStr === todayStr) {
+            return 'Today';
+        } else if (dateStr === yesterdayStr) {
+            return 'Yesterday';
+        } else {
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const year = date.getFullYear();
+            return `${month}/${day}/${year}`;
+        }
+    }
+
+    formatTime(timestamp) {
+        const date = new Date(timestamp);
+        let hours = date.getHours();
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const seconds = String(date.getSeconds()).padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12;
+        const hoursStr = String(hours).padStart(2, '0');
+        return `${hoursStr}:${minutes}:${seconds} ${ampm}`;
+    }
+
+    formatDuration(ms) {
+        const totalSeconds = Math.floor(ms / 1000);
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+
+        if (hours > 0) {
+            return `${hours}h ${minutes}m`;
+        } else if (minutes > 0) {
+            return `${minutes}m ${seconds}s`;
+        } else {
+            return `${seconds}s`;
+        }
+    }
+
+    deleteSession(session) {
+        // Remove all entries from this session
+        const timestampsToRemove = new Set(session.entries.map(e => e.timestamp));
+        this.activityLog = this.activityLog.filter(entry => !timestampsToRemove.has(entry.timestamp));
+        this.saveActivityLog();
+        this.displayActivityLog();
     }
 }
 

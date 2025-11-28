@@ -30,7 +30,16 @@
                 </div>
             </div>
             <h1>Metronome</h1>
-            <button id="infoBtn" class="info-btn" title="How to Use">ⓘ</button>
+            <div class="header-buttons">
+                <button id="logBtn" class="log-btn" title="View Activity Log">
+                    <span class="hamburger-icon">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </span>
+                </button>
+                <button id="infoBtn" class="info-btn" title="How to Use">ⓘ</button>
+            </div>
         </div>
 
         <!-- Visual Pulse Indicator -->
@@ -252,6 +261,22 @@
                         <li><strong>Screen Wake Lock:</strong> Screen stays on during practice (no interruptions!)</li>
                         <li><strong>Precise Timing:</strong> Uses Web Audio API for accurate, drift-free timing</li>
                     </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Log Modal -->
+        <div id="logModal" class="info-modal" style="display: none;">
+            <div class="info-modal-content log-modal-content">
+                <div class="info-modal-header">
+                    <h3>Activity Log</h3>
+                    <div class="log-header-buttons">
+                        <button id="clearLogBtn" class="clear-log-btn" title="Clear All Logs">Clear All</button>
+                        <button id="closeLogBtn" class="close-btn">&times;</button>
+                    </div>
+                </div>
+                <div class="log-container">
+                    <div id="logEntries" class="log-entries"></div>
                 </div>
             </div>
         </div>
