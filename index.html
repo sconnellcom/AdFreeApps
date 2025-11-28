@@ -147,81 +147,111 @@
                     <button id="closeInfoBtn" class="close-btn">&times;</button>
                 </div>
                 <div style="padding: 0 20px 20px;">
-                    <h4>Modes</h4>
+                    <h4>Getting Started</h4>
                     <ul>
-                        <li><strong>Regular:</strong> Visual pulse with sound. Standard metronome behavior.</li>
-                        <li><strong>Silent:</strong> Visual pulse only, no sound. Practice staying on tempo visually.
+                        <li><strong>Start/Stop:</strong> Click the "Metronome" pulse or the Start/Stop button</li>
+                        <li><strong>Set Tempo:</strong> Click the BPM number to open the tempo slider and quick presets
                         </li>
-                        <li><strong>Auto:</strong> Motion detection mode. The metronome beeps ONLY when you go off-beat.
-                        </li>
+                        <li><strong>Choose Sound:</strong> Select from the dropdown (Beep, Bass, Cymbal, Tock, Riffs,
+                            Vibrate, or Silent)</li>
+                        <li><strong>Change Theme:</strong> Click the colored circle in the top-left corner</li>
                     </ul>
 
-                    <h4>Auto Mode (Motion Detection)</h4>
+                    <h4>Visual Indicators</h4>
+                    <ul>
+                        <li><strong>Metronome (left pulse):</strong> Flashes on each beat to keep you in sync</li>
+                        <li><strong>Your Beat (right meter):</strong> Shows your tapping/movement intensity in real-time
+                        </li>
+                        <li>Tap the "Your Beat" meter to enable/disable beat detection</li>
+                    </ul>
+
+                    <h4>Beat Detection Mode</h4>
+                    <p><strong>What it does:</strong> The metronome monitors your movements and only makes sound when
+                        you drift off tempo. Perfect for practicing independence and staying on beat!</p>
+
                     <p><strong>How it works:</strong></p>
                     <ul>
-                        <li>The metronome runs silently in the background</li>
-                        <li>Your device detects when you tap/move (e.g., tapping your phone, moving to the beat)</li>
-                        <li>System checks TWO things:
+                        <li>Enable by checking "Beat Detection" or tapping the "Your Beat" meter</li>
+                        <li>The metronome runs silently while you practice</li>
+                        <li>Your device's accelerometer detects taps/movements</li>
+                        <li>The system evaluates <strong>both timing and tempo</strong>:
                             <ul>
-                                <li><strong>Timing:</strong> Is your tap within the "Timing Tolerance" (in milliseconds)
-                                    of the metronome beat?</li>
-                                <li><strong>Tempo:</strong> Is your detected BPM within the "BPM Tolerance" of the
-                                    target tempo?</li>
+                                <li><strong>Timing:</strong> Are you within tolerance of the beat? (in milliseconds)
+                                </li>
+                                <li><strong>Tempo:</strong> Is your overall BPM within range?</li>
                             </ul>
                         </li>
-                        <li>If BOTH timing and tempo are within tolerance → You're ON BEAT (no sound, green status)</li>
-                        <li>If EITHER timing or tempo is off → You're OFF BEAT (count increases)</li>
-                        <li>After 6 consecutive OFF BEAT detections → Metronome starts beeping to guide you back</li>
-                        <li>Metronome will beep for at least 6 beats once it starts</li>
-                        <li>After 6 consecutive ON BEAT detections → Beeping stops</li>
+                        <li>If you're on beat → Silent (green status)</li>
+                        <li>If you drift off → Metronome beeps to guide you back</li>
                     </ul>
 
-                    <h4>Auto Mode Settings</h4>
+                    <h4>Beat Detection Settings</h4>
+                    <p>These appear when Beat Detection is enabled:</p>
                     <ul>
-                        <li><strong>Beat Detection (0-100%):</strong> How sensitive motion detection is. Higher % =
-                            easier
-                            to detect light taps. Lower % = only detects harder hits. Default: 50%</li>
-                        <li><strong>Timing Tolerance (5-1000ms):</strong> How many milliseconds off you can be and still
-                            count as "on beat".
+                        <li><strong>Beat Detection (0-100%):</strong> Motion sensitivity
                             <ul>
-                                <li>100ms = must be within 0.1 seconds of metronome beat</li>
-                                <li>Lower = stricter, harder to stay on beat</li>
+                                <li>Higher % = detects lighter taps</li>
+                                <li>Lower % = requires harder hits</li>
+                                <li>Default: 50%</li>
+                            </ul>
+                        </li>
+                        <li><strong>Timing Tolerance (5-1000ms):</strong> How precise your timing must be
+                            <ul>
+                                <li>100ms = within 0.1 seconds of the beat</li>
+                                <li>Lower = stricter timing required</li>
                                 <li>Higher = more forgiving</li>
                             </ul>
                         </li>
-                        <li><strong>BPM Tolerance (0-20):</strong> How many BPM off you can be and still count as "on
-                            beat".
+                        <li><strong>BPM Tolerance (0-20):</strong> How consistent your tempo must be
                             <ul>
-                                <li>5 BPM = your tempo can be 115-125 BPM when target is 120 BPM</li>
-                                <li>0 = must match target BPM exactly</li>
-                                <li>Higher = more forgiving for tempo drift</li>
+                                <li>5 BPM = stay within ±5 BPM of target (e.g., 115-125 when target is 120)</li>
+                                <li>0 = must match target exactly</li>
+                                <li>Higher = more tempo drift allowed</li>
                             </ul>
                         </li>
                     </ul>
 
-                    <p><strong>Tip:</strong> Want to focus on just one metric? Set the other tolerance very high!</p>
+                    <p><strong>Pro Tip:</strong> Focus on one skill at a time!</p>
                     <ul>
-                        <li>Focus on tempo only: Set Timing Tolerance to 1000ms (max)</li>
-                        <li>Focus on timing only: Set BPM Tolerance to 20 (max)</li>
+                        <li>Practice tempo consistency: Set Timing Tolerance to 1000ms (max)</li>
+                        <li>Practice precise timing: Set BPM Tolerance to 20 (max)</li>
                     </ul>
 
-                    <h4>Display Info</h4>
+                    <h4>Status Display</h4>
+                    <p>When Beat Detection is active, you'll see three indicators at the top:</p>
                     <ul>
-                        <li><strong>Status:</strong> Shows if you're "On beat", "Off beat", or detecting taps</li>
-                        <li><strong>Detected BPM:</strong> Your actual tapping tempo (calculated from your beats)</li>
-                        <li><strong>Accuracy:</strong> How many milliseconds off you are from the metronome beat</li>
+                        <li><strong>Status:</strong> "On beat" (green) or "Off beat!" (red)</li>
+                        <li><strong>Detected BPM:</strong> Your actual tempo based on your taps</li>
+                        <li><strong>Accuracy:</strong> Milliseconds off from the metronome beat</li>
                     </ul>
 
-                    <h4>Quick Tempo Selection</h4>
-                    <p>Click the large BPM number to open a menu with common musical tempo presets (Largo, Adagio,
-                        Andante, Moderato, Allegretto, Allegro, Vivace, Presto).</p>
+                    <h4>Tempo Control</h4>
+                    <p>Click the large BPM number to open a menu with a tempo slider and quick preset buttons for common
+                        musical tempos:</p>
+                    <ul>
+                        <li>60 - Largo, 72 - Adagio, 80 - Andante, 92 - Moderato</li>
+                        <li>108 - Allegretto, 120 - Allegro, 132 - Vivace, 144 - Presto</li>
+                    </ul>
 
                     <h4>Sound Options</h4>
-                    <p>Choose from Beep, Bass Drum, Cymbal, Tock, drum riffs (4-count or 8-count patterns), or Vibrate
-                        (vibrates the device instead of playing a sound)</p>
+                    <ul>
+                        <li><strong>Beep:</strong> Classic metronome tone</li>
+                        <li><strong>Bass Drum:</strong> Low, punchy drum sound</li>
+                        <li><strong>Cymbal:</strong> Bright, shimmering cymbal</li>
+                        <li><strong>Tock:</strong> Wooden percussion sound</li>
+                        <li><strong>4-Count Riff:</strong> 3 bass hits + cymbal pattern</li>
+                        <li><strong>8-Count Riff:</strong> Full drum groove (bum bum chish de-de bum bum chish)</li>
+                        <li><strong>Vibrate:</strong> Device vibration instead of sound</li>
+                        <li><strong>Silent:</strong> Visual-only practice mode</li>
+                    </ul>
 
-                    <h4>Screen Wake Lock</h4>
-                    <p>The screen stays on while the metronome is running to prevent interruptions during practice.</p>
+                    <h4>Additional Features</h4>
+                    <ul>
+                        <li><strong>12 Themes:</strong> Choose from various color schemes including light/dark modes
+                        </li>
+                        <li><strong>Screen Wake Lock:</strong> Screen stays on during practice (no interruptions!)</li>
+                        <li><strong>Precise Timing:</strong> Uses Web Audio API for accurate, drift-free timing</li>
+                    </ul>
                 </div>
             </div>
         </div>
