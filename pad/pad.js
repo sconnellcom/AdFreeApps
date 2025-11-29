@@ -1,5 +1,10 @@
 // Drum Pad Application
 class DrumPad {
+    // Audio effect constants
+    static REVERB_DURATION = 2; // seconds
+    static DISTORTION_AMOUNT = 50;
+    static WAVE_SHAPER_SAMPLES = 44100;
+
     constructor() {
         this.audioContext = null;
         this.currentSound = 'kick';
@@ -139,21 +144,20 @@ class DrumPad {
         // Theme picker
         this.themeBtnActive.addEventListener('click', (e) => {
             e.stopPropagation();
-            const isVisible = this.themeDropdown.style.display === 'grid';
-            this.themeDropdown.style.display = isVisible ? 'none' : 'grid';
+            this.themeDropdown.classList.toggle('visible');
         });
 
         document.querySelectorAll('.theme-dropdown .theme-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 this.setTheme(btn.dataset.theme);
-                this.themeDropdown.style.display = 'none';
+                this.themeDropdown.classList.remove('visible');
             });
         });
 
         document.addEventListener('click', (e) => {
             if (!this.themeBtnActive.contains(e.target) && !this.themeDropdown.contains(e.target)) {
-                this.themeDropdown.style.display = 'none';
+                this.themeDropdown.classList.remove('visible');
             }
         });
 
@@ -174,13 +178,14 @@ class DrumPad {
                 // Toggle pitch modifiers (only one at a time)
                 if (modifier === 'pitch-up' || modifier === 'pitch-down') {
                     const otherPitch = modifier === 'pitch-up' ? 'pitch-down' : 'pitch-up';
-                    if (this.modifiers[otherPitch.replace('-', '')]) {
-                        this.modifiers[otherPitch.replace('-', '')] = false;
+                    const otherKey = otherPitch === 'pitch-up' ? 'pitchUp' : 'pitchDown';
+                    if (this.modifiers[otherKey]) {
+                        this.modifiers[otherKey] = false;
                         document.querySelector(`[data-modifier="${otherPitch}"]`).classList.remove('active');
                     }
                 }
                 
-                const key = modifier.replace('-', '').replace('Up', 'Up').replace('Down', 'Down');
+                // Convert modifier name to camelCase key (e.g., 'pitch-up' -> 'pitchUp')
                 const modKey = modifier === 'pitch-up' ? 'pitchUp' : modifier === 'pitch-down' ? 'pitchDown' : modifier;
                 this.modifiers[modKey] = !this.modifiers[modKey];
                 btn.classList.toggle('active');
@@ -229,7 +234,7 @@ class DrumPad {
     async createReverbBuffer() {
         // Create a simple reverb impulse response
         const sampleRate = this.audioContext.sampleRate;
-        const length = sampleRate * 2; // 2 second reverb
+        const length = sampleRate * DrumPad.REVERB_DURATION;
         const impulse = this.audioContext.createBuffer(2, length, sampleRate);
         
         for (let channel = 0; channel < 2; channel++) {
@@ -669,13 +674,11 @@ class DrumPad {
 
     createDistortion() {
         const distortion = this.audioContext.createWaveShaper();
-        const amount = 50;
-        const samples = 44100;
-        const curve = new Float32Array(samples);
+        const curve = new Float32Array(DrumPad.WAVE_SHAPER_SAMPLES);
         
-        for (let i = 0; i < samples; i++) {
-            const x = (i * 2) / samples - 1;
-            curve[i] = ((3 + amount) * x * 20 * (Math.PI / 180)) / (Math.PI + amount * Math.abs(x));
+        for (let i = 0; i < DrumPad.WAVE_SHAPER_SAMPLES; i++) {
+            const x = (i * 2) / DrumPad.WAVE_SHAPER_SAMPLES - 1;
+            curve[i] = ((3 + DrumPad.DISTORTION_AMOUNT) * x * 20 * (Math.PI / 180)) / (Math.PI + DrumPad.DISTORTION_AMOUNT * Math.abs(x));
         }
         
         distortion.curve = curve;

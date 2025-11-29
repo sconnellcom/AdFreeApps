@@ -349,9 +349,8 @@ h1 {
     z-index: 1000;
 }
 
-.theme-dropdown[style*="display: flex"],
-.theme-dropdown[style*="display: grid"] {
-    display: grid !important;
+.theme-dropdown.visible {
+    display: grid;
 }
 
 .theme-btn {
