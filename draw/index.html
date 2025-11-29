@@ -353,7 +353,10 @@
 
                 // History for undo
                 this.history = [];
-                this.maxHistory = 20;
+
+                // Configuration constants
+                this.MAX_HISTORY = 20;
+                this.COLOR_TOLERANCE = 10; // Tolerance for flood fill color matching
 
                 // Quick colors palette
                 this.quickColors = [
@@ -660,9 +663,9 @@
 
                 const matchesTarget = (x, y) => {
                     const pos = (y * width + x) * 4;
-                    return Math.abs(data[pos] - targetR) < 10 &&
-                        Math.abs(data[pos + 1] - targetG) < 10 &&
-                        Math.abs(data[pos + 2] - targetB) < 10;
+                    return Math.abs(data[pos] - targetR) < this.COLOR_TOLERANCE &&
+                        Math.abs(data[pos + 1] - targetG) < this.COLOR_TOLERANCE &&
+                        Math.abs(data[pos + 2] - targetB) < this.COLOR_TOLERANCE;
                 };
 
                 const setPixel = (x, y) => {
@@ -692,7 +695,7 @@
             saveState() {
                 const imageData = this.canvas.toDataURL();
                 this.history.push(imageData);
-                if (this.history.length > this.maxHistory) {
+                if (this.history.length > this.MAX_HISTORY) {
                     this.history.shift();
                 }
             }
@@ -723,15 +726,19 @@
                 tempCanvas.height = this.displayHeight;
                 const tempCtx = tempCanvas.getContext('2d');
 
-                // Draw current canvas content to temp canvas
-                tempCtx.drawImage(this.canvas, 0, 0, this.displayWidth, this.displayHeight);
+                // Draw current canvas content to temp canvas with proper scaling
+                tempCtx.drawImage(this.canvas, 0, 0, this.canvas.width, this.canvas.height, 0, 0, this.displayWidth, this.displayHeight);
 
                 // Create download link
                 const link = document.createElement('a');
-                const timestamp = new Date().toISOString().slice(0, 19).replace(/[:-]/g, '');
+                const timestamp = this.generateTimestamp();
                 link.download = `drawing-${timestamp}.png`;
                 link.href = tempCanvas.toDataURL('image/png');
                 link.click();
+            }
+
+            generateTimestamp() {
+                return new Date().toISOString().slice(0, 19).replace(/[:-]/g, '');
             }
         }
 
