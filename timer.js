@@ -32,7 +32,7 @@ class TimerApp {
         // Set initial page title based on active tab
         const activeTab = document.querySelector('.tab.active');
         if (activeTab) {
-            document.title = activeTab.textContent;
+            document.title = activeTab.textContent.trim();
         }
         if (this.alarms.length > 0) {
             this.startAlarmCheck();
@@ -465,7 +465,7 @@ class TimerApp {
                 document.getElementById(tabName).classList.add('active');
 
                 // Update page title to match selected tab
-                document.title = tab.textContent;
+                document.title = tab.textContent.trim();
 
                 if (tabName === 'clock') {
                     this.startClockUpdate();
