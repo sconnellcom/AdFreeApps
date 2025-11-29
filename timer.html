@@ -7,61 +7,269 @@
     <title>Timer</title>
     <link rel="stylesheet" href="style.css">
     <style>
+        :root {
+            /* Default Theme (Purple) */
+            --bg-gradient-start: #667eea;
+            --bg-gradient-end: #764ba2;
+            --primary-color: #667eea;
+            --primary-hover: #764ba2;
+            --pulse-active: #ff6b6b;
+            --container-bg: #ffffff;
+            --text-color: #333333;
+            --text-secondary: #555555;
+            --text-tertiary: #666666;
+            --border-color: #e2e8f0;
+            --surface-bg: #f7fafc;
+            --lap-bg: transparent;
+            --success-bg: #e9d5ff;
+            --warning-bg: #fce7f3;
+            --info-bg: #ddd6fe;
+        }
+
+        body.theme-light {
+            /* Light Theme (Olive/Yellow) */
+            --bg-gradient-start: #97B22D;
+            --bg-gradient-end: #89751B;
+            --primary-color: #97B22D;
+            --primary-hover: #89751B;
+            --pulse-active: #89751B;
+            --container-bg: #FEFCAD;
+            --text-color: #2d3748;
+            --text-secondary: #4a5568;
+            --text-tertiary: #718096;
+            --border-color: #E3DE81;
+            --surface-bg: #f1ff72;
+            --lap-bg: transparent;
+            --success-bg: #d4f5a6;
+            --warning-bg: #f9e79f;
+            --info-bg: #e8f5a0;
+        }
+
+        body.theme-dark {
+            /* Dark Theme (Dark Olive) */
+            --bg-gradient-start: #2d3d0f;
+            --bg-gradient-end: #1a2208;
+            --primary-color: #97B22D;
+            --primary-hover: #E3DE81;
+            --pulse-active: #E3DE81;
+            --container-bg: #1f2d0a;
+            --text-color: #E3DAB2;
+            --text-secondary: #E3DE81;
+            --text-tertiary: #97B22D;
+            --border-color: #3d4d1f;
+            --surface-bg: #2a3a12;
+            --lap-bg: transparent;
+            --success-bg: #3d5015;
+            --warning-bg: #4a4215;
+            --info-bg: #44501a;
+        }
+
+        body.theme-warm-light {
+            /* Warm Light Theme */
+            --bg-gradient-start: #C6BE28;
+            --bg-gradient-end: #97B22D;
+            --primary-color: #E49A32;
+            --primary-hover: #C6BE28;
+            --pulse-active: #E49A32;
+            --container-bg: #FEFCAD;
+            --text-color: #3d3d1f;
+            --text-secondary: #5d5d3f;
+            --text-tertiary: #7d7d5f;
+            --border-color: #E3DAB2;
+            --surface-bg: #faedb6;
+            --lap-bg: transparent;
+            --success-bg: #f4d89f;
+            --warning-bg: #f9cc8b;
+            --info-bg: #f5e1a4;
+        }
+
+        body.theme-warm-dark {
+            /* Warm Dark Theme */
+            --bg-gradient-start: #2a2510;
+            --bg-gradient-end: #1a1808;
+            --primary-color: #E49A32;
+            --primary-hover: #C6BE28;
+            --pulse-active: #E49A32;
+            --container-bg: #2d2815;
+            --text-color: #FEFCAD;
+            --text-secondary: #E3DAB2;
+            --text-tertiary: #C6BE28;
+            --border-color: #4a3f1a;
+            --surface-bg: #3a3220;
+            --lap-bg: transparent;
+            --success-bg: #4a3f20;
+            --warning-bg: #53421a;
+            --info-bg: #4d4425;
+        }
+
+        body.theme-red {
+            /* Red Theme */
+            --bg-gradient-start: #dc2626;
+            --bg-gradient-end: #991b1b;
+            --primary-color: #ef4444;
+            --primary-hover: #dc2626;
+            --pulse-active: #b91c1c;
+            --container-bg: #ffffff;
+            --text-color: #1f2937;
+            --text-secondary: #374151;
+            --text-tertiary: #4b5563;
+            --border-color: #fecaca;
+            --surface-bg: #fef2f2;
+            --lap-bg: transparent;
+            --success-bg: #fee2e2;
+            --warning-bg: #fecaca;
+            --info-bg: #fef2f2;
+        }
+
+        body.theme-pink {
+            /* Pink Theme */
+            --bg-gradient-start: #ec4899;
+            --bg-gradient-end: #be185d;
+            --primary-color: #f472b6;
+            --primary-hover: #ec4899;
+            --pulse-active: #be185d;
+            --container-bg: #ffffff;
+            --text-color: #1f2937;
+            --text-secondary: #374151;
+            --text-tertiary: #4b5563;
+            --border-color: #fbcfe8;
+            --surface-bg: #fdf2f8;
+            --lap-bg: transparent;
+            --success-bg: #fce7f3;
+            --warning-bg: #fbcfe8;
+            --info-bg: #fdf2f8;
+        }
+
+        body.theme-red-dark {
+            /* Dark Red Theme */
+            --bg-gradient-start: #7f1d1d;
+            --bg-gradient-end: #450a0a;
+            --primary-color: #ef4444;
+            --primary-hover: #f87171;
+            --pulse-active: #f87171;
+            --container-bg: #1a0505;
+            --text-color: #fecaca;
+            --text-secondary: #fca5a5;
+            --text-tertiary: #f87171;
+            --border-color: #7f1d1d;
+            --surface-bg: #450a0a;
+            --lap-bg: transparent;
+            --success-bg: #5a0f0f;
+            --warning-bg: #7f1d1d;
+            --info-bg: #5a0f0f;
+        }
+
+        body.theme-pink-dark {
+            /* Dark Pink Theme */
+            --bg-gradient-start: #831843;
+            --bg-gradient-end: #500724;
+            --primary-color: #f472b6;
+            --primary-hover: #f9a8d4;
+            --pulse-active: #f9a8d4;
+            --container-bg: #1a050f;
+            --text-color: #fce7f3;
+            --text-secondary: #fbcfe8;
+            --text-tertiary: #f9a8d4;
+            --border-color: #831843;
+            --surface-bg: #500724;
+            --lap-bg: transparent;
+            --success-bg: #701a3d;
+            --warning-bg: #831843;
+            --info-bg: #701a3d;
+        }
+
+        body.theme-black {
+            /* Black Theme */
+            --bg-gradient-start: #1f2937;
+            --bg-gradient-end: #111827;
+            --primary-color: #6b7280;
+            --primary-hover: #9ca3af;
+            --pulse-active: #e5e7eb;
+            --container-bg: #0f172a;
+            --text-color: #f3f4f6;
+            --text-secondary: #d1d5db;
+            --text-tertiary: #9ca3af;
+            --border-color: #374151;
+            --surface-bg: #1e293b;
+            --lap-bg: transparent;
+            --success-bg: #334155;
+            --warning-bg: #374151;
+            --info-bg: #334155;
+        }
+
+        body.theme-blue {
+            /* Blue Theme */
+            --bg-gradient-start: #3b82f6;
+            --bg-gradient-end: #1e40af;
+            --primary-color: #60a5fa;
+            --primary-hover: #3b82f6;
+            --pulse-active: #1e40af;
+            --container-bg: #ffffff;
+            --text-color: #1f2937;
+            --text-secondary: #374151;
+            --text-tertiary: #4b5563;
+            --border-color: #bfdbfe;
+            --surface-bg: #eff6ff;
+            --lap-bg: transparent;
+            --success-bg: #dbeafe;
+            --warning-bg: #bfdbfe;
+            --info-bg: #dbeafe;
+        }
+
+        body.theme-blue-dark {
+            /* Dark Blue Theme */
+            --bg-gradient-start: #0c4a6e;
+            --bg-gradient-end: #082f49;
+            --primary-color: #38bdf8;
+            --primary-hover: #0ea5e9;
+            --pulse-active: #0ea5e9;
+            --container-bg: #0a1929;
+            --text-color: #e0f2fe;
+            --text-secondary: #7dd3fc;
+            --text-tertiary: #38bdf8;
+            --border-color: #0e7490;
+            --surface-bg: #164e63;
+            --lap-bg: transparent;
+            --success-bg: #155e75;
+            --warning-bg: #0e7490;
+            --info-bg: #155e75;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+            transition: background 0.3s ease;
+        }
+
         .container {
-            background: rgba(255, 255, 255, 0.95);
+            background: var(--container-bg);
             border-radius: 20px;
             padding: 30px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             max-width: 600px;
             width: 100%;
+            transition: background 0.3s ease;
         }
 
-        body.theme-black .container,
-        body.theme-blue-dark .container,
-        body.theme-dark .container,
-        body.theme-warm-dark .container,
-        body.theme-red-dark .container,
-        body.theme-pink-dark .container {
-            background: rgba(20, 20, 20, 0.95);
-        }
-
-        /* Dark theme text colors */
+        /* Additional theme-specific overrides */
         body.theme-black,
         body.theme-blue-dark,
         body.theme-dark,
         body.theme-warm-dark,
         body.theme-red-dark,
         body.theme-pink-dark {
-            --text-color: #f3f4f6;
-            --text-secondary: #9ca3af;
-            --border-color: #374151;
             --input-bg: #1f2937;
-            --item-bg: #1f2937;
             --preset-bg: #374151;
             --preset-hover: #4b5563;
-            --lap-bg: #1f2937;
-            --success-bg: #064e3b;
-            --warning-bg: #78350f;
-            --info-bg: #1e3a8a;
         }
 
-        /* Light theme colors */
         body.theme-light,
         body.theme-warm-light,
         body.theme-red,
         body.theme-pink,
         body.theme-blue {
-            --text-color: #1f2937;
-            --text-secondary: #6b7280;
-            --border-color: #e5e7eb;
             --input-bg: white;
-            --item-bg: #f3f4f6;
             --preset-bg: #f3f4f6;
             --preset-hover: #e5e7eb;
-            --lap-bg: #f9fafb;
-            --success-bg: #d1fae5;
-            --warning-bg: #fef3c7;
-            --info-bg: #dbeafe;
         }
 
         .header-row {
@@ -84,6 +292,9 @@
             gap: 10px;
             margin-bottom: 30px;
             border-bottom: 2px solid var(--border-color, #e0e0e0);
+            border-radius: 8px 8px 0 0;
+            padding: 0;
+            transition: background 0.3s ease, border-color 0.3s ease;
         }
 
         .tab {
@@ -96,7 +307,7 @@
             font-weight: 600;
             color: var(--text-secondary, #666);
             transition: all 0.3s ease;
-            border-bottom: 3px solid transparent;
+            border-top: 3px solid transparent;
         }
 
         .tab:hover {
@@ -105,7 +316,7 @@
 
         .tab.active {
             color: var(--primary-color, #667eea);
-            border-bottom-color: var(--primary-color, #667eea);
+            border-top-color: var(--primary-color, #667eea);
         }
 
         .tab-content {
@@ -159,39 +370,43 @@
         }
 
         .btn-start {
-            background: #10b981;
+            background: var(--primary-color, #667eea);
             color: white;
         }
 
         .btn-start:hover {
-            background: #059669;
+            background: var(--primary-hover, #764ba2);
+            transform: translateY(-2px);
         }
 
         .btn-stop {
-            background: #ef4444;
+            background: var(--pulse-active, #ff6b6b);
             color: white;
         }
 
         .btn-stop:hover {
-            background: #dc2626;
+            background: var(--primary-hover, #764ba2);
+            transform: translateY(-2px);
         }
 
         .btn-dismiss {
-            background: #dc2626;
+            background: var(--pulse-active, #ff6b6b);
             color: white;
         }
 
         .btn-dismiss:hover {
-            background: #b91c1c;
+            background: var(--primary-hover, #764ba2);
+            transform: translateY(-2px);
         }
 
         .btn-reset {
-            background: #6b7280;
+            background: var(--text-secondary, #6b7280);
             color: white;
         }
 
         .btn-reset:hover {
-            background: #4b5563;
+            background: var(--text-tertiary, #4b5563);
+            transform: translateY(-2px);
         }
 
         .input-group {
@@ -263,11 +478,14 @@
             color: var(--text-color, #333);
             border: 2px solid var(--border-color, #e5e7eb);
             cursor: pointer;
+            transition: all 0.2s ease;
         }
 
         .preset-btn:hover {
-            background: var(--preset-hover, #e5e7eb);
+            background: var(--primary-color, #667eea);
+            color: white;
             border-color: var(--primary-color, #667eea);
+            transform: translateY(-2px);
         }
 
         .timer-list,
@@ -283,35 +501,36 @@
             justify-content: space-between;
             align-items: center;
             padding: 12px;
-            background: var(--item-bg, #f3f4f6);
+            background: var(--surface-bg);
             border-radius: 8px;
             margin-bottom: 10px;
+            transition: background 0.3s ease;
         }
 
         .timer-item.running {
-            background: var(--success-bg, #d1fae5);
-            border-left: 4px solid #10b981;
+            background: var(--success-bg);
+            border-left: 4px solid var(--primary-color);
         }
 
         .timer-item.paused {
-            background: var(--warning-bg, #fef3c7);
-            border-left: 4px solid #f59e0b;
+            background: var(--warning-bg);
+            border-left: 4px solid var(--pulse-active);
         }
 
         .timer-item.sounding {
-            background: #fef3c7;
-            border-left: 4px solid #f59e0b;
+            background: var(--warning-bg);
+            border-left: 4px solid var(--pulse-active);
             animation: pulse 1.5s ease-in-out infinite;
         }
 
         .alarm-item.active {
-            background: var(--info-bg, #dbeafe);
-            border-left: 4px solid #3b82f6;
+            background: var(--info-bg);
+            border-left: 4px solid var(--primary-color);
         }
 
         .alarm-item.sounding {
-            background: #fef3c7;
-            border-left: 4px solid #f59e0b;
+            background: var(--warning-bg);
+            border-left: 4px solid var(--pulse-active);
             animation: pulse 1.5s ease-in-out infinite;
         }
 
@@ -393,8 +612,9 @@
             overflow-y: auto;
             margin-top: 20px;
             padding: 10px;
-            background: var(--lap-bg, #f9fafb);
+            background: var(--lap-bg);
             border-radius: 8px;
+            transition: background 0.3s ease;
         }
 
         .lap-item {
@@ -402,6 +622,10 @@
             justify-content: space-between;
             padding: 8px;
             border-bottom: 1px solid var(--border-color, #e5e7eb);
+            background: var(--surface-bg);
+            margin-bottom: 4px;
+            border-radius: 4px;
+            transition: background 0.3s ease, border-color 0.3s ease;
         }
 
         .lap-item:last-child {
@@ -430,26 +654,126 @@
             cursor: pointer;
         }
 
-        .theme-picker .theme-btn-active {
-            box-sizing: content-box;
-            min-width: 32px !important;
-            max-width: 32px !important;
-            width: 32px !important;
-            min-height: 32px !important;
-            max-height: 32px !important;
-            height: 32px !important;
-            padding: 0 !important;
+        .theme-picker {
+            position: relative;
         }
 
-        .theme-picker .theme-btn {
-            box-sizing: content-box;
-            min-width: 32px !important;
-            max-width: 32px !important;
-            width: 32px !important;
-            min-height: 32px !important;
-            max-height: 32px !important;
-            height: 32px !important;
-            padding: 0 !important;
+        .theme-btn-active {
+            width: 32px;
+            height: 32px;
+            min-width: 32px;
+            min-height: 32px;
+            max-width: 32px;
+            max-height: 32px;
+            padding: 0;
+            border-radius: 50%;
+            border: 3px solid var(--text-color);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .theme-btn-active:hover {
+            transform: scale(1.1);
+        }
+
+        .theme-dropdown {
+            position: absolute;
+            top: 40px;
+            left: 0;
+            background: var(--container-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 10px;
+            display: none;
+            grid-template-columns: 32px 32px;
+            gap: 8px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            transition: background 0.3s ease, border-color 0.3s ease;
+        }
+
+        .theme-dropdown[style*="display: grid"] {
+            display: grid !important;
+        }
+
+        .theme-btn {
+            width: 32px;
+            height: 32px;
+            min-width: 32px;
+            min-height: 32px;
+            max-width: 32px;
+            max-height: 32px;
+            padding: 0;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .theme-btn:hover {
+            transform: scale(1.1);
+            border-color: var(--primary-color, #667eea);
+        }
+
+        .theme-btn-active.theme-default,
+        .theme-btn.theme-default {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .theme-btn-active.theme-black,
+        .theme-btn.theme-black {
+            background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+        }
+
+        .theme-btn-active.theme-blue,
+        .theme-btn.theme-blue {
+            background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+        }
+
+        .theme-btn-active.theme-blue-dark,
+        .theme-btn.theme-blue-dark {
+            background: linear-gradient(135deg, #0c4a6e 0%, #38bdf8 100%);
+        }
+
+        .theme-btn-active.theme-light,
+        .theme-btn.theme-light {
+            background: linear-gradient(135deg, #97B22D 0%, #E3DE81 100%);
+        }
+
+        .theme-btn-active.theme-dark,
+        .theme-btn.theme-dark {
+            background: linear-gradient(135deg, #2d3d0f 0%, #97B22D 100%);
+        }
+
+        .theme-btn-active.theme-warm-light,
+        .theme-btn.theme-warm-light {
+            background: linear-gradient(135deg, #E49A32 0%, #FEFCAD 100%);
+        }
+
+        .theme-btn-active.theme-warm-dark,
+        .theme-btn.theme-warm-dark {
+            background: linear-gradient(135deg, #2a2510 0%, #E49A32 100%);
+        }
+
+        .theme-btn-active.theme-red,
+        .theme-btn.theme-red {
+            background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+        }
+
+        .theme-btn-active.theme-red-dark,
+        .theme-btn.theme-red-dark {
+            background: linear-gradient(135deg, #7f1d1d 0%, #ef4444 100%);
+        }
+
+        .theme-btn-active.theme-pink,
+        .theme-btn.theme-pink {
+            background: linear-gradient(135deg, #ec4899 0%, #be185d 100%);
+        }
+
+        .theme-btn-active.theme-pink-dark,
+        .theme-btn.theme-pink-dark {
+            background: linear-gradient(135deg, #831843 0%, #f472b6 100%);
         }
 
         .alarm-repeat-toggle {
@@ -526,12 +850,13 @@
 
         .active-item {
             padding: 10px;
-            background: var(--item-bg, #f3f4f6);
+            background: var(--surface-bg);
             border-radius: 8px;
             margin-bottom: 8px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            transition: background 0.3s ease;
         }
 
         .active-item span {
@@ -768,8 +1093,6 @@
                 <div class="theme-dropdown" style="display: none;">
                     <button class="theme-btn theme-default" data-theme="default" title="Purple Theme"></button>
                     <button class="theme-btn theme-black" data-theme="black" title="Black Theme"></button>
-                    <button class="theme-btn theme-blue" data-theme="blue" title="Blue Theme"></button>
-                    <button class="theme-btn theme-blue-dark" data-theme="blue-dark" title="Dark Blue Theme"></button>
                     <button class="theme-btn theme-light" data-theme="light" title="Olive Theme"></button>
                     <button class="theme-btn theme-dark" data-theme="dark" title="Dark Olive Theme"></button>
                     <button class="theme-btn theme-warm-light" data-theme="warm-light"
@@ -779,6 +1102,8 @@
                     <button class="theme-btn theme-red-dark" data-theme="red-dark" title="Dark Red Theme"></button>
                     <button class="theme-btn theme-pink" data-theme="pink" title="Pink Theme"></button>
                     <button class="theme-btn theme-pink-dark" data-theme="pink-dark" title="Dark Pink Theme"></button>
+                    <button class="theme-btn theme-blue" data-theme="blue" title="Blue Theme"></button>
+                    <button class="theme-btn theme-blue-dark" data-theme="blue-dark" title="Dark Blue Theme"></button>
                 </div>
             </div>
             <h1>⏱️ Timer</h1>

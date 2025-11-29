@@ -461,7 +461,8 @@ class TimerApp {
 
         themePicker.addEventListener('click', (e) => {
             if (e.target.closest('.theme-btn-active')) {
-                themeDropdown.style.display = themeDropdown.style.display === 'none' ? 'block' : 'none';
+                const isVisible = themeDropdown.style.display === 'grid';
+                themeDropdown.style.display = isVisible ? 'none' : 'grid';
             }
         });
 
@@ -1423,6 +1424,17 @@ class TimerApp {
             }).join('');
         } else {
             this.activeAlarmsDisplay.innerHTML = '';
+        }
+
+        // Hide "Active Items" section if nothing is active
+        const activeItemsSection = document.querySelector('.active-items-section');
+        const hasActiveItems = runningTimers.length > 0 ||
+            this.stopwatchRunning ||
+            this.stopwatchElapsed > 0 ||
+            this.alarms.length > 0;
+
+        if (activeItemsSection) {
+            activeItemsSection.style.display = hasActiveItems ? 'block' : 'none';
         }
     }
 
