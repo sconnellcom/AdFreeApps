@@ -10,7 +10,7 @@ class TimerApp {
 
         this.stopwatchTimer = null;
         this.stopwatchStartTime = null;
-        this.stopwatchElapsed = 0;
+        this.stopwatchBaseElapsed = 0; // Time from previous sessions
         this.stopwatchRunning = false;
         this.stopwatchSaveInterval = null;
         this.lapCounter = 0;
@@ -112,7 +112,7 @@ class TimerApp {
                 };
             }),
             stopwatch: {
-                elapsed: this.stopwatchElapsed,
+                baseElapsed: this.stopwatchBaseElapsed,
                 running: this.stopwatchRunning,
                 startTime: this.stopwatchStartTime,
                 lastUpdate: this.stopwatchRunning ? now : null
@@ -212,10 +212,9 @@ class TimerApp {
 
                 // If stopwatch was started in another tab
                 if (!wasRunning && isNowRunning) {
-                    const timeSinceSave = now - (parsed.savedAt || now);
-                    this.stopwatchElapsed = parsed.stopwatch.elapsed + timeSinceSave;
+                    this.stopwatchBaseElapsed = parsed.stopwatch.baseElapsed || 0;
                     this.stopwatchRunning = true;
-                    this.stopwatchStartTime = now;
+                    this.stopwatchStartTime = parsed.stopwatch.startTime || now;
 
                     // Always start display timer when stopwatch starts
                     if (!this.stopwatchTimer) {
@@ -233,7 +232,7 @@ class TimerApp {
                 }
                 // If stopwatch was stopped in another tab
                 else if (wasRunning && !isNowRunning) {
-                    this.stopwatchElapsed = parsed.stopwatch.elapsed || 0;
+                    this.stopwatchBaseElapsed = parsed.stopwatch.baseElapsed || 0;
                     this.stopwatchRunning = false;
                     this.stopwatchStartTime = null;
 
@@ -259,15 +258,9 @@ class TimerApp {
                             clearInterval(this.stopwatchSaveInterval);
                             this.stopwatchSaveInterval = null;
                         }
-                        // Sync to the other tab's time
-                        const timeSinceSave = now - (parsed.savedAt || now);
-                        const newElapsed = parsed.stopwatch.elapsed + timeSinceSave;
-
-                        // Only reset startTime if we don't have one, or if we're making a big adjustment
-                        if (!this.stopwatchStartTime || Math.abs(newElapsed - (this.stopwatchElapsed + (now - this.stopwatchStartTime))) > 1000) {
-                            this.stopwatchElapsed = newElapsed;
-                            this.stopwatchStartTime = now;
-                        }
+                        // Sync to the other tab's time - use the same startTime!
+                        this.stopwatchBaseElapsed = parsed.stopwatch.baseElapsed || 0;
+                        this.stopwatchStartTime = parsed.stopwatch.startTime || now;
 
                         // Keep display timer running for passive tab
                         if (!this.stopwatchTimer) {
@@ -281,13 +274,14 @@ class TimerApp {
                         if (!this.stopwatchSaveInterval) {
                             this.stopwatchSaveInterval = setInterval(() => this.saveToLocalStorage(), 5000);
                         }
-                        // When taking over, set a fresh start time
-                        this.stopwatchStartTime = now;
+                        // Sync to the saved state
+                        this.stopwatchBaseElapsed = parsed.stopwatch.baseElapsed || 0;
+                        this.stopwatchStartTime = parsed.stopwatch.startTime || now;
                     }
                 }
-                // If stopwatch is not running in either tab, sync the elapsed time
+                // If stopwatch is not running in either tab, sync the base elapsed time
                 else if (!wasRunning && !isNowRunning) {
-                    this.stopwatchElapsed = parsed.stopwatch.elapsed || 0;
+                    this.stopwatchBaseElapsed = parsed.stopwatch.baseElapsed || 0;
                 }
 
                 // Update display
@@ -295,9 +289,9 @@ class TimerApp {
                     let displayElapsed;
                     if (this.stopwatchRunning && this.stopwatchStartTime) {
                         // Calculate from startTime (works for both active and passive tabs)
-                        displayElapsed = this.stopwatchElapsed + (now - this.stopwatchStartTime);
+                        displayElapsed = this.stopwatchBaseElapsed + (now - this.stopwatchStartTime);
                     } else {
-                        displayElapsed = this.stopwatchElapsed;
+                        displayElapsed = this.stopwatchBaseElapsed;
                     }
                     const hours = Math.floor(displayElapsed / 3600000);
                     const minutes = Math.floor((displayElapsed % 3600000) / 60000);
@@ -368,25 +362,39 @@ class TimerApp {
                     const possiblyActiveInOtherTab = parsed.stopwatch.lastUpdate &&
                         (now - parsed.stopwatch.lastUpdate) < 7000;
 
-                    if (parsed.stopwatch.running && parsed.stopwatch.startTime) {
-                        // Calculate elapsed time including time during page close
-                        const elapsedBeforeClose = parsed.stopwatch.elapsed;
-                        const elapsedDuringClose = timeSinceLastSave;
-                        this.stopwatchElapsed = elapsedBeforeClose + elapsedDuringClose;
+                    if (parsed.stopwatch.running) {
+                        // Restore the base elapsed and startTime
+                        this.stopwatchBaseElapsed = parsed.stopwatch.baseElapsed || 0;
                         this.stopwatchRunning = true;
-                        this.stopwatchStartTime = now; // Reset start time to now
+
+                        if (possiblyActiveInOtherTab && parsed.stopwatch.startTime) {
+                            // Another tab is running, use its startTime
+                            this.stopwatchStartTime = parsed.stopwatch.startTime;
+                        } else if (parsed.stopwatch.startTime) {
+                            // Page was closed/reloaded, need to account for time offline
+                            // Add the offline time to baseElapsed and set new startTime
+                            this.stopwatchBaseElapsed += timeSinceLastSave;
+                            this.stopwatchStartTime = now;
+                        } else {
+                            // No startTime saved (shouldn't happen), set to now
+                            this.stopwatchStartTime = now;
+                        }
                     } else {
-                        this.stopwatchElapsed = parsed.stopwatch.elapsed || 0;
+                        this.stopwatchBaseElapsed = parsed.stopwatch.baseElapsed || 0;
                         this.stopwatchRunning = false;
+                        this.stopwatchStartTime = null;
                     }
 
-                    if (this.stopwatchElapsed > 0) {
+                    if (this.stopwatchBaseElapsed > 0 || this.stopwatchRunning) {
                         // Update display after elements are initialized
                         setTimeout(() => {
-                            const hours = Math.floor(this.stopwatchElapsed / 3600000);
-                            const minutes = Math.floor((this.stopwatchElapsed % 3600000) / 60000);
-                            const seconds = Math.floor((this.stopwatchElapsed % 60000) / 1000);
-                            const ms = this.stopwatchElapsed % 1000;
+                            const currentElapsed = this.stopwatchRunning && this.stopwatchStartTime
+                                ? this.stopwatchBaseElapsed + (now - this.stopwatchStartTime)
+                                : this.stopwatchBaseElapsed;
+                            const hours = Math.floor(currentElapsed / 3600000);
+                            const minutes = Math.floor((currentElapsed % 3600000) / 60000);
+                            const seconds = Math.floor((currentElapsed % 60000) / 1000);
+                            const ms = currentElapsed % 1000;
                             this.stopwatchDisplay.textContent = this.formatTimeMs(hours, minutes, seconds, ms);
 
                             // Resume stopwatch if it was running AND another tab isn't already managing it
@@ -399,11 +407,13 @@ class TimerApp {
                                     this.stopwatchSaveInterval = setInterval(() => this.saveToLocalStorage(), 5000);
                                 }
                             } else if (this.stopwatchRunning && possiblyActiveInOtherTab) {
-                                // Another tab is managing it, just update UI without starting timers
+                                // Another tab is managing it, but we still need to update our display
                                 this.stopwatchStart.style.display = 'none';
                                 this.stopwatchStop.style.display = '';
                                 this.stopwatchLap.disabled = false;
-                                // Don't start intervals - let the storage sync handle updates
+                                // Start display timer even as passive tab
+                                this.stopwatchTimer = setInterval(() => this.updateStopwatchDisplay(), 10);
+                                // Don't start save interval - let the active tab handle that
                             }
                         }, 0);
                     }
@@ -435,7 +445,6 @@ class TimerApp {
         // Alarm elements
         this.alarmTimeInput = document.getElementById('alarm-time');
         this.alarmLabelInput = document.getElementById('alarm-label');
-        this.alarmRepeatInput = document.getElementById('alarm-repeat');
         this.alarmAdd = document.getElementById('alarm-add');
         this.alarmList = document.getElementById('alarm-list');
         this.alarmStatus = document.getElementById('alarm-status');
@@ -1074,7 +1083,18 @@ class TimerApp {
 
     // STOPWATCH
     updateStopwatchDisplay() {
-        const elapsed = this.stopwatchElapsed + (Date.now() - this.stopwatchStartTime);
+        // Safety check: ensure we have a valid start time when running
+        if (!this.stopwatchRunning || !this.stopwatchStartTime) {
+            // If not running properly, just display the base elapsed time
+            const hours = Math.floor(this.stopwatchBaseElapsed / 3600000);
+            const minutes = Math.floor((this.stopwatchBaseElapsed % 3600000) / 60000);
+            const seconds = Math.floor((this.stopwatchBaseElapsed % 60000) / 1000);
+            const ms = this.stopwatchBaseElapsed % 1000;
+            this.stopwatchDisplay.textContent = this.formatTimeMs(hours, minutes, seconds, ms);
+            return;
+        }
+
+        const elapsed = this.stopwatchBaseElapsed + (Date.now() - this.stopwatchStartTime);
         const hours = Math.floor(elapsed / 3600000);
         const minutes = Math.floor((elapsed % 3600000) / 60000);
         const seconds = Math.floor((elapsed % 60000) / 1000);
@@ -1107,9 +1127,9 @@ class TimerApp {
     }
 
     stopStopwatch() {
-        // First, update elapsed time if running
+        // First, update base elapsed time if running
         if (this.stopwatchRunning && this.stopwatchStartTime) {
-            this.stopwatchElapsed += Date.now() - this.stopwatchStartTime;
+            this.stopwatchBaseElapsed += Date.now() - this.stopwatchStartTime;
             this.stopwatchRunning = false;
             this.stopwatchStartTime = null;
         }
@@ -1133,7 +1153,7 @@ class TimerApp {
         this.saveToLocalStorage();
     } resetStopwatch() {
         this.stopStopwatch();
-        this.stopwatchElapsed = 0;
+        this.stopwatchBaseElapsed = 0;
         this.stopwatchDisplay.textContent = '00:00:00.000';
         this.lapTimes.innerHTML = '';
         this.lapCounter = 0;
@@ -1141,8 +1161,13 @@ class TimerApp {
     }
 
     recordLap() {
+        // Only record lap if stopwatch is actually running
+        if (!this.stopwatchRunning || !this.stopwatchStartTime) {
+            return;
+        }
+
         this.lapCounter++;
-        const elapsed = this.stopwatchElapsed + (Date.now() - this.stopwatchStartTime);
+        const elapsed = this.stopwatchBaseElapsed + (Date.now() - this.stopwatchStartTime);
         const hours = Math.floor(elapsed / 3600000);
         const minutes = Math.floor((elapsed % 3600000) / 60000);
         const seconds = Math.floor((elapsed % 60000) / 1000);
@@ -1171,7 +1196,7 @@ class TimerApp {
         const hour = parseInt(hourStr);
         const minute = parseInt(minuteStr);
         const label = this.alarmLabelInput.value.trim();
-        const repeat = this.alarmRepeatInput.checked;
+        const repeat = false; // Default to one-time alarm
 
         this.alarms.push({
             id: Date.now(),
@@ -1394,10 +1419,13 @@ class TimerApp {
         }
 
         // Active stopwatch
-        if (this.stopwatchRunning || this.stopwatchElapsed > 0) {
-            const elapsed = this.stopwatchRunning ?
-                this.stopwatchElapsed + (Date.now() - this.stopwatchStartTime) :
-                this.stopwatchElapsed;
+        if (this.stopwatchRunning || this.stopwatchBaseElapsed > 0) {
+            let elapsed;
+            if (this.stopwatchRunning && this.stopwatchStartTime) {
+                elapsed = this.stopwatchBaseElapsed + (Date.now() - this.stopwatchStartTime);
+            } else {
+                elapsed = this.stopwatchBaseElapsed;
+            }
             const hours = Math.floor(elapsed / 3600000);
             const minutes = Math.floor((elapsed % 3600000) / 60000);
             const seconds = Math.floor((elapsed % 60000) / 1000);
@@ -1430,7 +1458,7 @@ class TimerApp {
         const activeItemsSection = document.querySelector('.active-items-section');
         const hasActiveItems = runningTimers.length > 0 ||
             this.stopwatchRunning ||
-            this.stopwatchElapsed > 0 ||
+            this.stopwatchBaseElapsed > 0 ||
             this.alarms.length > 0;
 
         if (activeItemsSection) {
