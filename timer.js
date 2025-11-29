@@ -617,6 +617,18 @@ class TimerApp {
 
         // Silence button
         this.silenceBtn.addEventListener('click', () => this.silenceAlarms());
+
+        // Clock active items click navigation
+        document.addEventListener('click', (e) => {
+            const activeItem = e.target.closest('.active-item[data-goto-tab]');
+            if (activeItem) {
+                const targetTab = activeItem.dataset.gotoTab;
+                const tabButton = document.querySelector(`[data-tab="${targetTab}"]`);
+                if (tabButton) {
+                    tabButton.click();
+                }
+            }
+        });
     }
 
     // Utility functions
@@ -1409,7 +1421,7 @@ class TimerApp {
                 const hours = Math.floor(remainingMs / 3600000);
                 const minutes = Math.floor((remainingMs % 3600000) / 60000);
                 const seconds = Math.floor((remainingMs % 60000) / 1000);
-                return `<div class="active-item">
+                return `<div class="active-item" data-goto-tab="countdown">
                     <span>${timer.name}</span>
                     <span>${this.formatTime(hours, minutes, seconds)}</span>
                 </div>`;
@@ -1432,7 +1444,7 @@ class TimerApp {
             const ms = elapsed % 1000;
 
             this.activeStopwatchesDisplay.innerHTML = `<h4>Stopwatch</h4>
-                <div class="active-item">
+                <div class="active-item" data-goto-tab="stopwatch">
                     <span>Stopwatch</span>
                     <span>${this.formatTimeMs(hours, minutes, seconds, ms)}</span>
                 </div>`;
@@ -1445,7 +1457,7 @@ class TimerApp {
             this.activeAlarmsDisplay.innerHTML = '<h4>Alarms</h4>' + this.alarms.map(alarm => {
                 const timeDisplay = this.formatTime12Hour(alarm.hour, alarm.minute);
                 const timeUntil = this.getTimeUntilAlarm(alarm);
-                return `<div class="active-item">
+                return `<div class="active-item" data-goto-tab="alarm">
                     <span>${alarm.label || 'Alarm'} - ${timeDisplay}</span>
                     <span>${timeUntil}</span>
                 </div>`;

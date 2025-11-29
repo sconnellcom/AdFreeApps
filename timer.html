@@ -238,6 +238,14 @@
         body {
             background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
             transition: background 0.3s ease;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: 50px;
+            padding-left: 10px;
+            padding-right: 10px;
+            padding-bottom: 10px;
         }
 
         .container {
@@ -247,6 +255,7 @@
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             max-width: 600px;
             width: 100%;
+            min-height: 550px;
             transition: background 0.3s ease;
         }
 
@@ -380,12 +389,13 @@
         }
 
         .btn-stop {
-            background: var(--pulse-active, #ff6b6b);
-            color: white;
+            background: var(--warning-bg);
+            color: var(--text-color);
         }
 
         .btn-stop:hover {
-            background: var(--primary-hover, #764ba2);
+            background: var(--primary-hover);
+            color: white;
             transform: translateY(-2px);
         }
 
@@ -856,7 +866,13 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            transition: background 0.3s ease;
+            transition: background 0.3s ease, transform 0.2s ease;
+            cursor: pointer;
+        }
+
+        .active-item:hover {
+            background: var(--border-color);
+            transform: translateX(2px);
         }
 
         .active-item span {
@@ -885,167 +901,178 @@
 
         /* Mobile Responsive Styles */
         @media (max-width: 480px) {
+            body {
+                padding-top: 20px;
+            }
+
             .container {
                 padding: 15px;
                 border-radius: 15px;
             }
 
-            .header-row {
-                margin-bottom: 15px;
-                flex-wrap: wrap;
-                gap: 10px;
-            }
+            border-radius: 15px;
+        }
 
-            h1 {
-                font-size: 1.5em;
-            }
+        .header-row {
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
 
-            .tabs {
-                margin-bottom: 20px;
-                gap: 5px;
-            }
+        h1 {
+            font-size: 1.5em;
+        }
 
-            .tab {
-                padding: 10px 8px;
-                font-size: 13px;
-            }
+        .tabs {
+            margin-bottom: 20px;
+            gap: 5px;
+        }
 
-            .display {
-                font-size: 2.5em;
-                margin: 20px 0;
-                letter-spacing: 1px;
-            }
+        .tab {
+            padding: 10px 8px;
+            font-size: 13px;
+        }
 
-            .clock-display {
-                font-size: 2.8em;
-                margin: 15px 0;
-            }
+        .display {
+            font-size: 2.5em;
+            margin: 20px 0;
+            letter-spacing: 1px;
+        }
 
-            .clock-date {
-                font-size: 1em;
-                margin-bottom: 20px;
-            }
+        .clock-display {
+            font-size: 2.8em;
+            margin: 15px 0;
+        }
 
-            .controls {
-                gap: 10px;
-                margin: 15px 0;
-            }
+        .clock-date {
+            font-size: 1em;
+            margin-bottom: 20px;
+        }
 
-            button {
-                padding: 12px 20px;
-                font-size: 14px;
-                min-height: 44px;
-            }
+        .controls {
+            gap: 10px;
+            margin: 15px 0;
+        }
 
-            .timer-btn {
-                padding: 8px 12px;
-                font-size: 12px;
-                min-height: 36px;
-            }
+        button {
+            padding: 12px 20px;
+            font-size: 14px;
+            min-height: 44px;
+        }
 
-            .input-group {
-                flex-direction: column;
-                gap: 12px;
-                margin: 15px 0;
-            }
+        .timer-btn {
+            padding: 8px 12px;
+            font-size: 12px;
+            min-height: 36px;
+        }
 
-            .input-group input,
-            .input-group select {
-                width: 100% !important;
-                padding: 12px;
-                font-size: 16px;
-                min-height: 44px;
-            }
+        .input-group {
+            flex-direction: column;
+            gap: 12px;
+            margin: 15px 0;
+        }
 
-            .time-input {
-                width: 100% !important;
-                font-size: 18px !important;
-            }
+        .input-group input,
+        .input-group select {
+            width: 100% !important;
+            padding: 12px;
+            font-size: 16px;
+            min-height: 44px;
+        }
 
-            .preset-buttons {
-                gap: 6px;
-                margin: 12px 0;
-            }
+        .time-input {
+            width: 100% !important;
+            font-size: 18px !important;
+        }
 
-            .preset-btn {
-                padding: 10px 12px;
-                font-size: 13px;
-                min-height: 40px;
-            }
+        .preset-buttons {
+            gap: 6px;
+            margin: 12px 0;
+        }
 
-            .timer-item,
-            .alarm-item {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 12px;
-                padding: 15px;
-            }
+        .preset-btn {
+            padding: 10px 12px;
+            font-size: 13px;
+            min-height: 40px;
+        }
 
-            .timer-info,
-            .alarm-info {
-                width: 100%;
-            }
+        .timer-item,
+        .alarm-item {
+            flex-direction: row;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px;
+            padding: 15px;
+        }
 
-            .item-controls {
-                width: 100%;
-                justify-content: flex-start;
-            }
+        .timer-info,
+        .alarm-info {
+            flex: 1;
+            min-width: 200px;
+        }
 
-            .timer-name,
-            .alarm-time {
-                font-size: 1em;
-            }
+        .item-controls {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+            flex-shrink: 0;
+        }
 
-            .timer-time {
-                font-size: 1.1em;
-            }
+        .timer-name,
+        .alarm-time {
+            font-size: 1em;
+        }
 
-            .repeat-toggle {
-                margin-top: 5px;
-            }
+        .timer-time {
+            font-size: 1.1em;
+        }
 
-            .lap-times {
-                max-height: 150px;
-            }
+        .repeat-toggle {
+            margin-top: 5px;
+        }
 
-            .lap-item {
-                padding: 10px;
-            }
+        .lap-times {
+            max-height: 150px;
+        }
 
-            .active-items-section h3 {
-                font-size: 1em;
-            }
+        .lap-item {
+            padding: 10px;
+        }
 
-            .active-item {
-                padding: 12px;
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 5px;
-            }
+        .active-items-section h3 {
+            font-size: 1em;
+        }
 
-            .status {
-                font-size: 13px;
-            }
+        .active-item {
+            padding: 12px;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 5px;
+        }
 
-            .alert-banner {
-                padding: 10px;
-                font-size: 14px;
-            }
+        .status {
+            font-size: 13px;
+        }
 
-            #silence-btn {
-                padding: 6px 10px;
-                font-size: 12px;
-            }
+        .alert-banner {
+            padding: 10px;
+            font-size: 14px;
+        }
 
-            .theme-picker .theme-btn-active,
-            .theme-picker .theme-btn {
-                min-width: 28px !important;
-                max-width: 28px !important;
-                width: 28px !important;
-                min-height: 28px !important;
-                max-height: 28px !important;
-                height: 28px !important;
-            }
+        #silence-btn {
+            padding: 6px 10px;
+            font-size: 12px;
+        }
+
+        .theme-picker .theme-btn-active,
+        .theme-picker .theme-btn {
+            min-width: 28px !important;
+            max-width: 28px !important;
+            width: 28px !important;
+            min-height: 28px !important;
+            max-height: 28px !important;
+            height: 28px !important;
+        }
         }
 
         /* Extra small screens */
