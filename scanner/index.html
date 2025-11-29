@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Scanner</title>
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        :root {
+            /* Default Theme (Purple) */
+            --bg-gradient-start: #667eea;
+            --bg-gradient-end: #764ba2;
+            --primary-color: #667eea;
+            --primary-hover: #764ba2;
+            --pulse-active: #ff6b6b;
+            --container-bg: #ffffff;
+            --text-color: #333333;
+            --text-secondary: #555555;
+            --text-tertiary: #666666;
+            --border-color: #e2e8f0;
+            --surface-bg: #f7fafc;
+            --success-bg: #e9d5ff;
+            --warning-bg: #fce7f3;
+            --info-bg: #ddd6fe;
+        }
+
+        body.theme-light {
+            /* Light Theme (Olive/Yellow) */
+            --bg-gradient-start: #97B22D;
+            --bg-gradient-end: #89751B;
+            --primary-color: #97B22D;
+            --primary-hover: #89751B;
+            --pulse-active: #89751B;
+            --container-bg: #FEFCAD;
+            --text-color: #2d3748;
+            --text-secondary: #4a5568;
+            --text-tertiary: #718096;
+            --border-color: #d2cc54;
+            --surface-bg: #f1ff72;
+            --success-bg: #d4f5a6;
+            --warning-bg: #f9e79f;
+            --info-bg: #e8f5a0;
+        }
+
+        body.theme-dark {
+            /* Dark Theme (Dark Olive) */
+            --bg-gradient-start: #2d3d0f;
+            --bg-gradient-end: #1a2208;
+            --primary-color: #97B22D;
+            --primary-hover: #d2cc54;
+            --pulse-active: #d2cc54;
+            --container-bg: #1f2d0a;
+            --text-color: #E3DAB2;
+            --text-secondary: #d2cc54;
+            --text-tertiary: #97B22D;
+            --border-color: #3d4d1f;
+            --surface-bg: #2a3a12;
+            --success-bg: #3d5015;
+            --warning-bg: #4a4215;
+            --info-bg: #44501a;
+        }
+
+        body.theme-warm-light {
+            /* Warm Light Theme */
+            --bg-gradient-start: #C6BE28;
+            --bg-gradient-end: #97B22D;
+            --primary-color: #E49A32;
+            --primary-hover: #C6BE28;
+            --pulse-active: #E49A32;
+            --container-bg: #FEFCAD;
+            --text-color: #3d3d1f;
+            --text-secondary: #5d5d3f;
+            --text-tertiary: #7d7d5f;
+            --border-color: #E3DAB2;
+            --surface-bg: #faedb6;
+            --success-bg: #f4d89f;
+            --warning-bg: #f9cc8b;
+            --info-bg: #f5e1a4;
+        }
+
+        body.theme-warm-dark {
+            /* Warm Dark Theme */
+            --bg-gradient-start: #2a2510;
+            --bg-gradient-end: #1a1808;
+            --primary-color: #E49A32;
+            --primary-hover: #C6BE28;
+            --pulse-active: #E49A32;
+            --container-bg: #2d2815;
+            --text-color: #FEFCAD;
+            --text-secondary: #E3DAB2;
+            --text-tertiary: #C6BE28;
+            --border-color: #4a3f1a;
+            --surface-bg: #3a3220;
+            --success-bg: #4a3f20;
+            --warning-bg: #53421a;
+            --info-bg: #4d4425;
+        }
+
+        body.theme-red {
+            /* Red Theme */
+            --bg-gradient-start: #dc2626;
+            --bg-gradient-end: #991b1b;
+            --primary-color: #ef4444;
+            --primary-hover: #dc2626;
+            --pulse-active: #b91c1c;
+            --container-bg: #ffffff;
+            --text-color: #1f2937;
+            --text-secondary: #374151;
+            --text-tertiary: #4b5563;
+            --border-color: #fecaca;
+            --surface-bg: #fef2f2;
+            --success-bg: #fee2e2;
+            --warning-bg: #fecaca;
+            --info-bg: #fef2f2;
+        }
+
+        body.theme-pink {
+            /* Pink Theme */
+            --bg-gradient-start: #ec4899;
+            --bg-gradient-end: #be185d;
+            --primary-color: #f472b6;
+            --primary-hover: #ec4899;
+            --pulse-active: #be185d;
+            --container-bg: #ffffff;
+            --text-color: #1f2937;
+            --text-secondary: #374151;
+            --text-tertiary: #4b5563;
+            --border-color: #fbcfe8;
+            --surface-bg: #fdf2f8;
+            --success-bg: #fce7f3;
+            --warning-bg: #fbcfe8;
+            --info-bg: #fdf2f8;
+        }
+
+        body.theme-red-dark {
+            /* Dark Red Theme */
+            --bg-gradient-start: #7f1d1d;
+            --bg-gradient-end: #450a0a;
+            --primary-color: #ef4444;
+            --primary-hover: #f87171;
+            --pulse-active: #f87171;
+            --container-bg: #1a0505;
+            --text-color: #fecaca;
+            --text-secondary: #fca5a5;
+            --text-tertiary: #f87171;
+            --border-color: #7f1d1d;
+            --surface-bg: #450a0a;
+            --success-bg: #5a0f0f;
+            --warning-bg: #7f1d1d;
+            --info-bg: #5a0f0f;
+        }
+
+        body.theme-pink-dark {
+            /* Dark Pink Theme */
+            --bg-gradient-start: #831843;
+            --bg-gradient-end: #500724;
+            --primary-color: #f472b6;
+            --primary-hover: #f9a8d4;
+            --pulse-active: #f9a8d4;
+            --container-bg: #1a050f;
+            --text-color: #fce7f3;
+            --text-secondary: #fbcfe8;
+            --text-tertiary: #f9a8d4;
+            --border-color: #831843;
+            --surface-bg: #500724;
+            --success-bg: #701a3d;
+            --warning-bg: #831843;
+            --info-bg: #701a3d;
+        }
+
+        body.theme-black {
+            /* Black Theme */
+            --bg-gradient-start: #1f2937;
+            --bg-gradient-end: #111827;
+            --primary-color: #6b7280;
+            --primary-hover: #9ca3af;
+            --pulse-active: #e5e7eb;
+            --container-bg: #0f172a;
+            --text-color: #f3f4f6;
+            --text-secondary: #d1d5db;
+            --text-tertiary: #9ca3af;
+            --border-color: #374151;
+            --surface-bg: #1e293b;
+            --success-bg: #334155;
+            --warning-bg: #374151;
+            --info-bg: #334155;
+        }
+
+        body.theme-blue {
+            /* Blue Theme */
+            --bg-gradient-start: #3b82f6;
+            --bg-gradient-end: #1e40af;
+            --primary-color: #60a5fa;
+            --primary-hover: #3b82f6;
+            --pulse-active: #1e40af;
+            --container-bg: #ffffff;
+            --text-color: #1f2937;
+            --text-secondary: #374151;
+            --text-tertiary: #4b5563;
+            --border-color: #bfdbfe;
+            --surface-bg: #eff6ff;
+            --success-bg: #dbeafe;
+            --warning-bg: #bfdbfe;
+            --info-bg: #dbeafe;
+        }
+
+        body.theme-blue-dark {
+            /* Dark Blue Theme */
+            --bg-gradient-start: #0c4a6e;
+            --bg-gradient-end: #082f49;
+            --primary-color: #38bdf8;
+            --primary-hover: #0ea5e9;
+            --pulse-active: #0ea5e9;
+            --container-bg: #0a1929;
+            --text-color: #e0f2fe;
+            --text-secondary: #7dd3fc;
+            --text-tertiary: #38bdf8;
+            --border-color: #0e7490;
+            --surface-bg: #164e63;
+            --success-bg: #155e75;
+            --warning-bg: #0e7490;
+            --info-bg: #155e75;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+            transition: background 0.3s ease;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: 50px;
+            padding-left: 10px;
+            padding-right: 10px;
+            padding-bottom: 10px;
+        }
+
+        .container {
+            background: var(--container-bg);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 100%;
+            min-height: 400px;
+            transition: background 0.3s ease;
+        }
+
+        /* Additional theme-specific overrides */
+        body.theme-black,
+        body.theme-blue-dark,
+        body.theme-dark,
+        body.theme-warm-dark,
+        body.theme-red-dark,
+        body.theme-pink-dark {
+            --input-bg: #1f2937;
+            --preset-bg: #374151;
+            --preset-hover: #4b5563;
+        }
+
+        body.theme-light,
+        body.theme-warm-light,
+        body.theme-red,
+        body.theme-pink,
+        body.theme-blue {
+            --input-bg: white;
+            --preset-bg: #f3f4f6;
+            --preset-hover: #e5e7eb;
+        }
+
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--text-color, #333);
+            font-size: 1.8em;
+            flex: 1;
+            margin: 0;
+        }
+
+        .theme-picker {
+            position: relative;
+        }
+
+        .theme-btn-active {
+            width: 32px;
+            height: 32px;
+            min-width: 32px;
+            min-height: 32px;
+            max-width: 32px;
+            max-height: 32px;
+            padding: 0;
+            border-radius: 50%;
+            border: 3px solid var(--text-color);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .theme-btn-active:hover {
+            transform: scale(1.1);
+        }
+
+        .theme-dropdown {
+            position: absolute;
+            top: 40px;
+            left: 0;
+            background: var(--container-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 10px;
+            display: none;
+            grid-template-columns: 32px 32px;
+            gap: 8px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            transition: background 0.3s ease, border-color 0.3s ease;
+        }
+
+        .theme-dropdown[style*="display: grid"] {
+            display: grid !important;
+        }
+
+        .theme-btn {
+            width: 32px;
+            height: 32px;
+            min-width: 32px;
+            min-height: 32px;
+            max-width: 32px;
+            max-height: 32px;
+            padding: 0;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .theme-btn:hover {
+            transform: scale(1.1);
+            border-color: var(--primary-color, #667eea);
+        }
+
+        .theme-btn-active.theme-default,
+        .theme-btn.theme-default {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .theme-btn-active.theme-black,
+        .theme-btn.theme-black {
+            background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+        }
+
+        .theme-btn-active.theme-blue,
+        .theme-btn.theme-blue {
+            background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+        }
+
+        .theme-btn-active.theme-blue-dark,
+        .theme-btn.theme-blue-dark {
+            background: linear-gradient(135deg, #0c4a6e 0%, #38bdf8 100%);
+        }
+
+        .theme-btn-active.theme-light,
+        .theme-btn.theme-light {
+            background: linear-gradient(135deg, #97B22D 0%, #E3DE81 100%);
+        }
+
+        .theme-btn-active.theme-dark,
+        .theme-btn.theme-dark {
+            background: linear-gradient(135deg, #2d3d0f 0%, #97B22D 100%);
+        }
+
+        .theme-btn-active.theme-warm-light,
+        .theme-btn.theme-warm-light {
+            background: linear-gradient(135deg, #E49A32 0%, #FEFCAD 100%);
+        }
+
+        .theme-btn-active.theme-warm-dark,
+        .theme-btn.theme-warm-dark {
+            background: linear-gradient(135deg, #2a2510 0%, #E49A32 100%);
+        }
+
+        .theme-btn-active.theme-red,
+        .theme-btn.theme-red {
+            background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+        }
+
+        .theme-btn-active.theme-red-dark,
+        .theme-btn.theme-red-dark {
+            background: linear-gradient(135deg, #7f1d1d 0%, #ef4444 100%);
+        }
+
+        .theme-btn-active.theme-pink,
+        .theme-btn.theme-pink {
+            background: linear-gradient(135deg, #ec4899 0%, #be185d 100%);
+        }
+
+        .theme-btn-active.theme-pink-dark,
+        .theme-btn.theme-pink-dark {
+            background: linear-gradient(135deg, #831843 0%, #f472b6 100%);
+        }
+
+        /* Scanner specific styles */
+        #reader {
+            width: 100%;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        #reader video {
+            border-radius: 12px;
+        }
+
+        .scanner-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .scanner-btn {
+            flex: 1;
+            min-width: 120px;
+            padding: 12px 20px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .scanner-btn:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .scanner-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .scanner-btn.stop {
+            background: var(--pulse-active);
+        }
+
+        .scanner-btn.stop:hover {
+            background: var(--primary-hover);
+        }
+
+        .result-container {
+            background: var(--surface-bg);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            transition: background 0.3s ease;
+        }
+
+        .result-label {
+            font-size: 0.9em;
+            color: var(--text-tertiary);
+            font-weight: 600;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .result-text {
+            font-size: 1.1em;
+            color: var(--text-color);
+            word-break: break-all;
+            line-height: 1.5;
+            min-height: 24px;
+        }
+
+        .result-text.empty {
+            color: var(--text-tertiary);
+            font-style: italic;
+        }
+
+        .result-link {
+            color: var(--primary-color);
+            text-decoration: underline;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        .result-link:hover {
+            color: var(--primary-hover);
+        }
+
+        .scan-history {
+            margin-top: 20px;
+        }
+
+        .scan-history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .scan-history-header h3 {
+            margin: 0;
+            color: var(--text-secondary);
+            font-size: 1em;
+        }
+
+        .clear-history-btn {
+            background: none;
+            border: none;
+            color: var(--text-tertiary);
+            font-size: 0.85em;
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 5px;
+            transition: all 0.2s ease;
+        }
+
+        .clear-history-btn:hover {
+            background: var(--surface-bg);
+            color: var(--text-color);
+        }
+
+        .history-list {
+            max-height: 200px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .history-item {
+            background: var(--surface-bg);
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 10px;
+            transition: background 0.2s ease;
+        }
+
+        .history-item:hover {
+            background: var(--border-color);
+        }
+
+        .history-content {
+            flex: 1;
+            word-break: break-all;
+            font-size: 0.9em;
+            color: var(--text-color);
+        }
+
+        .history-time {
+            font-size: 0.75em;
+            color: var(--text-tertiary);
+            white-space: nowrap;
+        }
+
+        .copy-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.8em;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .copy-btn:hover {
+            background: var(--primary-hover);
+            transform: scale(1.05);
+        }
+
+        .status-message {
+            text-align: center;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+
+        .status-message.error {
+            background: var(--warning-bg);
+            color: #c53030;
+        }
+
+        .status-message.success {
+            background: var(--success-bg);
+            color: #2f855a;
+        }
+
+        .status-message.info {
+            background: var(--info-bg);
+            color: var(--text-secondary);
+        }
+
+        .empty-history {
+            text-align: center;
+            color: var(--text-tertiary);
+            padding: 20px;
+            font-style: italic;
+        }
+
+        /* Mobile Responsive Styles */
+        @media (max-width: 480px) {
+            body {
+                padding-top: 20px;
+            }
+
+            .container {
+                padding: 15px;
+                border-radius: 15px;
+            }
+
+            h1 {
+                font-size: 1.5em;
+            }
+
+            .scanner-controls {
+                flex-direction: column;
+            }
+
+            .scanner-btn {
+                min-width: 100%;
+            }
+
+            .theme-picker .theme-btn-active,
+            .theme-picker .theme-btn {
+                min-width: 28px !important;
+                max-width: 28px !important;
+                width: 28px !important;
+                min-height: 28px !important;
+                max-height: 28px !important;
+                height: 28px !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header-row">
+            <div class="theme-picker">
+                <button class="theme-btn-active theme-default" data-theme="default" title="Change Theme"></button>
+                <div class="theme-dropdown" style="display: none;">
+                    <button class="theme-btn theme-default" data-theme="default" title="Purple Theme"></button>
+                    <button class="theme-btn theme-black" data-theme="black" title="Black Theme"></button>
+                    <button class="theme-btn theme-light" data-theme="light" title="Olive Theme"></button>
+                    <button class="theme-btn theme-dark" data-theme="dark" title="Dark Olive Theme"></button>
+                    <button class="theme-btn theme-warm-light" data-theme="warm-light"
+                        title="Warm Light Theme"></button>
+                    <button class="theme-btn theme-warm-dark" data-theme="warm-dark" title="Warm Dark Theme"></button>
+                    <button class="theme-btn theme-red" data-theme="red" title="Red Theme"></button>
+                    <button class="theme-btn theme-red-dark" data-theme="red-dark" title="Dark Red Theme"></button>
+                    <button class="theme-btn theme-pink" data-theme="pink" title="Pink Theme"></button>
+                    <button class="theme-btn theme-pink-dark" data-theme="pink-dark" title="Dark Pink Theme"></button>
+                    <button class="theme-btn theme-blue" data-theme="blue" title="Blue Theme"></button>
+                    <button class="theme-btn theme-blue-dark" data-theme="blue-dark" title="Dark Blue Theme"></button>
+                </div>
+            </div>
+            <h1>📷 QR Scanner</h1>
+            <div style="width: 40px;"></div>
+        </div>
+
+        <div id="status-message" class="status-message info">
+            Click "Start Scanner" to begin scanning QR codes
+        </div>
+
+        <div id="reader"></div>
+
+        <div class="scanner-controls">
+            <button id="startBtn" class="scanner-btn">Start Scanner</button>
+            <button id="stopBtn" class="scanner-btn stop" disabled>Stop Scanner</button>
+        </div>
+
+        <div class="result-container">
+            <span class="result-label">Last Scanned Result:</span>
+            <div id="result" class="result-text empty">No QR code scanned yet</div>
+            <button id="copyResultBtn" class="copy-btn" style="margin-top: 10px; display: none;">📋 Copy</button>
+        </div>
+
+        <div class="scan-history">
+            <div class="scan-history-header">
+                <h3>📜 Scan History</h3>
+                <button id="clearHistoryBtn" class="clear-history-btn">Clear All</button>
+            </div>
+            <div id="historyList" class="history-list">
+                <div class="empty-history">No scans yet</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- html5-qrcode library -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    
+    <script>
+        // Theme Management
+        const themePickerActive = document.querySelector('.theme-btn-active');
+        const themeDropdown = document.querySelector('.theme-dropdown');
+        const themeButtons = document.querySelectorAll('.theme-btn');
+
+        // Load saved theme
+        const savedTheme = localStorage.getItem('scanner-theme') || 'default';
+        if (savedTheme !== 'default') {
+            document.body.classList.add(`theme-${savedTheme}`);
+            themePickerActive.className = `theme-btn-active theme-${savedTheme}`;
+        }
+
+        themePickerActive.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isVisible = themeDropdown.style.display === 'grid';
+            themeDropdown.style.display = isVisible ? 'none' : 'grid';
+        });
+
+        themeButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const theme = btn.dataset.theme;
+
+                // Remove all theme classes
+                document.body.className = '';
+                themePickerActive.className = 'theme-btn-active';
+
+                // Apply new theme
+                if (theme !== 'default') {
+                    document.body.classList.add(`theme-${theme}`);
+                }
+                themePickerActive.classList.add(`theme-${theme}`);
+
+                // Save theme
+                localStorage.setItem('scanner-theme', theme);
+                themeDropdown.style.display = 'none';
+            });
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', () => {
+            themeDropdown.style.display = 'none';
+        });
+
+        // QR Scanner Logic
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const resultDiv = document.getElementById('result');
+        const statusMessage = document.getElementById('status-message');
+        const copyResultBtn = document.getElementById('copyResultBtn');
+        const historyList = document.getElementById('historyList');
+        const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+
+        let html5QrCode = null;
+        let scanHistory = JSON.parse(localStorage.getItem('scanner-history') || '[]');
+
+        // Initialize history display
+        renderHistory();
+
+        // URL detection regex
+        const urlRegex = /https?:\/\/[^\s<>"{}|\\^`\[\]]+/gi;
+
+        function isValidUrl(string) {
+            try {
+                new URL(string);
+                return true;
+            } catch (_) {
+                return false;
+            }
+        }
+
+        function formatResultWithLinks(text) {
+            // Check if the entire text is a URL
+            if (isValidUrl(text)) {
+                return `<a href="${escapeHtml(text)}" target="_blank" rel="noopener noreferrer" class="result-link">${escapeHtml(text)}</a>`;
+            }
+            
+            // Otherwise, find and replace URLs within the text
+            return escapeHtml(text).replace(urlRegex, (url) => {
+                return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="result-link">${url}</a>`;
+            });
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function showStatus(message, type = 'info') {
+            statusMessage.textContent = message;
+            statusMessage.className = `status-message ${type}`;
+        }
+
+        function addToHistory(text) {
+            const entry = {
+                text: text,
+                timestamp: new Date().toISOString()
+            };
+            scanHistory.unshift(entry);
+            // Keep only last 50 entries
+            if (scanHistory.length > 50) {
+                scanHistory = scanHistory.slice(0, 50);
+            }
+            localStorage.setItem('scanner-history', JSON.stringify(scanHistory));
+            renderHistory();
+        }
+
+        function renderHistory() {
+            if (scanHistory.length === 0) {
+                historyList.innerHTML = '<div class="empty-history">No scans yet</div>';
+                return;
+            }
+
+            historyList.innerHTML = scanHistory.map((entry, index) => {
+                const date = new Date(entry.timestamp);
+                const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const dateStr = date.toLocaleDateString();
+                const displayText = formatResultWithLinks(entry.text);
+                
+                return `
+                    <div class="history-item">
+                        <div class="history-content">${displayText}</div>
+                        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 5px;">
+                            <span class="history-time">${dateStr} ${timeStr}</span>
+                            <button class="copy-btn" onclick="copyToClipboard('${escapeHtml(entry.text).replace(/'/g, "\\'")}')">📋</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showStatus('Copied to clipboard!', 'success');
+                setTimeout(() => {
+                    if (html5QrCode && html5QrCode.isScanning) {
+                        showStatus('Scanning for QR codes...', 'info');
+                    } else {
+                        showStatus('Click "Start Scanner" to begin scanning QR codes', 'info');
+                    }
+                }, 1500);
+            }).catch(() => {
+                showStatus('Failed to copy to clipboard', 'error');
+            });
+        }
+
+        // Make copyToClipboard available globally for onclick handlers
+        window.copyToClipboard = copyToClipboard;
+
+        clearHistoryBtn.addEventListener('click', () => {
+            if (confirm('Clear all scan history?')) {
+                scanHistory = [];
+                localStorage.setItem('scanner-history', JSON.stringify(scanHistory));
+                renderHistory();
+            }
+        });
+
+        let lastScannedText = '';
+
+        copyResultBtn.addEventListener('click', () => {
+            if (lastScannedText) {
+                copyToClipboard(lastScannedText);
+            }
+        });
+
+        function onScanSuccess(decodedText, decodedResult) {
+            // Avoid duplicate scans
+            if (decodedText === lastScannedText) {
+                return;
+            }
+            
+            lastScannedText = decodedText;
+            resultDiv.innerHTML = formatResultWithLinks(decodedText);
+            resultDiv.classList.remove('empty');
+            copyResultBtn.style.display = 'inline-block';
+            
+            addToHistory(decodedText);
+            showStatus('QR code scanned successfully!', 'success');
+            
+            // Play a subtle beep sound
+            playBeep();
+        }
+
+        function playBeep() {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = 800;
+                oscillator.type = 'sine';
+                gainNode.gain.value = 0.1;
+                
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.1);
+            } catch (e) {
+                // Audio not available, silently fail
+            }
+        }
+
+        function onScanFailure(error) {
+            // Ignore scan failures (no QR code in frame)
+        }
+
+        async function startScanner() {
+            try {
+                html5QrCode = new Html5Qrcode("reader");
+                
+                const config = {
+                    fps: 10,
+                    qrbox: { width: 250, height: 250 },
+                    aspectRatio: 1.0
+                };
+
+                await html5QrCode.start(
+                    { facingMode: "environment" },
+                    config,
+                    onScanSuccess,
+                    onScanFailure
+                );
+
+                startBtn.disabled = true;
+                stopBtn.disabled = false;
+                showStatus('Scanning for QR codes...', 'info');
+                lastScannedText = ''; // Reset to allow rescanning same code
+                
+            } catch (err) {
+                console.error('Error starting scanner:', err);
+                showStatus(`Error: ${err.message || 'Could not access camera. Please ensure camera permissions are granted.'}`, 'error');
+            }
+        }
+
+        async function stopScanner() {
+            try {
+                if (html5QrCode && html5QrCode.isScanning) {
+                    await html5QrCode.stop();
+                }
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+                showStatus('Scanner stopped. Click "Start Scanner" to scan again.', 'info');
+            } catch (err) {
+                console.error('Error stopping scanner:', err);
+            }
+        }
+
+        startBtn.addEventListener('click', startScanner);
+        stopBtn.addEventListener('click', stopScanner);
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (html5QrCode && html5QrCode.isScanning) {
+                html5QrCode.stop();
+            }
+        });
+    </script>
+</body>
+
+</html>
