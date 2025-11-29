@@ -199,8 +199,8 @@ class TimerApp {
                         this.stopwatchSaveInterval = setInterval(() => this.saveToLocalStorage(), 5000);
                     }
 
-                    this.stopwatchStart.disabled = true;
-                    this.stopwatchStop.disabled = false;
+                    this.stopwatchStart.style.display = 'none';
+                    this.stopwatchStop.style.display = '';
                     this.stopwatchLap.disabled = false;
                 }
                 // If stopwatch was stopped in another tab
@@ -219,8 +219,8 @@ class TimerApp {
                         this.stopwatchSaveInterval = null;
                     }
 
-                    this.stopwatchStart.disabled = false;
-                    this.stopwatchStop.disabled = true;
+                    this.stopwatchStart.style.display = '';
+                    this.stopwatchStop.style.display = 'none';
                     this.stopwatchLap.disabled = true;
                 }
                 // If both tabs think stopwatch is running
@@ -363,8 +363,8 @@ class TimerApp {
 
                             // Resume stopwatch if it was running AND another tab isn't already managing it
                             if (this.stopwatchRunning && !possiblyActiveInOtherTab) {
-                                this.stopwatchStart.disabled = true;
-                                this.stopwatchStop.disabled = false;
+                                this.stopwatchStart.style.display = 'none';
+                                this.stopwatchStop.style.display = '';
                                 this.stopwatchLap.disabled = false;
                                 this.stopwatchTimer = setInterval(() => this.updateStopwatchDisplay(), 10);
                                 if (!this.stopwatchSaveInterval) {
@@ -372,8 +372,8 @@ class TimerApp {
                                 }
                             } else if (this.stopwatchRunning && possiblyActiveInOtherTab) {
                                 // Another tab is managing it, just update UI without starting timers
-                                this.stopwatchStart.disabled = true;
-                                this.stopwatchStop.disabled = false;
+                                this.stopwatchStart.style.display = 'none';
+                                this.stopwatchStop.style.display = '';
                                 this.stopwatchLap.disabled = false;
                                 // Don't start intervals - let the storage sync handle updates
                             }
@@ -1051,8 +1051,8 @@ class TimerApp {
         }
         this.stopwatchTimer = setInterval(() => this.updateStopwatchDisplay(), 10);
 
-        this.stopwatchStart.disabled = true;
-        this.stopwatchStop.disabled = false;
+        this.stopwatchStart.style.display = 'none';
+        this.stopwatchStop.style.display = '';
         this.stopwatchLap.disabled = false;
 
         // Save immediately when starting to claim this tab as active
@@ -1079,8 +1079,8 @@ class TimerApp {
             this.stopwatchTimer = null;
         }
 
-        this.stopwatchStart.disabled = false;
-        this.stopwatchStop.disabled = true;
+        this.stopwatchStart.style.display = '';
+        this.stopwatchStop.style.display = 'none';
         this.stopwatchLap.disabled = true;
 
         // Clear periodic save
