@@ -131,11 +131,12 @@
                     <option value="silent">Silent</option>
                 </select>
             </div>
-            <div class="dropdown-group" style="padding-top: 8px;">
-                <label for="beatDetectionToggle">
-                    <input type="checkbox" id="beatDetectionToggle" class="toggle-checkbox">
-                    <span class="toggle-label">Beat Detection</span>
-                </label>
+            <div class="dropdown-group">
+                <select id="beatDetectionMode" class="dropdown-select">
+                    <option value="off">No Beat Detection</option>
+                    <option value="tap">Tap Beat Detection</option>
+                    <option value="audio">Audio Beat Detection</option>
+                </select>
             </div>
         </div>
 
@@ -175,13 +176,17 @@
                         <li>Tap the "Your Beat" meter to enable/disable beat detection</li>
                     </ul>
 
-                    <h4>Beat Detection Mode</h4>
-                    <p><strong>What it does:</strong> The metronome monitors your movements and only makes sound when
-                        you drift off tempo. Perfect for practicing independence and staying on beat!</p>
-
-                    <p><strong>How it works:</strong></p>
+                    <h4>Beat Detection Modes</h4>
+                    <p>Choose from three beat detection modes:</p>
                     <ul>
-                        <li>Enable by checking "Beat Detection" or tapping the "Your Beat" meter</li>
+                        <li><strong>No Beat Detection:</strong> Standard metronome - plays continuously</li>
+                        <li><strong>Tap Beat Detection:</strong> Uses your device's accelerometer to detect taps/movements</li>
+                        <li><strong>Audio Beat Detection:</strong> Uses your microphone to detect beats from your instrument (optimized for cello and violin)</li>
+                    </ul>
+
+                    <p><strong>How Tap Detection works:</strong></p>
+                    <ul>
+                        <li>Enable by selecting "Tap Beat Detection" from the dropdown</li>
                         <li>The metronome runs silently while you practice</li>
                         <li>Your device's accelerometer detects taps/movements</li>
                         <li>The system evaluates <strong>both timing and tempo</strong>:
@@ -193,6 +198,16 @@
                         </li>
                         <li>If you're on beat → Silent (green status)</li>
                         <li>If you drift off → Metronome beeps to guide you back</li>
+                    </ul>
+
+                    <p><strong>How Audio Detection works:</strong></p>
+                    <ul>
+                        <li>Enable by selecting "Audio Beat Detection" from the dropdown</li>
+                        <li>Grant microphone permission when prompted</li>
+                        <li>Play your cello or violin - the app analyzes audio for beats</li>
+                        <li>Uses low-pass filtering optimized for string instruments</li>
+                        <li>Detects note attacks/peaks to identify beats</li>
+                        <li>Same on/off beat feedback as Tap Detection</li>
                     </ul>
 
                     <h4>Beat Detection Settings</h4>
