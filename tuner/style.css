@@ -206,6 +206,19 @@ body {
     margin-bottom: 15px;
 }
 
+.home-btn {
+    text-decoration: none;
+    font-size: 1.5em;
+    padding: 5px;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+    opacity: 0.8;
+}
+
+.home-btn:hover {
+    transform: scale(1.1);
+    opacity: 1;
+}
+
 h1 {
     text-align: center;
     color: var(--text-color);
@@ -681,6 +694,73 @@ h1 {
     color: var(--out-tune-color);
 }
 
+/* Audio Level Meter */
+.audio-level-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background: var(--surface-bg);
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+
+.audio-level-label {
+    font-size: 0.85em;
+    color: var(--text-secondary);
+    font-weight: 500;
+    white-space: nowrap;
+    min-width: 70px;
+}
+
+.audio-level-meter {
+    flex: 1;
+    height: 12px;
+    background: var(--border-color);
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+}
+
+.audio-level-bar {
+    height: 100%;
+    width: 0%;
+    background: var(--in-tune-color);
+    border-radius: 6px;
+    transition: width 0.05s ease-out, background-color 0.1s ease;
+}
+
+.audio-level-bar.low {
+    background: var(--out-tune-color);
+}
+
+.audio-level-bar.medium {
+    background: var(--close-color);
+}
+
+.audio-level-bar.good {
+    background: var(--in-tune-color);
+}
+
+.audio-level-status {
+    font-size: 0.8em;
+    color: var(--text-tertiary);
+    min-width: 60px;
+    text-align: right;
+}
+
+.audio-level-status.no-signal {
+    color: var(--out-tune-color);
+}
+
+.audio-level-status.weak {
+    color: var(--close-color);
+}
+
+.audio-level-status.good {
+    color: var(--in-tune-color);
+}
+
 /* Buttons */
 .btn {
     width: 100%;
@@ -763,6 +843,59 @@ h1 {
     color: var(--primary-color);
     font-weight: 600;
     min-width: 35px;
+}
+
+/* Input Gain/Volume Control */
+.input-gain-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background: var(--surface-bg);
+    border-radius: 8px;
+    font-size: 0.9em;
+    margin-bottom: 15px;
+}
+
+.input-gain-control label {
+    color: var(--text-secondary);
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.input-gain-control input[type="range"] {
+    flex: 1;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--border-color);
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+.input-gain-control input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    cursor: pointer;
+}
+
+.input-gain-control input[type="range"]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    cursor: pointer;
+    border: none;
+}
+
+.input-gain-control span {
+    color: var(--primary-color);
+    font-weight: 600;
+    min-width: 25px;
 }
 
 /* Info Modal */

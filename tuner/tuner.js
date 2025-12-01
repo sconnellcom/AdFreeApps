@@ -5,15 +5,28 @@ class Tuner {
         this.audioContext = null;
         this.analyser = null;
         this.mediaStream = null;
+        this.sourceNode = null;  // Store source node to prevent garbage collection
+        this.gainNode = null;    // Gain node for volume control
         this.dataArray = null;
         this.bufferLength = 0;
         this.isRunning = false;
         this.animationId = null;
+        
+        // Volume/gain settings
+        this.inputGain = 80;    // Default gain (80 = moderate amplification)
 
         // Tuning settings
         this.referencePitch = 440; // A4 reference frequency
         this.minFrequency = 60;    // Minimum detectable frequency
         this.maxFrequency = 1500;  // Maximum detectable frequency
+
+        // Audio level meter thresholds (percentage values)
+        // RMS values from microphones are typically very low (0.01-0.1 range)
+        // Multiplier of 500 provides good sensitivity for typical microphone input
+        this.RMS_TO_PERCENTAGE_MULTIPLIER = 500;
+        this.NO_SIGNAL_THRESHOLD = 1;    // Below this: "No signal"
+        this.QUIET_THRESHOLD = 10;       // Below this: "Too quiet"
+        this.LOW_THRESHOLD = 30;         // Below this: "Low", above: "Good"
 
         // Note names
         this.noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
@@ -117,7 +130,8 @@ class Tuner {
     }
 
     initializeTheme() {
-        const savedTheme = localStorage.getItem('tunerTheme') || 'default';
+        // Use shared 'appTheme' key for consistency across all apps
+        const savedTheme = localStorage.getItem('appTheme') || 'default';
         this.setTheme(savedTheme);
     }
 
@@ -136,7 +150,8 @@ class Tuner {
         });
 
         this.themeBtnActive.className = `theme-btn-active theme-${theme}`;
-        localStorage.setItem('tunerTheme', theme);
+        // Save to localStorage using shared key for all apps
+        localStorage.setItem('appTheme', theme);
     }
 
     initializeUI() {
@@ -155,6 +170,12 @@ class Tuner {
         this.permissionOverlay = document.getElementById('permissionOverlay');
         this.permissionBtn = document.getElementById('permissionBtn');
         this.errorMessage = document.getElementById('errorMessage');
+        this.audioLevelBar = document.getElementById('audioLevelBar');
+        this.audioLevelStatus = document.getElementById('audioLevelStatus');
+        
+        // Volume/gain control elements
+        this.inputGainSlider = document.getElementById('inputGain');
+        this.inputGainValue = document.getElementById('inputGainValue');
 
         // Theme elements
         this.themeBtnActive = document.querySelector('.theme-btn-active');
@@ -187,6 +208,16 @@ class Tuner {
         this.referencePitchSlider.addEventListener('input', (e) => {
             this.referencePitch = parseInt(e.target.value);
             this.referencePitchValue.textContent = this.referencePitch;
+        });
+        
+        // Input gain/volume slider
+        this.inputGainSlider.addEventListener('input', (e) => {
+            this.inputGain = parseInt(e.target.value);
+            this.inputGainValue.textContent = this.inputGain;
+            // Update gain node if it exists, using setValueAtTime for smooth transitions
+            if (this.gainNode && this.audioContext) {
+                this.gainNode.gain.setValueAtTime(this.inputGain, this.audioContext.currentTime);
+            }
         });
 
         // Permission button
@@ -286,9 +317,15 @@ class Tuner {
             this.bufferLength = this.analyser.fftSize;
             this.dataArray = new Float32Array(this.bufferLength);
 
-            // Connect microphone to analyser
-            const source = this.audioContext.createMediaStreamSource(this.mediaStream);
-            source.connect(this.analyser);
+            // Set up gain node for volume control
+            this.gainNode = this.audioContext.createGain();
+            this.gainNode.gain.setValueAtTime(this.inputGain, this.audioContext.currentTime);
+
+            // Connect microphone -> gain -> analyser
+            // Store source node as instance variable to prevent garbage collection
+            this.sourceNode = this.audioContext.createMediaStreamSource(this.mediaStream);
+            this.sourceNode.connect(this.gainNode);
+            this.gainNode.connect(this.analyser);
 
             this.isRunning = true;
             this.startStopBtn.textContent = 'Stop Tuner';
@@ -330,6 +367,16 @@ class Tuner {
             this.animationId = null;
         }
 
+        // Disconnect audio nodes to clean up resources
+        if (this.gainNode) {
+            this.gainNode.disconnect();
+            this.gainNode = null;
+        }
+        if (this.sourceNode) {
+            this.sourceNode.disconnect();
+            this.sourceNode = null;
+        }
+
         this.startStopBtn.textContent = 'Start Tuner';
         this.startStopBtn.classList.remove('active');
 
@@ -348,12 +395,29 @@ class Tuner {
         this.gaugeNeedle.className = 'gauge-needle';
         this.tuningStatus.className = 'tuning-status';
         this.tuningStatus.querySelector('.status-text').textContent = 'Ready to tune';
+        
+        // Reset audio level meter
+        this.audioLevelBar.style.width = '0%';
+        this.audioLevelBar.classList.remove('low', 'medium', 'good');
+        this.audioLevelStatus.textContent = 'No signal';
+        this.audioLevelStatus.classList.remove('weak', 'good');
+        this.audioLevelStatus.classList.add('no-signal');
     }
 
     detectPitch() {
         if (!this.isRunning) return;
 
         this.analyser.getFloatTimeDomainData(this.dataArray);
+
+        // Calculate RMS for audio level display
+        let rms = 0;
+        for (let i = 0; i < this.dataArray.length; i++) {
+            rms += this.dataArray[i] * this.dataArray[i];
+        }
+        rms = Math.sqrt(rms / this.dataArray.length);
+
+        // Update audio level meter
+        this.updateAudioLevel(rms);
 
         // Use autocorrelation to detect pitch
         const frequency = this.autoCorrelate(this.dataArray, this.audioContext.sampleRate);
@@ -365,6 +429,34 @@ class Tuner {
         this.animationId = requestAnimationFrame(() => this.detectPitch());
     }
 
+    updateAudioLevel(rms) {
+        // Convert RMS to a percentage (0-100)
+        const percentage = Math.min(100, rms * this.RMS_TO_PERCENTAGE_MULTIPLIER);
+        
+        this.audioLevelBar.style.width = percentage + '%';
+        
+        // Update bar color and status based on level
+        this.audioLevelBar.classList.remove('low', 'medium', 'good');
+        this.audioLevelStatus.classList.remove('no-signal', 'weak', 'good');
+        
+        if (percentage < this.NO_SIGNAL_THRESHOLD) {
+            this.audioLevelStatus.textContent = 'No signal';
+            this.audioLevelStatus.classList.add('no-signal');
+        } else if (percentage < this.QUIET_THRESHOLD) {
+            this.audioLevelBar.classList.add('low');
+            this.audioLevelStatus.textContent = 'Too quiet';
+            this.audioLevelStatus.classList.add('weak');
+        } else if (percentage < this.LOW_THRESHOLD) {
+            this.audioLevelBar.classList.add('medium');
+            this.audioLevelStatus.textContent = 'Low';
+            this.audioLevelStatus.classList.add('weak');
+        } else {
+            this.audioLevelBar.classList.add('good');
+            this.audioLevelStatus.textContent = 'Good';
+            this.audioLevelStatus.classList.add('good');
+        }
+    }
+
     autoCorrelate(buffer, sampleRate) {
         // Find the RMS of the signal
         let rms = 0;
@@ -374,35 +466,47 @@ class Tuner {
         rms = Math.sqrt(rms / buffer.length);
 
         // If too quiet, return -1
-        if (rms < 0.01) return -1;
+        // Threshold of 0.002 RMS corresponds to 1% audio level (0.002 × 500 = 1)
+        // This matches the audio level meter's NO_SIGNAL_THRESHOLD percentage
+        if (rms < 0.002) return -1;
 
-        // Autocorrelation
+        // Autocorrelation using normalized difference function
         const SIZE = buffer.length;
         const MAX_SAMPLES = Math.floor(SIZE / 2);
+        // Minimum offset to skip trivial self-correlation at offset 0
+        // This corresponds to the maximum detectable frequency
+        // At 44100 Hz sample rate: offset 20 = 2205 Hz, offset 30 = 1470 Hz
+        const MIN_OFFSET = 20;
         let bestOffset = -1;
         let bestCorrelation = 0;
         let foundGoodCorrelation = false;
         const correlations = new Array(MAX_SAMPLES);
 
-        for (let offset = 0; offset < MAX_SAMPLES; offset++) {
+        for (let offset = MIN_OFFSET; offset < MAX_SAMPLES; offset++) {
             let correlation = 0;
+            let denominator = 0;
             const loopLimit = MAX_SAMPLES - offset;
 
             for (let i = 0; i < loopLimit; i++) {
-                correlation += Math.abs((buffer[i]) - (buffer[i + offset]));
+                const diff = buffer[i] - buffer[i + offset];
+                correlation += diff * diff;
+                denominator += buffer[i] * buffer[i] + buffer[i + offset] * buffer[i + offset];
             }
 
-            correlation = 1 - (correlation / loopLimit);
+            // Normalize correlation: 1 when perfectly correlated, 0 when uncorrelated
+            correlation = denominator > 0 ? 1 - (correlation / denominator) : 0;
             correlations[offset] = correlation;
 
-            if ((correlation > 0.9) && (correlation > bestCorrelation)) {
+            // Use a lower threshold (0.3) for initial detection to handle real-world audio with noise
+            if ((correlation > 0.3) && (correlation > bestCorrelation)) {
                 bestCorrelation = correlation;
                 bestOffset = offset;
                 foundGoodCorrelation = true;
             } else if (foundGoodCorrelation) {
                 // Short-circuit once we've found a good correlation and it starts decreasing
-                // Add bounds checking and division by zero protection
-                if (bestOffset > 0 && bestOffset < MAX_SAMPLES - 1 && correlations[bestOffset] !== 0) {
+                // At this point, bestOffset >= MIN_OFFSET since we only set foundGoodCorrelation
+                // when we also set bestOffset = offset (where offset >= MIN_OFFSET)
+                if (bestOffset >= MIN_OFFSET && bestOffset < MAX_SAMPLES - 1 && correlations[bestOffset] !== 0) {
                     // Parabolic interpolation to refine the peak position
                     // The factor 8 is an empirical refinement constant for pitch detection accuracy
                     const shift = (correlations[bestOffset + 1] - correlations[bestOffset - 1]) / correlations[bestOffset];
@@ -412,7 +516,7 @@ class Tuner {
             }
         }
 
-        if (bestCorrelation > 0.01) {
+        if (bestCorrelation > 0.01 && bestOffset >= MIN_OFFSET) {
             return sampleRate / bestOffset;
         }
 

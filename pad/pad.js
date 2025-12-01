@@ -5,6 +5,8 @@ class DrumPad {
     static DISTORTION_AMOUNT = 50;
     static WAVE_SHAPER_SAMPLES = 44100;
     static GRAVITY = 9.8; // Standard gravity in m/s²
+    static STORAGE_KEY = 'drumPadBeats';
+    static RECORDING_BUFFER_MS = 200; // Buffer added to raw recordings for looping
 
     constructor() {
         this.audioContext = null;
@@ -30,14 +32,34 @@ class DrumPad {
         this.convolverNode = null;
         this.reverbBuffer = null;
         
+        // Track mouse button state for drag support
+        this.isMouseDown = false;
+        
+        // Track which pad each touch is currently over (touchId -> pad element)
+        this.touchPadMap = new Map();
+        
+        // Recording state
+        this.isRecording = false;
+        this.recordingStartTime = 0;
+        this.recordedEvents = [];
+        
+        // Saved beats
+        this.savedBeats = [];
+        this.loadBeats();
+        
+        // Playback state - Map of beatIndex -> timeoutIds array for multi-beat playback
+        this.playingBeats = new Map();
+        
         this.initializeUI();
         this.setupEventListeners();
         this.initializeTheme();
         this.initializeAccelerometer();
+        this.renderBeatList();
     }
 
     initializeTheme() {
-        const savedTheme = localStorage.getItem('padTheme') || 'default';
+        // Use shared 'appTheme' key for consistency across all apps
+        const savedTheme = localStorage.getItem('appTheme') || 'default';
         this.setTheme(savedTheme);
     }
 
@@ -56,7 +78,8 @@ class DrumPad {
         });
 
         this.themeBtnActive.className = `theme-btn-active theme-${theme}`;
-        localStorage.setItem('padTheme', theme);
+        // Save to localStorage using shared key for all apps
+        localStorage.setItem('appTheme', theme);
     }
 
     initializeUI() {
@@ -71,6 +94,18 @@ class DrumPad {
         
         // Accelerometer indicator
         this.accelValue = document.getElementById('accelValue');
+        
+        // Recording controls
+        this.recordBtn = document.getElementById('recordBtn');
+        this.saveBtn = document.getElementById('saveBtn');
+        this.savePlayBtn = document.getElementById('savePlayBtn');
+        this.menuBtn = document.getElementById('menuBtn');
+        this.menuDropdown = document.getElementById('menuDropdown');
+        this.cleanupBtn = document.getElementById('cleanupBtn');
+        
+        // Beat list
+        this.beatList = document.getElementById('beatList');
+        this.beatListItems = document.getElementById('beatListItems');
     }
 
     initializeAccelerometer() {
@@ -170,28 +205,98 @@ class DrumPad {
             // Touch events for multi-touch support
             pad.addEventListener('touchstart', (e) => {
                 e.preventDefault();
+                // Register this touch with the pad
+                for (const touch of e.changedTouches) {
+                    this.touchPadMap.set(touch.identifier, pad);
+                }
                 this.handlePadPress(pad);
             }, { passive: false });
             
+            // Touch end is handled by the global document touchend handler (below)
+            // which properly tracks the actual current pad from touchPadMap.
+            // We keep this handler to prevent default browser behavior and ensure
+            // the touch event doesn't trigger unwanted actions like text selection.
             pad.addEventListener('touchend', (e) => {
                 e.preventDefault();
-                this.handlePadRelease(pad);
             }, { passive: false });
             
             // Mouse events for desktop
             pad.addEventListener('mousedown', (e) => {
                 e.preventDefault();
+                this.isMouseDown = true;
                 this.handlePadPress(pad);
             });
             
             pad.addEventListener('mouseup', (e) => {
+                this.isMouseDown = false;
                 this.handlePadRelease(pad);
             });
             
             pad.addEventListener('mouseleave', (e) => {
                 this.handlePadRelease(pad);
             });
+            
+            // Mouse enter for dragging across pads
+            pad.addEventListener('mouseenter', (e) => {
+                if (this.isMouseDown) {
+                    this.handlePadPress(pad);
+                }
+            });
         });
+
+        // Global mouseup to reset mouse state when released outside pads
+        document.addEventListener('mouseup', () => {
+            this.isMouseDown = false;
+        });
+
+        // Global touchmove handler for dragging across pads
+        document.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            for (const touch of e.changedTouches) {
+                const element = document.elementFromPoint(touch.clientX, touch.clientY);
+                const pad = element?.closest('.drum-pad');
+                const previousPad = this.touchPadMap.get(touch.identifier);
+                
+                // If touch moved to a different pad (or no pad)
+                if (pad !== previousPad) {
+                    // Release the previous pad if there was one
+                    if (previousPad) {
+                        this.handlePadRelease(previousPad);
+                    }
+                    
+                    // If moved to a new pad, press it
+                    if (pad) {
+                        this.touchPadMap.set(touch.identifier, pad);
+                        this.handlePadPress(pad);
+                    } else {
+                        // Moved off all pads
+                        this.touchPadMap.delete(touch.identifier);
+                    }
+                }
+            }
+        }, { passive: false });
+
+        // Global touchend handler to properly release pads when touch ends
+        document.addEventListener('touchend', (e) => {
+            for (const touch of e.changedTouches) {
+                const currentPad = this.touchPadMap.get(touch.identifier);
+                if (currentPad) {
+                    this.handlePadRelease(currentPad);
+                    this.touchPadMap.delete(touch.identifier);
+                }
+            }
+        }, { passive: false });
+
+        // Global touchcancel handler to properly release pads when touch is cancelled
+        document.addEventListener('touchcancel', (e) => {
+            for (const touch of e.changedTouches) {
+                const currentPad = this.touchPadMap.get(touch.identifier);
+                if (currentPad) {
+                    this.handlePadRelease(currentPad);
+                    this.touchPadMap.delete(touch.identifier);
+                }
+            }
+        }, { passive: false });
 
         // Modifier buttons
         document.querySelectorAll('.modifier-btn').forEach(btn => {
@@ -229,6 +334,406 @@ class DrumPad {
                 this.infoModal.style.display = 'none';
             }
         });
+
+        // Recording controls
+        this.recordBtn.addEventListener('click', () => {
+            this.toggleRecording();
+        });
+
+        this.saveBtn.addEventListener('click', () => {
+            this.saveBeat(false);
+        });
+
+        this.savePlayBtn.addEventListener('click', () => {
+            this.saveBeat(true);
+        });
+
+        // Menu
+        this.menuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.menuDropdown.classList.toggle('visible');
+        });
+
+        this.cleanupBtn.addEventListener('click', () => {
+            this.cleanupTempo();
+            this.menuDropdown.classList.remove('visible');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!this.menuBtn.contains(e.target) && !this.menuDropdown.contains(e.target)) {
+                this.menuDropdown.classList.remove('visible');
+            }
+        });
+    }
+
+    toggleRecording() {
+        if (this.isRecording) {
+            // Stop recording
+            this.isRecording = false;
+            this.recordBtn.classList.remove('recording');
+            this.recordBtn.querySelector('.record-label').textContent = 'Record';
+            
+            // Hide save buttons if no events recorded
+            if (this.recordedEvents.length === 0) {
+                this.saveBtn.style.display = 'none';
+                this.savePlayBtn.style.display = 'none';
+            }
+        } else {
+            // Start recording
+            this.isRecording = true;
+            this.recordingStartTime = Date.now();
+            this.recordedEvents = [];
+            this.recordBtn.classList.add('recording');
+            this.recordBtn.querySelector('.record-label').textContent = 'Stop';
+            
+            // Show save buttons
+            this.saveBtn.style.display = 'flex';
+            this.savePlayBtn.style.display = 'flex';
+        }
+    }
+
+    recordEvent(soundType) {
+        if (this.isRecording) {
+            const timestamp = Date.now() - this.recordingStartTime;
+            this.recordedEvents.push({
+                sound: soundType,
+                time: timestamp,
+                modifiers: { ...this.modifiers }
+            });
+        }
+    }
+
+    saveBeat(playAfterSave) {
+        if (this.recordedEvents.length === 0) {
+            return;
+        }
+
+        // Calculate duration - add a small buffer for looping raw recordings.
+        // Use cleanupTempo() from the menu to recalculate proper beat-aligned duration.
+        const lastEventTime = this.recordedEvents[this.recordedEvents.length - 1].time;
+        const duration = lastEventTime + DrumPad.RECORDING_BUFFER_MS;
+        
+        const beat = {
+            id: Date.now(),
+            name: `Beat ${this.savedBeats.length + 1}`,
+            events: [...this.recordedEvents],
+            duration: duration,
+            repeat: true
+        };
+
+        this.savedBeats.push(beat);
+        this.saveBeatsToStorage();
+        this.renderBeatList();
+
+        // Reset recording state
+        this.isRecording = false;
+        this.recordBtn.classList.remove('recording');
+        this.recordBtn.querySelector('.record-label').textContent = 'Record';
+        this.saveBtn.style.display = 'none';
+        this.savePlayBtn.style.display = 'none';
+        this.recordedEvents = [];
+
+        if (playAfterSave) {
+            this.playBeat(this.savedBeats.length - 1);
+        }
+    }
+
+    loadBeats() {
+        try {
+            const stored = localStorage.getItem(DrumPad.STORAGE_KEY);
+            if (stored) {
+                this.savedBeats = JSON.parse(stored);
+            }
+        } catch (e) {
+            console.error('Error loading beats:', e);
+            this.savedBeats = [];
+        }
+    }
+
+    saveBeatsToStorage() {
+        try {
+            localStorage.setItem(DrumPad.STORAGE_KEY, JSON.stringify(this.savedBeats));
+        } catch (e) {
+            console.error('Error saving beats:', e);
+        }
+    }
+
+    renderBeatList() {
+        if (this.savedBeats.length === 0) {
+            this.beatList.classList.remove('has-beats');
+            this.beatListItems.innerHTML = '';
+            return;
+        }
+
+        this.beatList.classList.add('has-beats');
+        this.beatListItems.innerHTML = '';
+
+        this.savedBeats.forEach((beat, index) => {
+            const isPlaying = this.playingBeats.has(index);
+            const beatItem = document.createElement('div');
+            beatItem.className = 'beat-item';
+            beatItem.innerHTML = `
+                <span class="beat-name">${this.escapeHtml(beat.name)}</span>
+                <span class="beat-duration">${this.formatDuration(beat.duration)}</span>
+                <button class="beat-btn beat-repeat-btn ${beat.repeat ? '' : 'off'}" data-index="${index}" title="Toggle Repeat">
+                    🔁
+                </button>
+                <button class="beat-btn beat-play-btn ${isPlaying ? 'playing' : ''}" data-index="${index}" title="${isPlaying ? 'Pause' : 'Play'}">
+                    ${isPlaying ? '⏸' : '▶'}
+                </button>
+                <button class="beat-btn beat-delete-btn" data-index="${index}" title="Delete">
+                    🗑
+                </button>
+            `;
+            this.beatListItems.appendChild(beatItem);
+
+            // Add event listeners
+            beatItem.querySelector('.beat-repeat-btn').addEventListener('click', (e) => {
+                this.toggleRepeat(index);
+            });
+
+            beatItem.querySelector('.beat-play-btn').addEventListener('click', (e) => {
+                if (this.playingBeats.has(index)) {
+                    this.stopBeat(index);
+                } else {
+                    this.playBeat(index);
+                }
+            });
+
+            beatItem.querySelector('.beat-delete-btn').addEventListener('click', (e) => {
+                this.deleteBeat(index);
+            });
+        });
+    }
+
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    formatDuration(ms) {
+        const seconds = Math.floor(ms / 1000);
+        const milliseconds = ms % 1000;
+        return `${seconds}.${Math.floor(milliseconds / 100)}s`;
+    }
+
+    toggleRepeat(index) {
+        this.savedBeats[index].repeat = !this.savedBeats[index].repeat;
+        this.saveBeatsToStorage();
+        this.renderBeatList();
+    }
+
+    playBeat(index) {
+        this.initAudioContext();
+        
+        // Stop this specific beat if it's already playing
+        if (this.playingBeats.has(index)) {
+            this.stopBeat(index);
+        }
+
+        const beat = this.savedBeats[index];
+        if (!beat || beat.events.length === 0) return;
+
+        // Initialize timeout array for this beat
+        this.playingBeats.set(index, []);
+        this.renderBeatList();
+
+        const playEvents = () => {
+            const timeouts = this.playingBeats.get(index);
+            if (!timeouts) return; // Beat was stopped
+            
+            beat.events.forEach(event => {
+                const timeout = setTimeout(() => {
+                    // Save current modifiers
+                    const savedModifiers = { ...this.modifiers };
+                    
+                    // Apply recorded modifiers
+                    this.modifiers = { ...event.modifiers };
+                    
+                    // Play the sound
+                    this.playSound(event.sound);
+                    
+                    // Restore modifiers
+                    this.modifiers = savedModifiers;
+                }, event.time);
+                timeouts.push(timeout);
+            });
+
+            // Schedule next loop if repeat is enabled
+            if (beat.repeat && this.playingBeats.has(index)) {
+                const loopTimeout = setTimeout(() => {
+                    if (this.playingBeats.has(index)) {
+                        // Clear old timeouts and start fresh
+                        this.playingBeats.set(index, []);
+                        playEvents();
+                    }
+                }, beat.duration);
+                timeouts.push(loopTimeout);
+            } else {
+                // Stop after playback completes
+                const stopTimeout = setTimeout(() => {
+                    if (this.playingBeats.has(index)) {
+                        this.stopBeat(index);
+                    }
+                }, beat.duration);
+                timeouts.push(stopTimeout);
+            }
+        };
+
+        playEvents();
+    }
+
+    stopBeat(index) {
+        const timeouts = this.playingBeats.get(index);
+        if (timeouts) {
+            timeouts.forEach(timeout => clearTimeout(timeout));
+        }
+        this.playingBeats.delete(index);
+        this.renderBeatList();
+    }
+
+    stopPlayback() {
+        // Stop all playing beats
+        for (const [index, timeouts] of this.playingBeats) {
+            timeouts.forEach(timeout => clearTimeout(timeout));
+        }
+        this.playingBeats.clear();
+        this.renderBeatList();
+    }
+
+    deleteBeat(index) {
+        if (this.playingBeats.has(index)) {
+            this.stopBeat(index);
+        }
+        this.savedBeats.splice(index, 1);
+        // Update playingBeats indices for beats after the deleted one
+        const newPlayingBeats = new Map();
+        for (const [beatIndex, timeouts] of this.playingBeats) {
+            if (beatIndex > index) {
+                newPlayingBeats.set(beatIndex - 1, timeouts);
+            } else if (beatIndex < index) {
+                newPlayingBeats.set(beatIndex, timeouts);
+            }
+            // beatIndex === index is already stopped and removed, skip it
+        }
+        this.playingBeats = newPlayingBeats;
+        this.saveBeatsToStorage();
+        this.renderBeatList();
+    }
+
+    cleanupTempo() {
+        // Only works on the most recent recording or if we have a selected beat
+        if (this.recordedEvents.length === 0 && this.savedBeats.length === 0) {
+            return;
+        }
+
+        // Get events to analyze (either current recording or last saved beat)
+        let events;
+        let targetBeatIndex = -1;
+        
+        if (this.recordedEvents.length > 0) {
+            events = this.recordedEvents;
+        } else {
+            targetBeatIndex = this.savedBeats.length - 1;
+            events = this.savedBeats[targetBeatIndex].events;
+        }
+
+        if (events.length < 4) {
+            return; // Need at least 4 events to detect tempo
+        }
+
+        // Detect tempo by finding intervals between hits
+        const intervals = [];
+        for (let i = 1; i < events.length; i++) {
+            intervals.push(events[i].time - events[i - 1].time);
+        }
+
+        // Find the most common interval (beat duration) using clustering
+        const sortedIntervals = [...intervals].sort((a, b) => a - b);
+        const medianInterval = sortedIntervals[Math.floor(sortedIntervals.length / 2)];
+        
+        // Filter intervals that are close to the median (within 20%)
+        const tolerance = medianInterval * 0.2;
+        const consistentIntervals = intervals.filter(
+            i => Math.abs(i - medianInterval) <= tolerance
+        );
+
+        if (consistentIntervals.length < 2) {
+            return; // Not enough consistent beats
+        }
+
+        // Calculate average beat interval
+        const avgInterval = consistentIntervals.reduce((a, b) => a + b, 0) / consistentIntervals.length;
+        
+        // Determine how many beats we have (round to nearest 4 for common time signatures)
+        const totalDuration = events[events.length - 1].time - events[0].time;
+        let beatCount = Math.round(totalDuration / avgInterval);
+        
+        // Round to multiples of 4 for cleaner loops (assumes 4/4 time signature,
+        // which is the most common in popular music. Future enhancement could
+        // detect or allow user to select other time signatures like 3/4 or 6/8)
+        beatCount = Math.round(beatCount / 4) * 4;
+        if (beatCount < 4) beatCount = 4;
+        
+        // Calculate ideal loop duration
+        const idealDuration = beatCount * avgInterval;
+        
+        // Find the best starting point (look for a strong hit pattern)
+        let bestStartIndex = 0;
+        let bestScore = 0;
+        
+        for (let i = 0; i < Math.min(events.length, 8); i++) {
+            // Score based on how well subsequent hits align with the tempo
+            let score = 0;
+            const startTime = events[i].time;
+            
+            for (let j = i + 1; j < events.length; j++) {
+                const timeSinceStart = events[j].time - startTime;
+                const expectedBeat = Math.round(timeSinceStart / avgInterval);
+                const expectedTime = expectedBeat * avgInterval;
+                const deviation = Math.abs(timeSinceStart - expectedTime);
+                
+                if (deviation < tolerance) {
+                    score++;
+                }
+            }
+            
+            if (score > bestScore) {
+                bestScore = score;
+                bestStartIndex = i;
+            }
+        }
+
+        // Trim events to the ideal duration
+        const startTime = events[bestStartIndex].time;
+        const endTime = startTime + idealDuration;
+        
+        const trimmedEvents = events
+            .filter(e => e.time >= startTime && e.time < endTime)
+            .map(e => ({
+                ...e,
+                time: e.time - startTime // Normalize to start at 0
+            }));
+
+        if (trimmedEvents.length === 0) {
+            return;
+        }
+
+        // Set the loop duration to idealDuration so that when the loop repeats,
+        // the gap from the last beat to the first beat of the next loop equals avgInterval.
+        // This ensures seamless looping where listeners can't detect the loop point.
+        const loopDuration = idealDuration;
+
+        // Update the events
+        if (this.recordedEvents.length > 0) {
+            this.recordedEvents = trimmedEvents;
+        } else {
+            this.savedBeats[targetBeatIndex].events = trimmedEvents;
+            this.savedBeats[targetBeatIndex].duration = loopDuration;
+            this.saveBeatsToStorage();
+            this.renderBeatList();
+        }
     }
 
     handlePadPress(pad) {
@@ -244,6 +749,9 @@ class DrumPad {
         
         // Add active class for visual feedback
         pad.classList.add('active');
+        
+        // Record the event if recording
+        this.recordEvent(soundType);
         
         // Play the sound for this specific pad
         this.playSound(soundType);
@@ -295,8 +803,9 @@ class DrumPad {
         const shakeFactor = this.accelerometer.shakeFactor || 1;
         
         // Base volume adjusted by shake factor
-        const baseVolume = 0.5;
-        const volume = Math.min(1.0, baseVolume * shakeFactor);
+        // Lower base volume (0.3) with wider range to 1.0 makes shake more noticeable
+        const baseVolume = 0.3;
+        const volume = Math.min(1.0, baseVolume + (shakeFactor - 1) * 0.7);
         
         // Apply slight pitch variation based on accelerometer
         if (this.accelerometer.supported && shakeFactor > 1.05) {
@@ -368,6 +877,8 @@ class DrumPad {
                 return this.createCowbell(time, pitchMod);
             case 'rim':
                 return this.createRim(time, pitchMod);
+            case 'shaker':
+                return this.createShaker(time, pitchMod);
             default:
                 return this.createKick(time, pitchMod);
         }
@@ -385,6 +896,7 @@ class DrumPad {
         gain.gain.exponentialRampToValueAtTime(0.01, time + 0.3);
         
         osc.connect(gain);
+        osc.start(time);
         osc.stop(time + 0.3);
         
         return gain;
@@ -480,6 +992,7 @@ class DrumPad {
         gain.gain.exponentialRampToValueAtTime(0.01, time + 0.25);
         
         osc.connect(gain);
+        osc.start(time);
         osc.stop(time + 0.25);
         
         return gain;
@@ -594,7 +1107,45 @@ class DrumPad {
         gain.gain.exponentialRampToValueAtTime(0.01, time + 0.03);
         
         osc.connect(gain);
+        osc.start(time);
         osc.stop(time + 0.03);
+        
+        return gain;
+    }
+
+    createShaker(time, pitchMod) {
+        const bufferSize = this.audioContext.sampleRate * 0.15;
+        const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
+        const data = buffer.getChannelData(0);
+        
+        // Create a shaker sound with quick bursts of filtered noise
+        for (let i = 0; i < bufferSize; i++) {
+            // Add some randomness with envelope
+            const envelope = Math.sin((i / bufferSize) * Math.PI);
+            data[i] = (Math.random() * 2 - 1) * envelope * 0.8;
+        }
+        
+        const noise = this.audioContext.createBufferSource();
+        noise.buffer = buffer;
+        
+        const highpass = this.audioContext.createBiquadFilter();
+        highpass.type = 'highpass';
+        highpass.frequency.value = 4000 * pitchMod;
+        
+        const lowpass = this.audioContext.createBiquadFilter();
+        lowpass.type = 'lowpass';
+        lowpass.frequency.value = 10000 * pitchMod;
+        
+        const gain = this.audioContext.createGain();
+        gain.gain.setValueAtTime(0.4, time);
+        gain.gain.exponentialRampToValueAtTime(0.01, time + 0.12);
+        
+        noise.connect(highpass);
+        highpass.connect(lowpass);
+        lowpass.connect(gain);
+        
+        noise.start(time);
+        noise.stop(time + 0.15);
         
         return gain;
     }
