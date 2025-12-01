@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ad-free-apps-v1';
+const CACHE_NAME = 'ad-free-apps-v2';
 const urlsToCache = [
     '/',
     '/index.html',
@@ -43,38 +43,42 @@ self.addEventListener('install', (event) => {
     self.skipWaiting();
 });
 
-// Fetch event - serve from cache, fallback to network
+// Fetch event - stale-while-revalidate strategy
+// Serve from cache immediately, then update cache in background
 self.addEventListener('fetch', (event) => {
     event.respondWith(
-        caches.match(event.request)
-            .then((response) => {
-                // Return cached version or fetch from network
-                if (response) {
-                    return response;
-                }
-                return fetch(event.request).then((response) => {
-                    // Don't cache non-successful responses or non-GET requests
-                    if (!response || response.status !== 200 || response.type !== 'basic' || event.request.method !== 'GET') {
-                        return response;
+        caches.open(CACHE_NAME).then((cache) => {
+            return cache.match(event.request).then((cachedResponse) => {
+                // Fetch from network in parallel
+                const fetchPromise = fetch(event.request).then((networkResponse) => {
+                    // Only cache successful GET requests for same-origin resources
+                    if (networkResponse && networkResponse.status === 200 && 
+                        networkResponse.type === 'basic' && event.request.method === 'GET') {
+                        cache.put(event.request, networkResponse.clone());
                     }
-
-                    // Clone the response
-                    const responseToCache = response.clone();
-
-                    caches.open(CACHE_NAME)
-                        .then((cache) => {
-                            cache.put(event.request, responseToCache);
-                        });
-
-                    return response;
+                    return networkResponse;
+                }).catch(() => {
+                    // Network failed, return null (we'll use cached response or fallback)
+                    return null;
                 });
-            })
-            .catch(() => {
-                // Return offline page for navigation requests
-                if (event.request.mode === 'navigate') {
-                    return caches.match('/index.html');
+
+                // Return cached response immediately if available, otherwise wait for network
+                if (cachedResponse) {
+                    return cachedResponse;
                 }
-            })
+                
+                return fetchPromise.then((networkResponse) => {
+                    if (networkResponse) {
+                        return networkResponse;
+                    }
+                    // Both cache and network failed for navigation, return offline page
+                    if (event.request.mode === 'navigate') {
+                        return cache.match('/index.html');
+                    }
+                    return new Response('Offline', { status: 503, statusText: 'Service Unavailable' });
+                });
+            });
+        })
     );
 });
 
@@ -94,4 +98,11 @@ self.addEventListener('activate', (event) => {
     );
     // Take control of all pages immediately
     self.clients.claim();
+});
+
+// Listen for messages from clients
+self.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'SKIP_WAITING') {
+        self.skipWaiting();
+    }
 });
