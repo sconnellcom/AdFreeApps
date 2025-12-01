@@ -15,6 +15,13 @@ class Tuner {
         this.minFrequency = 60;    // Minimum detectable frequency
         this.maxFrequency = 1500;  // Maximum detectable frequency
 
+        // Audio level meter thresholds (percentage values)
+        // RMS values typically range from 0 to ~0.5 for loud sounds
+        this.RMS_TO_PERCENTAGE_MULTIPLIER = 200;
+        this.NO_SIGNAL_THRESHOLD = 1;    // Below this: "No signal"
+        this.QUIET_THRESHOLD = 10;       // Below this: "Too quiet"
+        this.LOW_THRESHOLD = 30;         // Below this: "Low", above: "Good"
+
         // Note names
         this.noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
@@ -388,8 +395,7 @@ class Tuner {
 
     updateAudioLevel(rms) {
         // Convert RMS to a percentage (0-100)
-        // RMS values typically range from 0 to about 0.5 for loud sounds
-        const percentage = Math.min(100, rms * 200);
+        const percentage = Math.min(100, rms * this.RMS_TO_PERCENTAGE_MULTIPLIER);
         
         this.audioLevelBar.style.width = percentage + '%';
         
@@ -397,14 +403,14 @@ class Tuner {
         this.audioLevelBar.classList.remove('low', 'medium', 'good');
         this.audioLevelStatus.classList.remove('no-signal', 'weak', 'good');
         
-        if (percentage < 1) {
+        if (percentage < this.NO_SIGNAL_THRESHOLD) {
             this.audioLevelStatus.textContent = 'No signal';
             this.audioLevelStatus.classList.add('no-signal');
-        } else if (percentage < 10) {
+        } else if (percentage < this.QUIET_THRESHOLD) {
             this.audioLevelBar.classList.add('low');
             this.audioLevelStatus.textContent = 'Too quiet';
             this.audioLevelStatus.classList.add('weak');
-        } else if (percentage < 30) {
+        } else if (percentage < this.LOW_THRESHOLD) {
             this.audioLevelBar.classList.add('medium');
             this.audioLevelStatus.textContent = 'Low';
             this.audioLevelStatus.classList.add('weak');
