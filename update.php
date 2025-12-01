@@ -4,7 +4,8 @@
 
 // PASSWORD PROTECTION
 session_start();
-$correctPassword = 'greenfish';
+$passwordFile = __DIR__ . '/../data/password.txt';
+$correctPassword = file_exists($passwordFile) ? trim(file_get_contents($passwordFile)) : 'greenfish';
 
 if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['password'])) {
