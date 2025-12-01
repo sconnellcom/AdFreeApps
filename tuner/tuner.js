@@ -11,7 +11,7 @@ class Tuner {
         this.bufferLength = 0;
         this.isRunning = false;
         this.animationId = null;
-        
+
         // Volume/gain settings
         this.inputGain = 80;    // Default gain (80 = moderate amplification)
 
@@ -116,7 +116,7 @@ class Tuner {
             }
         };
 
-        this.currentInstrument = 'guitar';
+        this.currentInstrument = 'chromatic';
         this.selectedString = null;
 
         // Smoothing for display
@@ -172,7 +172,7 @@ class Tuner {
         this.errorMessage = document.getElementById('errorMessage');
         this.audioLevelBar = document.getElementById('audioLevelBar');
         this.audioLevelStatus = document.getElementById('audioLevelStatus');
-        
+
         // Volume/gain control elements
         this.inputGainSlider = document.getElementById('inputGain');
         this.inputGainValue = document.getElementById('inputGainValue');
@@ -209,7 +209,7 @@ class Tuner {
             this.referencePitch = parseInt(e.target.value);
             this.referencePitchValue.textContent = this.referencePitch;
         });
-        
+
         // Input gain/volume slider
         this.inputGainSlider.addEventListener('input', (e) => {
             this.inputGain = parseInt(e.target.value);
@@ -395,7 +395,7 @@ class Tuner {
         this.gaugeNeedle.className = 'gauge-needle';
         this.tuningStatus.className = 'tuning-status';
         this.tuningStatus.querySelector('.status-text').textContent = 'Ready to tune';
-        
+
         // Reset audio level meter
         this.audioLevelBar.style.width = '0%';
         this.audioLevelBar.classList.remove('low', 'medium', 'good');
@@ -432,13 +432,13 @@ class Tuner {
     updateAudioLevel(rms) {
         // Convert RMS to a percentage (0-100)
         const percentage = Math.min(100, rms * this.RMS_TO_PERCENTAGE_MULTIPLIER);
-        
+
         this.audioLevelBar.style.width = percentage + '%';
-        
+
         // Update bar color and status based on level
         this.audioLevelBar.classList.remove('low', 'medium', 'good');
         this.audioLevelStatus.classList.remove('no-signal', 'weak', 'good');
-        
+
         if (percentage < this.NO_SIGNAL_THRESHOLD) {
             this.audioLevelStatus.textContent = 'No signal';
             this.audioLevelStatus.classList.add('no-signal');
