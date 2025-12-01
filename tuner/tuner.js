@@ -15,6 +15,13 @@ class Tuner {
         this.minFrequency = 60;    // Minimum detectable frequency
         this.maxFrequency = 1500;  // Maximum detectable frequency
 
+        // Audio level meter thresholds (percentage values)
+        // RMS values typically range from 0 to ~0.5 for loud sounds
+        this.RMS_TO_PERCENTAGE_MULTIPLIER = 200;
+        this.NO_SIGNAL_THRESHOLD = 1;    // Below this: "No signal"
+        this.QUIET_THRESHOLD = 10;       // Below this: "Too quiet"
+        this.LOW_THRESHOLD = 30;         // Below this: "Low", above: "Good"
+
         // Note names
         this.noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
@@ -157,6 +164,8 @@ class Tuner {
         this.permissionOverlay = document.getElementById('permissionOverlay');
         this.permissionBtn = document.getElementById('permissionBtn');
         this.errorMessage = document.getElementById('errorMessage');
+        this.audioLevelBar = document.getElementById('audioLevelBar');
+        this.audioLevelStatus = document.getElementById('audioLevelStatus');
 
         // Theme elements
         this.themeBtnActive = document.querySelector('.theme-btn-active');
@@ -350,12 +359,29 @@ class Tuner {
         this.gaugeNeedle.className = 'gauge-needle';
         this.tuningStatus.className = 'tuning-status';
         this.tuningStatus.querySelector('.status-text').textContent = 'Ready to tune';
+        
+        // Reset audio level meter
+        this.audioLevelBar.style.width = '0%';
+        this.audioLevelBar.classList.remove('low', 'medium', 'good');
+        this.audioLevelStatus.textContent = 'No signal';
+        this.audioLevelStatus.classList.remove('weak', 'good');
+        this.audioLevelStatus.classList.add('no-signal');
     }
 
     detectPitch() {
         if (!this.isRunning) return;
 
         this.analyser.getFloatTimeDomainData(this.dataArray);
+
+        // Calculate RMS for audio level display
+        let rms = 0;
+        for (let i = 0; i < this.dataArray.length; i++) {
+            rms += this.dataArray[i] * this.dataArray[i];
+        }
+        rms = Math.sqrt(rms / this.dataArray.length);
+
+        // Update audio level meter
+        this.updateAudioLevel(rms);
 
         // Use autocorrelation to detect pitch
         const frequency = this.autoCorrelate(this.dataArray, this.audioContext.sampleRate);
@@ -365,6 +391,34 @@ class Tuner {
         }
 
         this.animationId = requestAnimationFrame(() => this.detectPitch());
+    }
+
+    updateAudioLevel(rms) {
+        // Convert RMS to a percentage (0-100)
+        const percentage = Math.min(100, rms * this.RMS_TO_PERCENTAGE_MULTIPLIER);
+        
+        this.audioLevelBar.style.width = percentage + '%';
+        
+        // Update bar color and status based on level
+        this.audioLevelBar.classList.remove('low', 'medium', 'good');
+        this.audioLevelStatus.classList.remove('no-signal', 'weak', 'good');
+        
+        if (percentage < this.NO_SIGNAL_THRESHOLD) {
+            this.audioLevelStatus.textContent = 'No signal';
+            this.audioLevelStatus.classList.add('no-signal');
+        } else if (percentage < this.QUIET_THRESHOLD) {
+            this.audioLevelBar.classList.add('low');
+            this.audioLevelStatus.textContent = 'Too quiet';
+            this.audioLevelStatus.classList.add('weak');
+        } else if (percentage < this.LOW_THRESHOLD) {
+            this.audioLevelBar.classList.add('medium');
+            this.audioLevelStatus.textContent = 'Low';
+            this.audioLevelStatus.classList.add('weak');
+        } else {
+            this.audioLevelBar.classList.add('good');
+            this.audioLevelStatus.textContent = 'Good';
+            this.audioLevelStatus.classList.add('good');
+        }
     }
 
     autoCorrelate(buffer, sampleRate) {
