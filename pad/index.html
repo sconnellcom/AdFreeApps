@@ -52,12 +52,12 @@
                     <span class="pad-icon">🔔</span>
                     <span class="pad-label">Hi-Hat</span>
                 </button>
+            </div>
+            <div class="pads-row">
                 <button class="drum-pad" data-sound="tom" title="Tom Drum">
                     <span class="pad-icon">🎵</span>
                     <span class="pad-label">Tom</span>
                 </button>
-            </div>
-            <div class="pads-row">
                 <button class="drum-pad" data-sound="cymbal" title="Cymbal">
                     <span class="pad-icon">💿</span>
                     <span class="pad-label">Cymbal</span>
@@ -66,6 +66,8 @@
                     <span class="pad-icon">👏</span>
                     <span class="pad-label">Clap</span>
                 </button>
+            </div>
+            <div class="pads-row">
                 <button class="drum-pad" data-sound="cowbell" title="Cowbell">
                     <span class="pad-icon">🔔</span>
                     <span class="pad-label">Cowbell</span>
@@ -73,6 +75,10 @@
                 <button class="drum-pad" data-sound="rim" title="Rim Shot">
                     <span class="pad-icon">🎯</span>
                     <span class="pad-label">Rim</span>
+                </button>
+                <button class="drum-pad" data-sound="shaker" title="Shaker">
+                    <span class="pad-icon">🎶</span>
+                    <span class="pad-label">Shaker</span>
                 </button>
             </div>
         </div>
@@ -91,6 +97,38 @@
             <button class="modifier-btn" data-modifier="pitch-down" title="Pitch Down">
                 <span class="modifier-label">Pitch ↓</span>
             </button>
+        </div>
+
+        <!-- Recording Controls -->
+        <div class="recording-controls">
+            <button id="recordBtn" class="record-btn" title="Start Recording">
+                <span class="record-icon">⏺</span>
+                <span class="record-label">Record</span>
+            </button>
+            <button id="saveBtn" class="save-btn" style="display: none;" title="Save Beat">
+                <span class="save-icon">💾</span>
+                <span class="save-label">Save</span>
+            </button>
+            <button id="savePlayBtn" class="save-play-btn" style="display: none;" title="Save and Play">
+                <span class="save-play-icon">💾▶</span>
+                <span class="save-play-label">Save & Play</span>
+            </button>
+            <div class="menu-container">
+                <button id="menuBtn" class="menu-btn" title="Menu">
+                    <span class="menu-icon">☰</span>
+                </button>
+                <div id="menuDropdown" class="menu-dropdown">
+                    <button id="cleanupBtn" class="menu-item">🔧 Clean up tempo</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Beat List -->
+        <div id="beatList" class="beat-list">
+            <div class="beat-list-header">Saved Beats</div>
+            <div id="beatListItems" class="beat-list-items">
+                <!-- Beat items will be added here dynamically -->
+            </div>
         </div>
 
         <!-- Accelerometer Indicator -->
@@ -124,6 +162,7 @@
                         <li><strong>Clap:</strong> Hand clap sound</li>
                         <li><strong>Cowbell:</strong> Classic cowbell</li>
                         <li><strong>Rim:</strong> Rim shot</li>
+                        <li><strong>Shaker:</strong> Rhythmic shaker sound</li>
                     </ul>
 
                     <h4>Effects Modifiers</h4>
@@ -140,6 +179,15 @@
                         <li>Combine multiple modifiers for unique sounds</li>
                         <li>Shake the device while tapping for louder, more intense hits</li>
                         <li>Change themes using the colored circle in the corner</li>
+                    </ul>
+
+                    <h4>Recording Loops</h4>
+                    <ul>
+                        <li><strong>Record:</strong> Tap to start recording your beat</li>
+                        <li><strong>Save:</strong> Save your recorded beat to the list</li>
+                        <li><strong>Save & Play:</strong> Save and immediately play your beat</li>
+                        <li><strong>Repeat:</strong> Toggle looping for each saved beat</li>
+                        <li><strong>Clean up tempo:</strong> Automatically detect tempo and trim to a perfect loop</li>
                     </ul>
                 </div>
             </div>

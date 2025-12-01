@@ -5,6 +5,7 @@ class DrumPad {
     static DISTORTION_AMOUNT = 50;
     static WAVE_SHAPER_SAMPLES = 44100;
     static GRAVITY = 9.8; // Standard gravity in m/s²
+    static STORAGE_KEY = 'drumPadBeats';
 
     constructor() {
         this.audioContext = null;
@@ -36,10 +37,24 @@ class DrumPad {
         // Track which pad each touch is currently over (touchId -> pad element)
         this.touchPadMap = new Map();
         
+        // Recording state
+        this.isRecording = false;
+        this.recordingStartTime = 0;
+        this.recordedEvents = [];
+        
+        // Saved beats
+        this.savedBeats = [];
+        this.loadBeats();
+        
+        // Playback state
+        this.playingBeatIndex = -1;
+        this.playbackTimeouts = [];
+        
         this.initializeUI();
         this.setupEventListeners();
         this.initializeTheme();
         this.initializeAccelerometer();
+        this.renderBeatList();
     }
 
     initializeTheme() {
@@ -79,6 +94,18 @@ class DrumPad {
         
         // Accelerometer indicator
         this.accelValue = document.getElementById('accelValue');
+        
+        // Recording controls
+        this.recordBtn = document.getElementById('recordBtn');
+        this.saveBtn = document.getElementById('saveBtn');
+        this.savePlayBtn = document.getElementById('savePlayBtn');
+        this.menuBtn = document.getElementById('menuBtn');
+        this.menuDropdown = document.getElementById('menuDropdown');
+        this.cleanupBtn = document.getElementById('cleanupBtn');
+        
+        // Beat list
+        this.beatList = document.getElementById('beatList');
+        this.beatListItems = document.getElementById('beatListItems');
     }
 
     initializeAccelerometer() {
@@ -286,6 +313,367 @@ class DrumPad {
                 this.infoModal.style.display = 'none';
             }
         });
+
+        // Recording controls
+        this.recordBtn.addEventListener('click', () => {
+            this.toggleRecording();
+        });
+
+        this.saveBtn.addEventListener('click', () => {
+            this.saveBeat(false);
+        });
+
+        this.savePlayBtn.addEventListener('click', () => {
+            this.saveBeat(true);
+        });
+
+        // Menu
+        this.menuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.menuDropdown.classList.toggle('visible');
+        });
+
+        this.cleanupBtn.addEventListener('click', () => {
+            this.cleanupTempo();
+            this.menuDropdown.classList.remove('visible');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!this.menuBtn.contains(e.target) && !this.menuDropdown.contains(e.target)) {
+                this.menuDropdown.classList.remove('visible');
+            }
+        });
+    }
+
+    toggleRecording() {
+        if (this.isRecording) {
+            // Stop recording
+            this.isRecording = false;
+            this.recordBtn.classList.remove('recording');
+            this.recordBtn.querySelector('.record-label').textContent = 'Record';
+            
+            // Hide save buttons if no events recorded
+            if (this.recordedEvents.length === 0) {
+                this.saveBtn.style.display = 'none';
+                this.savePlayBtn.style.display = 'none';
+            }
+        } else {
+            // Start recording
+            this.isRecording = true;
+            this.recordingStartTime = Date.now();
+            this.recordedEvents = [];
+            this.recordBtn.classList.add('recording');
+            this.recordBtn.querySelector('.record-label').textContent = 'Stop';
+            
+            // Show save buttons
+            this.saveBtn.style.display = 'flex';
+            this.savePlayBtn.style.display = 'flex';
+        }
+    }
+
+    recordEvent(soundType) {
+        if (this.isRecording) {
+            const timestamp = Date.now() - this.recordingStartTime;
+            this.recordedEvents.push({
+                sound: soundType,
+                time: timestamp,
+                modifiers: { ...this.modifiers }
+            });
+        }
+    }
+
+    saveBeat(playAfterSave) {
+        if (this.recordedEvents.length === 0) {
+            return;
+        }
+
+        // Calculate duration
+        const duration = this.recordedEvents[this.recordedEvents.length - 1].time;
+        
+        const beat = {
+            id: Date.now(),
+            name: `Beat ${this.savedBeats.length + 1}`,
+            events: [...this.recordedEvents],
+            duration: duration,
+            repeat: true
+        };
+
+        this.savedBeats.push(beat);
+        this.saveBeatsToStorage();
+        this.renderBeatList();
+
+        // Reset recording state
+        this.isRecording = false;
+        this.recordBtn.classList.remove('recording');
+        this.recordBtn.querySelector('.record-label').textContent = 'Record';
+        this.saveBtn.style.display = 'none';
+        this.savePlayBtn.style.display = 'none';
+        this.recordedEvents = [];
+
+        if (playAfterSave) {
+            this.playBeat(this.savedBeats.length - 1);
+        }
+    }
+
+    loadBeats() {
+        try {
+            const stored = localStorage.getItem(DrumPad.STORAGE_KEY);
+            if (stored) {
+                this.savedBeats = JSON.parse(stored);
+            }
+        } catch (e) {
+            console.error('Error loading beats:', e);
+            this.savedBeats = [];
+        }
+    }
+
+    saveBeatsToStorage() {
+        try {
+            localStorage.setItem(DrumPad.STORAGE_KEY, JSON.stringify(this.savedBeats));
+        } catch (e) {
+            console.error('Error saving beats:', e);
+        }
+    }
+
+    renderBeatList() {
+        if (this.savedBeats.length === 0) {
+            this.beatList.classList.remove('has-beats');
+            this.beatListItems.innerHTML = '';
+            return;
+        }
+
+        this.beatList.classList.add('has-beats');
+        this.beatListItems.innerHTML = '';
+
+        this.savedBeats.forEach((beat, index) => {
+            const beatItem = document.createElement('div');
+            beatItem.className = 'beat-item';
+            beatItem.innerHTML = `
+                <span class="beat-name">${this.escapeHtml(beat.name)}</span>
+                <span class="beat-duration">${this.formatDuration(beat.duration)}</span>
+                <button class="beat-btn beat-repeat-btn ${beat.repeat ? '' : 'off'}" data-index="${index}" title="Toggle Repeat">
+                    🔁
+                </button>
+                <button class="beat-btn beat-play-btn ${this.playingBeatIndex === index ? 'playing' : ''}" data-index="${index}" title="${this.playingBeatIndex === index ? 'Pause' : 'Play'}">
+                    ${this.playingBeatIndex === index ? '⏸' : '▶'}
+                </button>
+                <button class="beat-btn beat-delete-btn" data-index="${index}" title="Delete">
+                    🗑
+                </button>
+            `;
+            this.beatListItems.appendChild(beatItem);
+
+            // Add event listeners
+            beatItem.querySelector('.beat-repeat-btn').addEventListener('click', (e) => {
+                this.toggleRepeat(index);
+            });
+
+            beatItem.querySelector('.beat-play-btn').addEventListener('click', (e) => {
+                if (this.playingBeatIndex === index) {
+                    this.stopPlayback();
+                } else {
+                    this.playBeat(index);
+                }
+            });
+
+            beatItem.querySelector('.beat-delete-btn').addEventListener('click', (e) => {
+                this.deleteBeat(index);
+            });
+        });
+    }
+
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    formatDuration(ms) {
+        const seconds = Math.floor(ms / 1000);
+        const milliseconds = ms % 1000;
+        return `${seconds}.${Math.floor(milliseconds / 100)}s`;
+    }
+
+    toggleRepeat(index) {
+        this.savedBeats[index].repeat = !this.savedBeats[index].repeat;
+        this.saveBeatsToStorage();
+        this.renderBeatList();
+    }
+
+    playBeat(index) {
+        this.initAudioContext();
+        
+        // Stop any current playback
+        this.stopPlayback();
+
+        const beat = this.savedBeats[index];
+        if (!beat || beat.events.length === 0) return;
+
+        this.playingBeatIndex = index;
+        this.renderBeatList();
+
+        const playEvents = () => {
+            beat.events.forEach(event => {
+                const timeout = setTimeout(() => {
+                    // Save current modifiers
+                    const savedModifiers = { ...this.modifiers };
+                    
+                    // Apply recorded modifiers
+                    this.modifiers = { ...event.modifiers };
+                    
+                    // Play the sound
+                    this.playSound(event.sound);
+                    
+                    // Restore modifiers
+                    this.modifiers = savedModifiers;
+                }, event.time);
+                this.playbackTimeouts.push(timeout);
+            });
+
+            // Schedule next loop if repeat is enabled
+            if (beat.repeat && this.playingBeatIndex === index) {
+                const loopTimeout = setTimeout(() => {
+                    if (this.playingBeatIndex === index) {
+                        this.playbackTimeouts = [];
+                        playEvents();
+                    }
+                }, beat.duration + 100); // Small gap between loops
+                this.playbackTimeouts.push(loopTimeout);
+            } else {
+                // Stop after playback completes
+                const stopTimeout = setTimeout(() => {
+                    if (this.playingBeatIndex === index) {
+                        this.stopPlayback();
+                    }
+                }, beat.duration + 100);
+                this.playbackTimeouts.push(stopTimeout);
+            }
+        };
+
+        playEvents();
+    }
+
+    stopPlayback() {
+        this.playbackTimeouts.forEach(timeout => clearTimeout(timeout));
+        this.playbackTimeouts = [];
+        this.playingBeatIndex = -1;
+        this.renderBeatList();
+    }
+
+    deleteBeat(index) {
+        if (this.playingBeatIndex === index) {
+            this.stopPlayback();
+        }
+        this.savedBeats.splice(index, 1);
+        this.saveBeatsToStorage();
+        this.renderBeatList();
+    }
+
+    cleanupTempo() {
+        // Only works on the most recent recording or if we have a selected beat
+        if (this.recordedEvents.length === 0 && this.savedBeats.length === 0) {
+            return;
+        }
+
+        // Get events to analyze (either current recording or last saved beat)
+        let events;
+        let targetBeatIndex = -1;
+        
+        if (this.recordedEvents.length > 0) {
+            events = this.recordedEvents;
+        } else {
+            targetBeatIndex = this.savedBeats.length - 1;
+            events = this.savedBeats[targetBeatIndex].events;
+        }
+
+        if (events.length < 4) {
+            return; // Need at least 4 events to detect tempo
+        }
+
+        // Detect tempo by finding intervals between hits
+        const intervals = [];
+        for (let i = 1; i < events.length; i++) {
+            intervals.push(events[i].time - events[i - 1].time);
+        }
+
+        // Find the most common interval (beat duration) using clustering
+        const sortedIntervals = [...intervals].sort((a, b) => a - b);
+        const medianInterval = sortedIntervals[Math.floor(sortedIntervals.length / 2)];
+        
+        // Filter intervals that are close to the median (within 20%)
+        const tolerance = medianInterval * 0.2;
+        const consistentIntervals = intervals.filter(
+            i => Math.abs(i - medianInterval) <= tolerance
+        );
+
+        if (consistentIntervals.length < 2) {
+            return; // Not enough consistent beats
+        }
+
+        // Calculate average beat interval
+        const avgInterval = consistentIntervals.reduce((a, b) => a + b, 0) / consistentIntervals.length;
+        
+        // Determine how many beats we have (round to nearest 4 for common time signatures)
+        const totalDuration = events[events.length - 1].time - events[0].time;
+        let beatCount = Math.round(totalDuration / avgInterval);
+        
+        // Round to multiples of 4 for cleaner loops
+        beatCount = Math.round(beatCount / 4) * 4;
+        if (beatCount < 4) beatCount = 4;
+        
+        // Calculate ideal loop duration
+        const idealDuration = beatCount * avgInterval;
+        
+        // Find the best starting point (look for a strong hit pattern)
+        let bestStartIndex = 0;
+        let bestScore = 0;
+        
+        for (let i = 0; i < Math.min(events.length, 8); i++) {
+            // Score based on how well subsequent hits align with the tempo
+            let score = 0;
+            const startTime = events[i].time;
+            
+            for (let j = i + 1; j < events.length; j++) {
+                const timeSinceStart = events[j].time - startTime;
+                const expectedBeat = Math.round(timeSinceStart / avgInterval);
+                const expectedTime = expectedBeat * avgInterval;
+                const deviation = Math.abs(timeSinceStart - expectedTime);
+                
+                if (deviation < tolerance) {
+                    score++;
+                }
+            }
+            
+            if (score > bestScore) {
+                bestScore = score;
+                bestStartIndex = i;
+            }
+        }
+
+        // Trim events to the ideal duration
+        const startTime = events[bestStartIndex].time;
+        const endTime = startTime + idealDuration;
+        
+        const trimmedEvents = events
+            .filter(e => e.time >= startTime && e.time <= endTime)
+            .map(e => ({
+                ...e,
+                time: e.time - startTime // Normalize to start at 0
+            }));
+
+        if (trimmedEvents.length === 0) {
+            return;
+        }
+
+        // Update the events
+        if (this.recordedEvents.length > 0) {
+            this.recordedEvents = trimmedEvents;
+        } else {
+            this.savedBeats[targetBeatIndex].events = trimmedEvents;
+            this.savedBeats[targetBeatIndex].duration = trimmedEvents[trimmedEvents.length - 1].time;
+            this.saveBeatsToStorage();
+            this.renderBeatList();
+        }
     }
 
     handlePadPress(pad) {
@@ -301,6 +689,9 @@ class DrumPad {
         
         // Add active class for visual feedback
         pad.classList.add('active');
+        
+        // Record the event if recording
+        this.recordEvent(soundType);
         
         // Play the sound for this specific pad
         this.playSound(soundType);
@@ -426,6 +817,8 @@ class DrumPad {
                 return this.createCowbell(time, pitchMod);
             case 'rim':
                 return this.createRim(time, pitchMod);
+            case 'shaker':
+                return this.createShaker(time, pitchMod);
             default:
                 return this.createKick(time, pitchMod);
         }
@@ -656,6 +1049,43 @@ class DrumPad {
         osc.connect(gain);
         osc.start(time);
         osc.stop(time + 0.03);
+        
+        return gain;
+    }
+
+    createShaker(time, pitchMod) {
+        const bufferSize = this.audioContext.sampleRate * 0.15;
+        const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
+        const data = buffer.getChannelData(0);
+        
+        // Create a shaker sound with quick bursts of filtered noise
+        for (let i = 0; i < bufferSize; i++) {
+            // Add some randomness with envelope
+            const envelope = Math.sin((i / bufferSize) * Math.PI);
+            data[i] = (Math.random() * 2 - 1) * envelope * 0.8;
+        }
+        
+        const noise = this.audioContext.createBufferSource();
+        noise.buffer = buffer;
+        
+        const highpass = this.audioContext.createBiquadFilter();
+        highpass.type = 'highpass';
+        highpass.frequency.value = 4000 * pitchMod;
+        
+        const lowpass = this.audioContext.createBiquadFilter();
+        lowpass.type = 'lowpass';
+        lowpass.frequency.value = 10000 * pitchMod;
+        
+        const gain = this.audioContext.createGain();
+        gain.gain.setValueAtTime(0.4, time);
+        gain.gain.exponentialRampToValueAtTime(0.01, time + 0.12);
+        
+        noise.connect(highpass);
+        highpass.connect(lowpass);
+        lowpass.connect(gain);
+        
+        noise.start(time);
+        noise.stop(time + 0.15);
         
         return gain;
     }
