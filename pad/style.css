@@ -503,9 +503,11 @@ h1 {
     0% {
         box-shadow: 0 0 0 0 var(--pulse-shadow);
     }
+
     50% {
         box-shadow: 0 0 20px 10px var(--pulse-shadow);
     }
+
     100% {
         box-shadow: 0 0 0 0 var(--pulse-shadow);
     }
@@ -708,7 +710,7 @@ h1 {
         gap: 12px;
         flex: 0 0 auto;
     }
-    
+
     .pads-row {
         gap: 12px;
         flex: 0 0 auto;
@@ -773,24 +775,24 @@ h1 {
         gap: 10px;
         padding: 6px 0;
     }
-    
+
     .pads-row {
         gap: 10px;
     }
-    
+
     .pad-icon {
         font-size: 1.8em;
     }
-    
+
     .pad-label {
         font-size: 0.7em;
     }
-    
+
     .modifiers-panel {
         gap: 6px;
         padding: 6px 0;
     }
-    
+
     .modifier-btn {
         padding: 8px 5px;
     }
@@ -843,9 +845,12 @@ h1 {
 }
 
 @keyframes recording-pulse {
-    0%, 100% {
+
+    0%,
+    100% {
         box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4);
     }
+
     50% {
         box-shadow: 0 0 0 10px rgba(220, 38, 38, 0);
     }
