@@ -117,12 +117,13 @@ class DrumPad {
         document.querySelectorAll('.drum-pad').forEach(pad => {
             // Touch events for multi-touch support
             pad.addEventListener('touchstart', (e) => {
+                e.preventDefault(); // Prevent mouse events from firing
                 // Register this touch with the pad
                 for (const touch of e.changedTouches) {
                     this.touchPadMap.set(touch.identifier, pad);
                 }
                 this.handlePadPress(pad);
-            });
+            }, { passive: false });
 
             // Touch end is handled by the global document touchend handler (below)
             // which properly tracks the actual current pad from touchPadMap.
