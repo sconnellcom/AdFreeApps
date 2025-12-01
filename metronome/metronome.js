@@ -4,6 +4,7 @@ class Metronome {
         this.bpm = 120;
         this.isRunning = false;
         this.beatDetectionEnabled = false; // Toggle for beat detection
+        this.beatDetectionMode = 'off'; // 'off', 'tap', or 'audio'
         this.intervalId = null;
         this.audioContext = null;
         this.beatTimes = [];
@@ -52,6 +53,24 @@ class Metronome {
         this.consecutiveOffBeatsThreshold = this.BASE_OFF_BEAT_THRESHOLD;
         this.consecutiveOnBeatsNeeded = 6; // Number of consecutive on-beats needed to stop the sound
         this.minimumBeatsToPlay = 4; // Minimum number of beats to play when off beat
+
+        // Audio beat detection properties
+        this.audioAnalyser = null;
+        this.audioMicStream = null;
+        this.audioMicSource = null;
+        this.audioDataArray = null;
+        this.audioPreviousEnergy = 0;
+        this.audioEnergyHistory = [];
+        this.audioIntervalHistory = [];
+        this.lastAudioBeatTime = 0;
+
+        // Constants for audio beat detection (optimized for cello/violin)
+        this.AUDIO_FFT_SIZE = 2048;
+        this.AUDIO_LOW_FREQ_CUTOFF = 500; // Hz - captures fundamental frequencies of cello and violin
+        this.AUDIO_ENERGY_THRESHOLD_MULTIPLIER = 1.3; // Energy must be this much above average
+        this.AUDIO_MIN_PEAK_ENERGY = 0.01; // Minimum energy to consider as a beat
+        this.AUDIO_BEAT_DEBOUNCE_MS = 150; // Minimum time between audio beats
+        this.AUDIO_HISTORY_SIZE = 30; // Number of energy samples to track for averaging
 
         // Activity log
         this.activityLog = [];
@@ -156,8 +175,8 @@ class Metronome {
         this.beatDetectedBpmTop = document.getElementById('beatDetectedBpm');
         this.beatAccuracyTopDisplay = document.getElementById('beatAccuracyTop');
 
-        // Beat detection toggle
-        this.beatDetectionToggle = document.getElementById('beatDetectionToggle');
+        // Beat detection mode dropdown
+        this.beatDetectionModeSelect = document.getElementById('beatDetectionMode');
 
         // Auto mode elements
         this.autoModeSettings = document.getElementById('autoModeSettings');
@@ -247,9 +266,13 @@ class Metronome {
                 }
             } else {
                 this.start();
-                // Auto-start detection if beat detection is enabled
-                if (this.beatDetectionEnabled) {
-                    this.startDetection();
+                // Auto-start detection based on current mode
+                if (this.beatDetectionEnabled && !this.isDetecting) {
+                    if (this.beatDetectionMode === 'tap') {
+                        this.startDetection();
+                    } else if (this.beatDetectionMode === 'audio') {
+                        this.startAudioDetection();
+                    }
                 }
             }
         });
@@ -260,24 +283,9 @@ class Metronome {
             this.beatCount = 0; // Reset beat counter when changing sounds
         });
 
-        // Beat detection toggle
-        this.beatDetectionToggle.addEventListener('change', (e) => {
-            this.beatDetectionEnabled = e.target.checked;
-            if (this.beatDetectionEnabled) {
-                this.autoModeSettings.style.display = 'block';
-                this.beatInfo.style.display = 'flex';
-                // Auto-start detection if metronome is running
-                if (this.isRunning && !this.isDetecting) {
-                    this.startDetection();
-                }
-            } else {
-                this.autoModeSettings.style.display = 'none';
-                this.beatInfo.style.display = 'none';
-                // Stop detection if currently detecting
-                if (this.isDetecting) {
-                    this.stopDetection();
-                }
-            }
+        // Beat detection mode dropdown
+        this.beatDetectionModeSelect.addEventListener('change', (e) => {
+            this.setBeatDetectionMode(e.target.value);
         });
 
         // Sensitivity slider - for beat detection threshold
@@ -405,17 +413,19 @@ class Metronome {
             }
         });
 
-        // Click on acceleration meter to toggle beat detection
-        const toggleMode = (e) => {
+        // Click on acceleration meter to cycle beat detection modes
+        const cycleMode = (e) => {
             e.preventDefault();
             e.stopPropagation();
-            this.beatDetectionToggle.checked = !this.beatDetectionToggle.checked;
-            // Trigger change event
-            this.beatDetectionToggle.dispatchEvent(new Event('change'));
+            const modes = ['off', 'tap', 'audio'];
+            const currentIndex = modes.indexOf(this.beatDetectionMode);
+            const nextIndex = (currentIndex + 1) % modes.length;
+            this.beatDetectionModeSelect.value = modes[nextIndex];
+            this.setBeatDetectionMode(modes[nextIndex]);
         };
 
-        this.accelerationMeter.addEventListener('touchend', toggleMode);
-        this.accelerationMeter.addEventListener('click', toggleMode);
+        this.accelerationMeter.addEventListener('touchend', cycleMode);
+        this.accelerationMeter.addEventListener('click', cycleMode);
 
         // Click on pulse (metronome indicator) to start/stop
         const toggleMetronome = (e) => {
@@ -429,9 +439,13 @@ class Metronome {
                 }
             } else {
                 this.start();
-                // Auto-start detection if beat detection is enabled
-                if (this.beatDetectionEnabled) {
-                    this.startDetection();
+                // Auto-start detection based on current mode
+                if (this.beatDetectionEnabled && !this.isDetecting) {
+                    if (this.beatDetectionMode === 'tap') {
+                        this.startDetection();
+                    } else if (this.beatDetectionMode === 'audio') {
+                        this.startAudioDetection();
+                    }
                 }
             }
         };
@@ -737,6 +751,9 @@ class Metronome {
             this.motionHandler = null;
         }
 
+        // Stop audio detection if active
+        this.stopAudioDetection();
+
         this.detectedBeats = [];
         this.offBeatCount = 0;
         this.detectedBpmDisplay.textContent = '--';
@@ -750,6 +767,276 @@ class Metronome {
 
         // Reset acceleration bar
         this.updateAccelerationBar(0);
+    }
+
+    setBeatDetectionMode(mode) {
+        // Stop current detection if active
+        if (this.isDetecting) {
+            this.stopDetection();
+        }
+
+        this.beatDetectionMode = mode;
+        this.beatDetectionEnabled = mode !== 'off';
+
+        if (this.beatDetectionEnabled) {
+            this.autoModeSettings.style.display = 'block';
+            this.beatInfo.style.display = 'flex';
+            // Auto-start detection if metronome is running
+            if (this.isRunning && !this.isDetecting) {
+                if (mode === 'tap') {
+                    this.startDetection();
+                } else if (mode === 'audio') {
+                    this.startAudioDetection();
+                }
+            }
+        } else {
+            this.autoModeSettings.style.display = 'none';
+            this.beatInfo.style.display = 'none';
+        }
+    }
+
+    async startAudioDetection() {
+        try {
+            // Check if getUserMedia is supported
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                alert('Audio input is not supported in this browser. Please try a modern browser like Chrome, Firefox, or Safari.');
+                return;
+            }
+
+            // Request microphone access
+            this.audioMicStream = await navigator.mediaDevices.getUserMedia({
+                audio: {
+                    echoCancellation: false,
+                    noiseSuppression: false,
+                    autoGainControl: false
+                }
+            });
+
+            // Create audio context if not exists
+            if (!this.audioContext) {
+                this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+
+            // Resume audio context if suspended
+            if (this.audioContext.state === 'suspended') {
+                await this.audioContext.resume();
+            }
+
+            // Create analyser with low-pass filter for cello/violin
+            this.audioAnalyser = this.audioContext.createAnalyser();
+            this.audioAnalyser.fftSize = this.AUDIO_FFT_SIZE;
+            this.audioAnalyser.smoothingTimeConstant = 0.3;
+
+            // Create low-pass filter optimized for cello/violin
+            this.audioLowPassFilter = this.audioContext.createBiquadFilter();
+            this.audioLowPassFilter.type = 'lowpass';
+            this.audioLowPassFilter.frequency.value = this.AUDIO_LOW_FREQ_CUTOFF;
+            this.audioLowPassFilter.Q.value = 0.7;
+
+            // Connect microphone -> low-pass filter -> analyser
+            this.audioMicSource = this.audioContext.createMediaStreamSource(this.audioMicStream);
+            this.audioMicSource.connect(this.audioLowPassFilter);
+            this.audioLowPassFilter.connect(this.audioAnalyser);
+
+            // Initialize data array for frequency analysis
+            this.audioDataArray = new Float32Array(this.audioAnalyser.frequencyBinCount);
+
+            // Reset audio detection state
+            this.audioPreviousEnergy = 0;
+            this.audioEnergyHistory = [];
+            this.audioIntervalHistory = [];
+            this.lastAudioBeatTime = 0;
+
+            this.isDetecting = true;
+            this.autoStatus.textContent = 'Listening for audio...';
+            this.autoStatus.classList.add('listening');
+
+            this.detectedBeats = [];
+            this.offBeatCount = 0;
+
+            // Initialize session stats
+            this.sessionStats = {
+                bpmReadings: [],
+                currentStreak: 0,
+                bestSessionStreak: 0,
+                totalBeats: 0,
+                onBeatCount: 0,
+                sessionStartTime: Date.now()
+            };
+
+            // Initialize top displays
+            this.beatStatusTop.textContent = 'Listening for audio...';
+            this.beatStatusTop.className = 'beat-info-value status-listening';
+            this.beatDetectedBpmTop.textContent = '--';
+            this.beatAccuracyTopDisplay.textContent = '--';
+
+            // Start the metronome if not already running
+            if (!this.isRunning) {
+                this.start();
+            }
+
+            // Start audio analysis loop
+            this.analyzeAudioForBeats();
+
+        } catch (error) {
+            console.error('Error accessing microphone:', error);
+            if (error.name === 'NotAllowedError') {
+                alert('Microphone access was denied. Please grant permission to use audio beat detection.');
+            } else {
+                alert('Could not access microphone. Please ensure your device has a microphone and try again.');
+            }
+            // Reset mode to off
+            this.beatDetectionModeSelect.value = 'off';
+            this.setBeatDetectionMode('off');
+        }
+    }
+
+    stopAudioDetection() {
+        // Stop microphone stream
+        if (this.audioMicStream) {
+            this.audioMicStream.getTracks().forEach(track => track.stop());
+            this.audioMicStream = null;
+        }
+
+        // Disconnect audio nodes
+        if (this.audioMicSource) {
+            this.audioMicSource.disconnect();
+            this.audioMicSource = null;
+        }
+
+        if (this.audioLowPassFilter) {
+            this.audioLowPassFilter.disconnect();
+            this.audioLowPassFilter = null;
+        }
+
+        if (this.audioAnalyser) {
+            this.audioAnalyser = null;
+        }
+
+        // Reset audio detection state
+        this.audioDataArray = null;
+        this.audioPreviousEnergy = 0;
+        this.audioEnergyHistory = [];
+        this.audioIntervalHistory = [];
+    }
+
+    analyzeAudioForBeats() {
+        if (!this.isDetecting || !this.audioAnalyser || this.beatDetectionMode !== 'audio') {
+            return;
+        }
+
+        // Get frequency data
+        this.audioAnalyser.getFloatFrequencyData(this.audioDataArray);
+
+        // Calculate energy in the low frequency range (for cello/violin fundamentals)
+        // Frequency resolution = sampleRate / fftSize
+        const sampleRate = this.audioContext.sampleRate;
+        const binSize = sampleRate / this.AUDIO_FFT_SIZE;
+        const maxBin = Math.floor(this.AUDIO_LOW_FREQ_CUTOFF / binSize);
+
+        let energy = 0;
+        for (let i = 0; i < maxBin; i++) {
+            // Convert dB to linear and accumulate
+            const dbValue = this.audioDataArray[i];
+            const linearValue = Math.pow(10, dbValue / 20);
+            energy += linearValue * linearValue;
+        }
+        energy = Math.sqrt(energy / maxBin);
+
+        // Track energy history for adaptive threshold
+        this.audioEnergyHistory.push(energy);
+        if (this.audioEnergyHistory.length > this.AUDIO_HISTORY_SIZE) {
+            this.audioEnergyHistory.shift();
+        }
+
+        // Calculate average and dynamic threshold
+        const avgEnergy = this.audioEnergyHistory.reduce((a, b) => a + b, 0) / this.audioEnergyHistory.length;
+        
+        // Apply sensitivity adjustment
+        const sensitivityMultiplier = 1 + ((100 - this.sensitivityPercent) / 100);
+        const threshold = avgEnergy * this.AUDIO_ENERGY_THRESHOLD_MULTIPLIER * sensitivityMultiplier;
+
+        // Update visualization (normalize to percentage)
+        const visualPercentage = Math.min(100, (energy / (avgEnergy * 2)) * 100);
+        this.updateAccelerationBar(visualPercentage / 50); // Scale for visualization
+
+        // Detect beat - energy must be above threshold and above minimum
+        const now = Date.now();
+        const timeSinceLastBeat = now - this.lastAudioBeatTime;
+
+        if (energy > threshold && 
+            energy > this.AUDIO_MIN_PEAK_ENERGY && 
+            energy > this.audioPreviousEnergy &&
+            timeSinceLastBeat > this.AUDIO_BEAT_DEBOUNCE_MS) {
+            
+            // Beat detected
+            this.lastAudioBeatTime = now;
+            this.detectedBeats.push(now);
+
+            // Flash the acceleration meter
+            this.flashBeatDetected();
+
+            // Keep only recent beats
+            if (this.detectedBeats.length > 10) {
+                this.detectedBeats.shift();
+            }
+
+            // Calculate detected BPM from intervals
+            if (this.detectedBeats.length >= 3) {
+                const intervals = [];
+                for (let i = 1; i < this.detectedBeats.length; i++) {
+                    intervals.push(this.detectedBeats[i] - this.detectedBeats[i - 1]);
+                }
+
+                // Use interval histogram to find most common interval
+                const bpmEstimate = this.estimateBPMFromIntervals(intervals);
+                if (bpmEstimate) {
+                    this.detectedBPM = bpmEstimate;
+                    this.detectedBpmDisplay.textContent = this.detectedBPM;
+                    this.beatDetectedBpmTop.textContent = this.detectedBPM;
+                }
+            }
+
+            // Check if beat is on time with metronome
+            this.checkBeatAccuracy(now);
+        }
+
+        this.audioPreviousEnergy = energy;
+
+        // Continue analysis loop
+        requestAnimationFrame(() => this.analyzeAudioForBeats());
+    }
+
+    estimateBPMFromIntervals(intervals) {
+        if (intervals.length < 2) return null;
+
+        // Create histogram of intervals (quantized to 10ms bins)
+        const histogram = {};
+        intervals.forEach(interval => {
+            // Only consider reasonable intervals (200ms to 1500ms = 40-300 BPM)
+            if (interval >= 200 && interval <= 1500) {
+                const bin = Math.round(interval / 10) * 10;
+                histogram[bin] = (histogram[bin] || 0) + 1;
+            }
+        });
+
+        // Find the most common interval
+        let maxCount = 0;
+        let mostCommonInterval = null;
+        for (const [interval, count] of Object.entries(histogram)) {
+            if (count > maxCount) {
+                maxCount = count;
+                mostCommonInterval = parseInt(interval);
+            }
+        }
+
+        if (mostCommonInterval === null) {
+            // Fall back to average if no clear winner
+            const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+            return Math.round(60000 / avgInterval);
+        }
+
+        return Math.round(60000 / mostCommonInterval);
     }
 
     playBassDrum(time) {
