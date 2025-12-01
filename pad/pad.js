@@ -168,10 +168,10 @@ class DrumPad {
                 const element = document.elementFromPoint(touch.clientX, touch.clientY);
                 const pad = element?.closest('.drum-pad');
                 const previousPad = this.touchPadMap.get(touch.identifier);
-                const drumPadsArea = element?.closest('.drum-pads');
 
-                // Prevent default if touch is on a pad, was on a pad, or is in the drum-pads area
-                if (pad || previousPad || drumPadsArea) {
+                // Only prevent default if currently on a pad or was on a pad
+                // This allows scrolling on other parts of the page
+                if (pad || previousPad) {
                     e.preventDefault();
                 }
 
