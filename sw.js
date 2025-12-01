@@ -1,14 +1,14 @@
-const CACHE_NAME = 'ad-free-apps-v20251201172125';
+const CACHE_NAME = 'ad-free-apps-v20251201172344';
 const urlsToCache = [
     '/',
     '/index.html',
     '/metronome/',
     '/metronome/index.html',
-    '/metronome/style.css?v=20251201172125',
-    '/metronome/metronome.js?v=20251201172125',
+    '/metronome/style.css?v=20251201172344',
+    '/metronome/metronome.js?v=20251201172344',
     '/timer/',
     '/timer/index.html',
-    '/timer/timer.js?v=20251201172125',
+    '/timer/timer.js?v=20251201172344',
     '/draw/',
     '/draw/index.html',
     '/level/',
@@ -17,12 +17,12 @@ const urlsToCache = [
     '/scanner/index.html',
     '/pad/',
     '/pad/index.html',
-    '/pad/style.css?v=20251201172125',
-    '/pad/pad.js?v=20251201172125',
+    '/pad/style.css?v=20251201172344',
+    '/pad/pad.js?v=20251201172344',
     '/tuner/',
     '/tuner/index.html',
-    '/tuner/style.css?v=20251201172125',
-    '/tuner/tuner.js?v=20251201172125',
+    '/tuner/style.css?v=20251201172344',
+    '/tuner/tuner.js?v=20251201172344',
     '/icons/icon-192x192.png',
     '/icons/icon-512x512.png'
 ];

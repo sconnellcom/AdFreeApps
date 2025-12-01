@@ -38,18 +38,24 @@ echo "Found " . count($htmlFiles) . " HTML file(s)\n\n";
 $htmlUpdated = 0;
 foreach ($htmlFiles as $htmlFile) {
     $content = file_get_contents($htmlFile);
+    if ($content === false) {
+        echo "Error reading file: $htmlFile\n";
+        continue;
+    }
     $originalContent = $content;
     
     // Replace .css?v=<anything> with .css?v=<timestamp>
     // Match patterns like style.css?v=2, style.css?v=20251201170653, etc.
-    $content = preg_replace('/\.css\?v=[^"\']+/', '.css?v=' . $timestamp, $content);
+    // Use [^"\'&\s]+ to stop at quotes, ampersands, or whitespace
+    $content = preg_replace('/\.css\?v=[^"\'&\s]+/', '.css?v=' . $timestamp, $content);
     
     // Replace .js?v=<anything> with .js?v=<timestamp>
-    $content = preg_replace('/\.js\?v=[^"\']+/', '.js?v=' . $timestamp, $content);
+    $content = preg_replace('/\.js\?v=[^"\'&\s]+/', '.js?v=' . $timestamp, $content);
     
     if ($content !== $originalContent) {
         file_put_contents($htmlFile, $content);
-        $relativePath = str_replace($baseDir . '/', '', $htmlFile);
+        // Handle both Unix and Windows path separators
+        $relativePath = str_replace([$baseDir . DIRECTORY_SEPARATOR, $baseDir . '/'], '', $htmlFile);
         echo "Updated: $relativePath\n";
         $htmlUpdated++;
     }
@@ -61,27 +67,32 @@ echo "\nUpdated $htmlUpdated HTML file(s)\n\n";
 $swFile = $baseDir . '/sw.js';
 if (file_exists($swFile)) {
     $swContent = file_get_contents($swFile);
-    $originalSwContent = $swContent;
-    
-    // Update CACHE_NAME with new timestamp
-    // Match pattern like: const CACHE_NAME = 'ad-free-apps-v3';
-    $swContent = preg_replace(
-        "/const CACHE_NAME = '[^']+';/",
-        "const CACHE_NAME = 'ad-free-apps-v$timestamp';",
-        $swContent
-    );
-    
-    // Update .css?v= and .js?v= in urlsToCache array
-    $swContent = preg_replace('/\.css\?v=[^\']+/', '.css?v=' . $timestamp, $swContent);
-    $swContent = preg_replace('/\.js\?v=[^\']+/', '.js?v=' . $timestamp, $swContent);
-    
-    if ($swContent !== $originalSwContent) {
-        file_put_contents($swFile, $swContent);
-        echo "Updated: sw.js (service worker)\n";
-        echo "  - CACHE_NAME updated to 'ad-free-apps-v$timestamp'\n";
-        echo "  - Updated versioned resource URLs\n";
+    if ($swContent === false) {
+        echo "Error reading file: sw.js\n";
     } else {
-        echo "sw.js: No changes needed\n";
+        $originalSwContent = $swContent;
+        
+        // Update CACHE_NAME with new timestamp
+        // Match pattern like: const CACHE_NAME = 'ad-free-apps-v3';
+        $swContent = preg_replace(
+            "/const CACHE_NAME = '[^']+';/",
+            "const CACHE_NAME = 'ad-free-apps-v$timestamp';",
+            $swContent
+        );
+        
+        // Update .css?v= and .js?v= in urlsToCache array
+        // Use [^"\'&\s]+ to stop at quotes, ampersands, or whitespace (consistent with HTML patterns)
+        $swContent = preg_replace('/\.css\?v=[^"\'&\s]+/', '.css?v=' . $timestamp, $swContent);
+        $swContent = preg_replace('/\.js\?v=[^"\'&\s]+/', '.js?v=' . $timestamp, $swContent);
+        
+        if ($swContent !== $originalSwContent) {
+            file_put_contents($swFile, $swContent);
+            echo "Updated: sw.js (service worker)\n";
+            echo "  - CACHE_NAME updated to 'ad-free-apps-v$timestamp'\n";
+            echo "  - Updated versioned resource URLs\n";
+        } else {
+            echo "sw.js: No changes needed\n";
+        }
     }
 }
 
