@@ -580,10 +580,12 @@
                     .then((registration) => {
                         console.log('ServiceWorker registration successful');
                         
-                        // Check for updates periodically
-                        setInterval(() => {
-                            registration.update();
-                        }, 60000); // Check every minute
+                        // Check for updates when page becomes visible
+                        document.addEventListener('visibilitychange', () => {
+                            if (document.visibilityState === 'visible') {
+                                registration.update();
+                            }
+                        });
                         
                         // Handle updates
                         registration.addEventListener('updatefound', () => {

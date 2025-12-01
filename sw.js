@@ -52,8 +52,12 @@ self.addEventListener('fetch', (event) => {
                 // Fetch from network in parallel
                 const fetchPromise = fetch(event.request).then((networkResponse) => {
                     // Only cache successful GET requests for same-origin resources
-                    if (networkResponse && networkResponse.status === 200 && 
-                        networkResponse.type === 'basic' && event.request.method === 'GET') {
+                    const shouldCache = networkResponse && 
+                        networkResponse.status === 200 && 
+                        networkResponse.type === 'basic' && 
+                        event.request.method === 'GET';
+                    
+                    if (shouldCache) {
                         cache.put(event.request, networkResponse.clone());
                     }
                     return networkResponse;
@@ -75,7 +79,10 @@ self.addEventListener('fetch', (event) => {
                     if (event.request.mode === 'navigate') {
                         return cache.match('/index.html');
                     }
-                    return new Response('Offline', { status: 503, statusText: 'Service Unavailable' });
+                    return new Response('Content unavailable offline. Please check your connection and try again.', { 
+                        status: 503, 
+                        statusText: 'Service Unavailable' 
+                    });
                 });
             });
         })
