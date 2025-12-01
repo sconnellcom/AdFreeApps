@@ -1,7 +1,124 @@
-
 <?php
 // PRODUCTION-READY GITHUB ZIP UPDATER
 // Place in web root, configure $zipUrl, run once, then secure/remove
+
+// PASSWORD PROTECTION
+session_start();
+$correctPassword = 'greenfish';
+
+if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['password'])) {
+        if ($_POST['password'] === $correctPassword) {
+            $_SESSION['authenticated'] = true;
+        } else {
+            $loginError = 'Incorrect password';
+        }
+    }
+    
+    if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
+        ?>
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Password Required</title>
+            <style>
+                * { margin: 0; padding: 0; box-sizing: border-box; }
+                body {
+                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    min-height: 100vh;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 20px;
+                }
+                .password-box {
+                    background: white;
+                    padding: 40px;
+                    border-radius: 20px;
+                    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+                    text-align: center;
+                    max-width: 400px;
+                    width: 100%;
+                }
+                h2 {
+                    color: #333;
+                    margin-bottom: 10px;
+                    font-size: 1.8em;
+                }
+                p {
+                    color: #666;
+                    margin-bottom: 25px;
+                }
+                input[type="password"] {
+                    width: 100%;
+                    padding: 15px;
+                    border: 2px solid #e2e8f0;
+                    border-radius: 10px;
+                    font-size: 1.1em;
+                    text-align: center;
+                    margin-bottom: 15px;
+                    transition: border-color 0.3s ease;
+                }
+                input[type="password"]:focus {
+                    outline: none;
+                    border-color: #667eea;
+                }
+                input[type="password"].error {
+                    border-color: #dc2626;
+                    animation: shake 0.5s;
+                }
+                @keyframes shake {
+                    0%, 100% { transform: translateX(0); }
+                    25% { transform: translateX(-10px); }
+                    75% { transform: translateX(10px); }
+                }
+                button {
+                    width: 100%;
+                    padding: 15px;
+                    background: #667eea;
+                    color: white;
+                    border: none;
+                    border-radius: 10px;
+                    font-size: 1.1em;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                }
+                button:hover {
+                    background: #764ba2;
+                    transform: translateY(-2px);
+                    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+                }
+                .error-message {
+                    color: #dc2626;
+                    font-size: 0.9em;
+                    margin-top: 10px;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="password-box">
+                <h2>🔒 Password Required</h2>
+                <p>Please enter the password to access the updater</p>
+                <form method="POST">
+                    <input type="password" name="password" placeholder="Enter password" 
+                           class="<?php echo isset($loginError) ? 'error' : ''; ?>" 
+                           autocomplete="off" autofocus required>
+                    <button type="submit">Unlock</button>
+                    <?php if (isset($loginError)): ?>
+                        <div class="error-message"><?php echo htmlspecialchars($loginError); ?></div>
+                    <?php endif; ?>
+                </form>
+            </div>
+        </body>
+        </html>
+        <?php
+        exit;
+    }
+}
 
 while (ob_get_level()) ob_end_clean(); // Clear all output buffers
 ob_implicit_flush(1);                   // Auto-flush output
@@ -12,7 +129,8 @@ ini_set('max_execution_time', 300);
 ignore_user_abort(false);   // Stop on disconnect
 
 // CONFIGURATION
-$zipUrl = 'https://github.com/sconnellcom/Metronome/archive/refs/heads/main.zip';
+$repoName = 'AdFreeApps';
+$zipUrl = 'https://github.com/sconnellcom/' . $repoName . '/archive/refs/heads/main.zip';
 $zipFile = 'update.zip';
 $lockFile = 'update.lock';
 $selfScript = basename(__FILE__);
@@ -21,7 +139,7 @@ $extractPath = __DIR__ . '/';
 // FILE LOCKING - Prevent concurrent runs
 $fp = fopen($lockFile, 'w');
 if (!$fp || !flock($fp, LOCK_EX | LOCK_NB)) {
-    die("Update already running or lock failed.\n");
+    die("Update already running or lock failed.<br />");
 }
 register_shutdown_function(function() use ($fp, $lockFile) {
     flock($fp, LOCK_UN);
@@ -102,7 +220,7 @@ function curlDownloadFile($url, $dest) {
         curl_close($ch);
         fclose($fp);
         unlink($dest);
-        die("cURL download error: $error\n");
+        die("cURL download error: $error<br />");
     }
 
     curl_close($ch);
@@ -110,23 +228,23 @@ function curlDownloadFile($url, $dest) {
 }
 
 // VALIDATED DOWNLOAD
-echo "Downloading ZIP...\n";
+echo "Downloading ZIP...<br />";
 flush();
 curlDownloadFile($zipUrl, $zipFile);
 chmod($zipFile, 0644);
-echo "Download complete. File size: " . filesize($zipFile) . " bytes\n";
+echo "Download complete. File size: " . filesize($zipFile) . " bytes<br />";
 flush();
 
 // PROCESS ZIP
-echo "Opening ZIP file...\n";
+echo "Opening ZIP file...<br />";
 flush();
 
 if (!class_exists('ZipArchive')) {
-    die("ZipArchive class not available. Install php-zip extension.\n");
+    die("ZipArchive class not available. Install php-zip extension.<br />");
 }
 
 if (!file_exists($zipFile)) {
-    die("ZIP file disappeared after download.\n");
+    die("ZIP file disappeared after download.<br />");
 }
 
 $zip = new ZipArchive();
@@ -145,31 +263,27 @@ if ($openResult !== TRUE) {
     ];
     $errorMsg = isset($errors[$openResult]) ? $errors[$openResult] : 'Unknown error';
     @unlink($zipFile);
-    die("Failed to open ZIP file. Error code: $openResult ($errorMsg)\n");
+    die("Failed to open ZIP file. Error code: $openResult ($errorMsg)<br />");
 }
-echo "ZIP opened successfully.\n";
+echo "ZIP opened successfully.<br />";
 flush();
 
 $filesInZip = [];
-$rootFolder = 'Metronome-main';
-echo "Analyzing ZIP contents...\n";
+$rootFolder = $repoName . '-main';
+echo "Analyzing ZIP contents...<br />";
 flush();
 getZipFilesRecursive($zip, $rootFolder, $filesInZip);
 
 if (empty($filesInZip)) {
     $zip->close();
     @unlink($zipFile);
-    die("No valid files found in ZIP.\n");
+    die("No valid files found in ZIP.<br />");
 }
-echo "Found " . count($filesInZip) . " files in ZIP.\n";
+echo "Found " . count($filesInZip) . " files in ZIP.<br />";
 flush();
 
-// CLEANUP OLD FILES
-echo "Cleaning obsolete files...\n";
-deleteNotInZip($filesInZip, [$selfScript, $zipFile, $lockFile]);
-
 // EXTRACT NEW FILES
-echo "Extracting " . count($filesInZip) . " files...\n";
+echo "Extracting " . count($filesInZip) . " files...<br />";
 flush();
 $extracted = 0;
 for ($i = 0; $i < $zip->numFiles; $i++) {
@@ -211,7 +325,7 @@ for ($i = 0; $i < $zip->numFiles; $i++) {
             chmod($dstPath, 0644);
             $extracted++;
         } else {
-            echo "Warning: Could not write to $relativePath\n";
+            echo "Warning: Could not write to $relativePath<br />";
             flush();
         }
         fclose($zipStream);
@@ -219,9 +333,13 @@ for ($i = 0; $i < $zip->numFiles; $i++) {
 }
 flush();
 
+// CLEANUP OLD FILES
+echo "Cleaning obsolete files...<br />";
+deleteNotInZip($filesInZip, [$selfScript, $zipFile, $lockFile]);
+
 $zip->close();
 @unlink($zipFile);
 
-echo "Update completed: $extracted files extracted.\n";
-echo "Lock released. Script remains for manual re-runs.\n";
+echo "Update completed: $extracted files extracted.<br />";
+echo "Lock released. Script remains for manual re-runs.<br />";
 ?>
