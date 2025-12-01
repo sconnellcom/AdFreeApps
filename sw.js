@@ -8,7 +8,7 @@ const urlsToCache = [
     '/metronome/metronome.js?v=2',
     '/timer/',
     '/timer/index.html',
-    '/timer/timer.js',
+    '/timer/timer.js?v=2',
     '/draw/',
     '/draw/index.html',
     '/level/',
@@ -49,7 +49,7 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
         caches.open(CACHE_NAME).then((cache) => {
             return cache.match(event.request).then((cachedResponse) => {
-                // Fetch from network in parallel
+                // Always fetch from network to update cache in background
                 const fetchPromise = fetch(event.request).then((networkResponse) => {
                     // Only cache successful GET requests for same-origin resources
                     const shouldCache = networkResponse && 
@@ -66,11 +66,15 @@ self.addEventListener('fetch', (event) => {
                     return null;
                 });
 
-                // Return cached response immediately if available, otherwise wait for network
+                // If we have a cached response, return it immediately
+                // The fetchPromise will update the cache in the background
                 if (cachedResponse) {
+                    // Trigger background fetch but don't wait for it
+                    fetchPromise.catch(() => {}); // Suppress unhandled promise rejection
                     return cachedResponse;
                 }
                 
+                // No cached response, wait for network
                 return fetchPromise.then((networkResponse) => {
                     if (networkResponse) {
                         return networkResponse;
