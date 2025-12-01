@@ -1496,20 +1496,27 @@ class Metronome {
             }
 
             // Calculate metronome usage time (sum of all start-to-stop periods)
-            // Sort times to pair them correctly
-            const sortedStarts = [...session.startTimes].sort((a, b) => a - b);
-            const sortedStops = [...session.stopTimes].sort((a, b) => a - b);
+            // Use a state machine approach: pair consecutive start-stop events chronologically
+            const allEvents = [
+                ...session.startTimes.map(t => ({ time: t, type: 'start' })),
+                ...session.stopTimes.map(t => ({ time: t, type: 'stop' }))
+            ].sort((a, b) => a.time - b.time);
             
             let usageMs = 0;
-            // Pair each start with its corresponding stop
-            for (let i = 0; i < sortedStarts.length; i++) {
-                const startTime = sortedStarts[i];
-                // Find the first stop that comes after this start
-                const stopIndex = sortedStops.findIndex(stop => stop > startTime);
-                if (stopIndex !== -1) {
-                    usageMs += sortedStops[stopIndex] - startTime;
-                    // Remove this stop so it's not used again
-                    sortedStops.splice(stopIndex, 1);
+            let currentStartTime = null;
+            
+            for (const event of allEvents) {
+                if (event.type === 'start') {
+                    // Only record start if not already running
+                    if (currentStartTime === null) {
+                        currentStartTime = event.time;
+                    }
+                } else if (event.type === 'stop') {
+                    // Only record stop if currently running
+                    if (currentStartTime !== null) {
+                        usageMs += event.time - currentStartTime;
+                        currentStartTime = null;
+                    }
                 }
             }
 
