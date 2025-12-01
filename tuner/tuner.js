@@ -17,8 +17,9 @@ class Tuner {
         this.maxFrequency = 1500;  // Maximum detectable frequency
 
         // Audio level meter thresholds (percentage values)
-        // RMS values typically range from 0 to ~0.5 for loud sounds
-        this.RMS_TO_PERCENTAGE_MULTIPLIER = 200;
+        // RMS values from microphones are typically very low (0.01-0.1 range)
+        // Multiplier of 500 provides good sensitivity for typical microphone input
+        this.RMS_TO_PERCENTAGE_MULTIPLIER = 500;
         this.NO_SIGNAL_THRESHOLD = 1;    // Below this: "No signal"
         this.QUIET_THRESHOLD = 10;       // Below this: "Too quiet"
         this.LOW_THRESHOLD = 30;         // Below this: "Low", above: "Good"
@@ -438,9 +439,9 @@ class Tuner {
         rms = Math.sqrt(rms / buffer.length);
 
         // If too quiet, return -1
-        // Threshold of 0.005 RMS corresponds to 1% audio level (0.005 × 200 = 1)
+        // Threshold of 0.002 RMS corresponds to 1% audio level (0.002 × 500 = 1)
         // This matches the audio level meter's NO_SIGNAL_THRESHOLD percentage
-        if (rms < 0.005) return -1;
+        if (rms < 0.002) return -1;
 
         // Autocorrelation using normalized difference function
         const SIZE = buffer.length;
