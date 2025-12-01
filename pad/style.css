@@ -229,7 +229,6 @@ body {
     align-items: center;
     padding: 10px;
     transition: background 0.3s ease;
-    overflow: hidden;
 }
 
 .container {
@@ -455,6 +454,7 @@ h1 {
     gap: 15px;
     padding: 10px 0;
     min-height: 0;
+    touch-action: none;
 }
 
 .pads-row {
@@ -479,7 +479,6 @@ h1 {
     border: 2px solid rgba(255, 255, 255, 0.1);
     user-select: none;
     -webkit-user-select: none;
-    touch-action: none;
 }
 
 .drum-pad:hover {
