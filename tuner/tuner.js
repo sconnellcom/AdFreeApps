@@ -386,12 +386,13 @@ class Tuner {
 
         for (let offset = 0; offset < MAX_SAMPLES; offset++) {
             let correlation = 0;
+            const loopLimit = MAX_SAMPLES - offset;
 
-            for (let i = 0; i < MAX_SAMPLES; i++) {
+            for (let i = 0; i < loopLimit; i++) {
                 correlation += Math.abs((buffer[i]) - (buffer[i + offset]));
             }
 
-            correlation = 1 - (correlation / MAX_SAMPLES);
+            correlation = 1 - (correlation / loopLimit);
             correlations[offset] = correlation;
 
             if ((correlation > 0.9) && (correlation > bestCorrelation)) {
@@ -400,8 +401,14 @@ class Tuner {
                 foundGoodCorrelation = true;
             } else if (foundGoodCorrelation) {
                 // Short-circuit once we've found a good correlation and it starts decreasing
-                const shift = (correlations[bestOffset + 1] - correlations[bestOffset - 1]) / correlations[bestOffset];
-                return sampleRate / (bestOffset + (8 * shift));
+                // Add bounds checking and division by zero protection
+                if (bestOffset > 0 && bestOffset < MAX_SAMPLES - 1 && correlations[bestOffset] !== 0) {
+                    // Parabolic interpolation to refine the peak position
+                    // The factor 8 is an empirical refinement constant for pitch detection accuracy
+                    const shift = (correlations[bestOffset + 1] - correlations[bestOffset - 1]) / correlations[bestOffset];
+                    return sampleRate / (bestOffset + (8 * shift));
+                }
+                return sampleRate / bestOffset;
             }
         }
 
@@ -498,7 +505,8 @@ class Tuner {
         const cents = (halfStepsFromA4 - roundedHalfSteps) * 100;
 
         // Calculate note index and octave
-        // A4 is note index 9 (A is the 10th note: C=0, C#=1, ..., A=9, A#=10, B=11)
+        // In our noteNames array: C=0, C#=1, D=2, ..., A=9, A#=10, B=11
+        // A4 is at index 9 in the array
         const noteIndex = ((roundedHalfSteps % 12) + 12 + 9) % 12; // +9 because A is at index 9
         const octave = Math.floor((roundedHalfSteps + 9) / 12) + 4; // Adjust octave calculation
 
