@@ -730,19 +730,14 @@ h1 {
 
     .drum-pads {
         gap: 12px;
-        flex: 0 0 auto;
     }
 
     .pads-row {
         gap: 12px;
-        flex: 0 0 auto;
     }
 
     .drum-pad {
         border-radius: 12px;
-        aspect-ratio: 1 / 1;
-        flex: 1 1 0;
-        min-height: 0;
     }
 
     .pad-icon {
