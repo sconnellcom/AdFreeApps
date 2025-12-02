@@ -1226,6 +1226,13 @@ class DrumPad {
     }
 
     deleteSampleFromLibrary(index) {
+        const sample = this.sampleLibrary[index];
+        if (!sample) return;
+
+        if (!confirm(`Delete sample "${sample.name}"?`)) {
+            return;
+        }
+
         this.sampleLibrary.splice(index, 1);
         this.saveSampleLibraryToStorage();
         this.renderSampleList();
@@ -1366,6 +1373,13 @@ class DrumPad {
     }
 
     deleteBeat(index) {
+        const beat = this.savedBeats[index];
+        if (!beat) return;
+
+        if (!confirm(`Delete beat "${beat.name}"?`)) {
+            return;
+        }
+
         if (this.playingBeats.has(index)) {
             this.stopBeat(index);
         }
