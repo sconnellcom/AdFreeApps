@@ -1450,3 +1450,62 @@ body.sample-apply-mode .pad-label::before {
     color: white;
     border-color: var(--primary-color);
 }
+
+/* Scrub Mode Toggle */
+.scrub-mode-toggle {
+    flex: 1;
+    padding: 12px 8px;
+    border: none;
+    border-radius: 12px;
+    background: var(--surface-bg);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    border: 2px solid var(--border-color);
+}
+
+.scrub-mode-toggle:hover {
+    transform: translateY(-1px);
+    border-color: var(--primary-color);
+}
+
+.scrub-mode-toggle input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: var(--primary-color);
+}
+
+.scrub-mode-toggle:has(input:checked) {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.scrub-mode-toggle:has(input:checked) .scrub-label {
+    color: white;
+}
+
+.scrub-label {
+    font-size: 0.8em;
+    font-weight: 600;
+    color: var(--text-secondary);
+    transition: color 0.2s ease;
+}
+
+/* Scrub mode active - visual feedback on pads with samples */
+body.scrub-mode-active .drum-pad.has-sample {
+    position: relative;
+}
+
+body.scrub-mode-active .drum-pad.has-sample::before {
+    content: '↔↕';
+    position: absolute;
+    bottom: 4px;
+    left: 4px;
+    font-size: 0.6em;
+    opacity: 0.7;
+}

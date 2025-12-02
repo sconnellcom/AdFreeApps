@@ -10,6 +10,14 @@ class DrumPad {
     static RECORDING_BUFFER_MS = 200; // Buffer added to raw recordings for looping
     static SILENCE_THRESHOLD = 0.01; // Amplitude threshold for silence/noise detection
 
+    // Scrub mode constants
+    static SCRUB_SENSITIVITY = 0.01; // seconds per pixel (horizontal drag)
+    static PITCH_SENSITIVITY = 0.005; // pitch change per pixel (vertical drag)
+    static SCRUB_MOVE_THRESHOLD = 5; // minimum pixels to trigger position change
+    static PITCH_CHANGE_THRESHOLD = 0.05; // minimum pitch change to trigger update
+    static PITCH_MIN = 0.5; // minimum pitch rate
+    static PITCH_MAX = 2.0; // maximum pitch rate
+
     constructor() {
         this.audioContext = null;
         this.modifiers = {
@@ -56,6 +64,15 @@ class DrumPad {
         // Sample apply mode state
         this.isSampleApplyMode = false;
         this.sampleToApply = null;
+
+        // Scrub mode state
+        this.isScrubMode = false;
+        this.scrubStartPosition = null; // {x, y} for drag tracking
+        this.scrubActivePad = null; // Currently scrubbing pad
+        this.scrubAudioSource = null; // Active audio buffer source for scrubbing
+        this.scrubAudioBuffer = null; // Decoded audio buffer for scrubbing
+        this.scrubPitchRate = 1.0; // Current pitch rate during scrub
+        this.scrubBufferCache = new Map(); // Cache of decoded audio buffers by soundType
 
         this.initializeUI();
         this.setupEventListeners();
@@ -114,6 +131,9 @@ class DrumPad {
         // Default sound button
         this.defaultSoundBtn = document.getElementById('defaultSoundBtn');
 
+        // Scrub mode checkbox
+        this.scrubModeCheckbox = document.getElementById('scrubModeCheckbox');
+
         // Beat list
         this.beatList = document.getElementById('beatList');
         this.beatListItems = document.getElementById('beatListItems');
@@ -152,6 +172,13 @@ class DrumPad {
                 // Register this touch with the pad
                 for (const touch of e.changedTouches) {
                     this.touchPadMap.set(touch.identifier, pad);
+                    // Store touch start position for scrub mode
+                    if (this.isScrubMode && this.customSamples[pad.dataset.sound]) {
+                        this.scrubStartPosition = { x: touch.clientX, y: touch.clientY };
+                        this.scrubActivePad = pad;
+                        this.scrubPitchRate = 1.0;
+                        this.startScrubbing(pad.dataset.sound);
+                    }
                 }
                 this.handlePadPress(pad);
             }, { passive: false });
@@ -163,22 +190,42 @@ class DrumPad {
             pad.addEventListener('mousedown', (e) => {
                 e.preventDefault();
                 this.isMouseDown = true;
+                // Store mouse start position for scrub mode
+                if (this.isScrubMode && this.customSamples[pad.dataset.sound]) {
+                    this.scrubStartPosition = { x: e.clientX, y: e.clientY };
+                    this.scrubActivePad = pad;
+                    this.scrubPitchRate = 1.0;
+                    this.startScrubbing(pad.dataset.sound);
+                }
                 this.handlePadPress(pad);
             });
 
             pad.addEventListener('mouseup', (e) => {
                 this.isMouseDown = false;
                 this.handlePadRelease(pad);
+                if (this.isScrubMode) {
+                    this.stopScrubbing();
+                }
             });
 
             pad.addEventListener('mouseleave', (e) => {
-                this.handlePadRelease(pad);
+                // In scrub mode, don't release if still dragging
+                if (!this.isScrubMode || !this.isMouseDown) {
+                    this.handlePadRelease(pad);
+                }
             });
 
             // Mouse enter for dragging across pads
             pad.addEventListener('mouseenter', (e) => {
-                if (this.isMouseDown) {
+                if (this.isMouseDown && !this.isScrubMode) {
                     this.handlePadPress(pad);
+                }
+            });
+
+            // Mouse move for scrub mode
+            pad.addEventListener('mousemove', (e) => {
+                if (this.isScrubMode && this.isMouseDown && this.scrubStartPosition && this.scrubActivePad === pad) {
+                    this.handleScrubMove(e.clientX, e.clientY);
                 }
             });
         });
@@ -186,6 +233,16 @@ class DrumPad {
         // Global mouseup to reset mouse state when released outside pads
         document.addEventListener('mouseup', () => {
             this.isMouseDown = false;
+            if (this.isScrubMode) {
+                this.stopScrubbing();
+            }
+        });
+
+        // Global mousemove for scrub mode
+        document.addEventListener('mousemove', (e) => {
+            if (this.isScrubMode && this.isMouseDown && this.scrubStartPosition && this.scrubActivePad) {
+                this.handleScrubMove(e.clientX, e.clientY);
+            }
         });
 
         // Global touchmove handler for dragging across pads
@@ -199,6 +256,12 @@ class DrumPad {
                 // This allows scrolling on other parts of the page
                 if (pad || previousPad) {
                     e.preventDefault();
+                }
+
+                // Handle scrub mode
+                if (this.isScrubMode && this.scrubStartPosition && this.scrubActivePad) {
+                    this.handleScrubMove(touch.clientX, touch.clientY);
+                    continue; // Don't switch pads in scrub mode
                 }
 
                 // If touch moved to a different pad (or no pad)
@@ -227,6 +290,9 @@ class DrumPad {
                 if (currentPad) {
                     this.handlePadRelease(currentPad);
                     this.touchPadMap.delete(touch.identifier);
+                }
+                if (this.isScrubMode) {
+                    this.stopScrubbing();
                 }
             }
         }, { passive: false });
@@ -305,6 +371,17 @@ class DrumPad {
         // Default sound button
         this.defaultSoundBtn.addEventListener('click', () => {
             this.toggleDefaultSoundMode();
+        });
+
+        // Scrub mode checkbox
+        this.scrubModeCheckbox.addEventListener('change', () => {
+            this.isScrubMode = this.scrubModeCheckbox.checked;
+            if (this.isScrubMode) {
+                document.body.classList.add('scrub-mode-active');
+            } else {
+                document.body.classList.remove('scrub-mode-active');
+                this.stopScrubbing();
+            }
         });
 
         // Menu
@@ -633,6 +710,8 @@ class DrumPad {
                 this.customSamples[soundType] = base64data;
                 this.saveSamplesToStorage();
                 this.updatePadSampleIndicators();
+                // Clear the scrub buffer cache for this sound type (new sample stored)
+                this.scrubBufferCache.delete(soundType);
                 resolve();
             };
             reader.onerror = () => {
@@ -1032,6 +1111,177 @@ class DrumPad {
         }
     }
 
+    /**
+     * Start scrubbing a custom sample.
+     * Loads the audio buffer and prepares for playback control.
+     */
+    async startScrubbing(soundType) {
+        if (!this.customSamples[soundType]) {
+            return;
+        }
+
+        this.initAudioContext();
+
+        try {
+            // Check cache first
+            if (this.scrubBufferCache.has(soundType)) {
+                this.scrubAudioBuffer = this.scrubBufferCache.get(soundType);
+            } else {
+                // Decode base64 data URL to audio buffer
+                const base64data = this.customSamples[soundType];
+                const base64Content = base64data.split(',')[1];
+                const binaryString = atob(base64Content);
+                const bytes = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                const arrayBuffer = bytes.buffer;
+                
+                // Clone the buffer since decodeAudioData detaches it
+                const clonedBuffer = arrayBuffer.slice(0);
+                this.scrubAudioBuffer = await this.audioContext.decodeAudioData(clonedBuffer);
+                
+                // Cache the decoded buffer
+                this.scrubBufferCache.set(soundType, this.scrubAudioBuffer);
+            }
+            
+            this.scrubCurrentOffset = 0;
+            this.scrubGainNode = this.audioContext.createGain();
+            this.scrubGainNode.gain.setValueAtTime(0.8, this.audioContext.currentTime);
+            this.scrubGainNode.connect(this.audioContext.destination);
+            
+            // Start playback at the beginning
+            this.playScrubAtOffset(0, this.scrubPitchRate);
+        } catch (e) {
+            console.error('Error starting scrub:', e);
+        }
+    }
+
+    /**
+     * Play the scrub audio at a specific offset with a given pitch rate.
+     */
+    playScrubAtOffset(offsetSeconds, pitchRate) {
+        if (!this.scrubAudioBuffer || !this.scrubGainNode) {
+            return;
+        }
+
+        // Stop any existing source
+        if (this.scrubAudioSource) {
+            try {
+                this.scrubAudioSource.stop();
+            } catch (e) {
+                // Ignore errors from already stopped sources
+            }
+        }
+
+        // Create a new buffer source
+        this.scrubAudioSource = this.audioContext.createBufferSource();
+        this.scrubAudioSource.buffer = this.scrubAudioBuffer;
+        this.scrubAudioSource.playbackRate.value = pitchRate;
+        
+        // Apply effects if enabled
+        let currentNode = this.scrubAudioSource;
+
+        if (this.modifiers.distortion) {
+            const distortion = this.createDistortion();
+            currentNode.connect(distortion);
+            currentNode = distortion;
+        }
+
+        if (this.modifiers.reverb && this.reverbBuffer) {
+            const convolver = this.audioContext.createConvolver();
+            convolver.buffer = this.reverbBuffer;
+
+            const dryGain = this.audioContext.createGain();
+            const wetGain = this.audioContext.createGain();
+            dryGain.gain.value = 0.7;
+            wetGain.gain.value = 0.5;
+
+            currentNode.connect(dryGain);
+            currentNode.connect(convolver);
+            convolver.connect(wetGain);
+
+            dryGain.connect(this.scrubGainNode);
+            wetGain.connect(this.scrubGainNode);
+        } else {
+            currentNode.connect(this.scrubGainNode);
+        }
+
+        // Clamp offset to valid range
+        const duration = this.scrubAudioBuffer.duration;
+        const clampedOffset = Math.max(0, Math.min(offsetSeconds, duration - 0.01));
+        
+        this.scrubCurrentOffset = clampedOffset;
+        this.scrubAudioSource.start(0, clampedOffset);
+    }
+
+    /**
+     * Handle scrub movement based on drag distance.
+     * Left/right controls playback position (scrub).
+     * Up/down controls pitch.
+     */
+    handleScrubMove(currentX, currentY) {
+        if (!this.scrubStartPosition || !this.scrubAudioBuffer) {
+            return;
+        }
+
+        const deltaX = currentX - this.scrubStartPosition.x;
+        const deltaY = this.scrubStartPosition.y - currentY; // Inverted: up is positive
+
+        // Calculate new offset based on horizontal drag
+        const newOffset = this.scrubCurrentOffset + (deltaX * DrumPad.SCRUB_SENSITIVITY);
+
+        // Calculate pitch based on vertical drag
+        const basePitch = 1.0;
+        const pitchDelta = deltaY * DrumPad.PITCH_SENSITIVITY;
+        const newPitch = Math.max(DrumPad.PITCH_MIN, Math.min(DrumPad.PITCH_MAX, basePitch + pitchDelta));
+
+        // Only update if there's a significant change
+        const offsetChanged = Math.abs(deltaX) > DrumPad.SCRUB_MOVE_THRESHOLD;
+        const pitchChanged = Math.abs(newPitch - this.scrubPitchRate) > DrumPad.PITCH_CHANGE_THRESHOLD;
+
+        if (offsetChanged || pitchChanged) {
+            // Update start position for continuous dragging
+            this.scrubStartPosition = { x: currentX, y: currentY };
+            
+            if (pitchChanged) {
+                this.scrubPitchRate = newPitch;
+            }
+
+            // Clamp offset to valid range
+            const duration = this.scrubAudioBuffer.duration;
+            const clampedOffset = Math.max(0, Math.min(newOffset, duration - 0.01));
+
+            // Restart playback at new position with new pitch
+            this.playScrubAtOffset(clampedOffset, this.scrubPitchRate);
+        }
+    }
+
+    /**
+     * Stop scrubbing and clean up audio resources.
+     */
+    stopScrubbing() {
+        if (this.scrubAudioSource) {
+            try {
+                this.scrubAudioSource.stop();
+            } catch (e) {
+                // Ignore errors from already stopped sources
+            }
+            this.scrubAudioSource = null;
+        }
+
+        if (this.scrubGainNode) {
+            this.scrubGainNode.disconnect();
+            this.scrubGainNode = null;
+        }
+
+        this.scrubAudioBuffer = null;
+        this.scrubStartPosition = null;
+        this.scrubActivePad = null;
+        this.scrubPitchRate = 1.0;
+        this.scrubCurrentOffset = 0;
+    }
+
     loadBeats() {
         try {
             const stored = localStorage.getItem(DrumPad.STORAGE_KEY);
@@ -1222,6 +1472,8 @@ class DrumPad {
         this.customSamples[soundType] = sample.data;
         this.saveSamplesToStorage();
         this.updatePadSampleIndicators();
+        // Clear the scrub buffer cache for this sound type (new sample applied)
+        this.scrubBufferCache.delete(soundType);
         this.cancelSampleApplyMode();
     }
 
@@ -1268,6 +1520,8 @@ class DrumPad {
             delete this.customSamples[soundType];
             this.saveSamplesToStorage();
             this.updatePadSampleIndicators();
+            // Clear the scrub buffer cache for this sound type
+            this.scrubBufferCache.delete(soundType);
         }
         
         // Turn off default sound mode after resetting
@@ -1523,6 +1777,12 @@ class DrumPad {
         // If in sample recording mode, save the sample to this pad
         if (this.isSampleRecording) {
             this.saveSampleToPad(soundType);
+            return;
+        }
+
+        // If in scrub mode with a custom sample, don't play normally
+        // (scrubbing is handled separately in touch/mouse handlers)
+        if (this.isScrubMode && this.customSamples[soundType]) {
             return;
         }
 
