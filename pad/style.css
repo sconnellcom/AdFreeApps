@@ -958,6 +958,28 @@ h1 {
     border-color: var(--primary-color);
 }
 
+.settings-menu-btn.reset-mode-active {
+    background: #f59e0b;
+    border-color: #f59e0b;
+    animation: reset-mode-indicator-pulse 1.5s infinite;
+}
+
+.settings-menu-btn.reset-mode-active .settings-icon {
+    color: white;
+}
+
+@keyframes reset-mode-indicator-pulse {
+
+    0%,
+    100% {
+        box-shadow: 0 2px 6px rgba(245, 158, 11, 0.3);
+    }
+
+    50% {
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.6);
+    }
+}
+
 .menu-icon,
 .settings-icon {
     font-size: 1.2em;
@@ -1005,6 +1027,12 @@ h1 {
     background: var(--surface-bg);
 }
 
+.settings-menu-item.active {
+    background: #f59e0b;
+    color: white;
+    font-weight: 600;
+}
+
 .settings-menu-label {
     font-size: 0.8em;
     font-weight: 600;
@@ -1019,6 +1047,19 @@ h1 {
     padding: 8px 0;
     font-size: 0.9em;
     color: var(--text-color);
+    position: relative;
+}
+
+.settings-menu-slider.has-value::before {
+    content: '';
+    position: absolute;
+    left: -8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #f59e0b;
 }
 
 .settings-menu-slider .slider-label {
@@ -1090,6 +1131,19 @@ h1 {
     padding: 8px 0;
     font-size: 0.9em;
     color: var(--text-color);
+    position: relative;
+}
+
+.settings-menu-pitch.has-value::before {
+    content: '';
+    position: absolute;
+    left: -8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #f59e0b;
 }
 
 .settings-menu-pitch .pitch-label {

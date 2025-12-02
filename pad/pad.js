@@ -124,10 +124,13 @@ class DrumPad {
         this.settingsMenuDropdown = document.getElementById('settingsMenuDropdown');
         this.reverbSlider = document.getElementById('reverbSlider');
         this.reverbDisplay = document.getElementById('reverbDisplay');
+        this.reverbSliderContainer = document.getElementById('reverbSliderContainer');
         this.distortionSlider = document.getElementById('distortionSlider');
         this.distortionDisplay = document.getElementById('distortionDisplay');
+        this.distortionSliderContainer = document.getElementById('distortionSliderContainer');
         this.settingsPitchSlider = document.getElementById('settingsPitchSlider');
         this.settingsPitchDisplay = document.getElementById('settingsPitchDisplay');
+        this.pitchSliderContainer = document.getElementById('pitchSliderContainer');
         this.settingsResetBtn = document.getElementById('settingsResetBtn');
 
         // Beat list
@@ -311,6 +314,12 @@ class DrumPad {
             e.stopPropagation();
             this.modifiers.reverb = parseInt(e.target.value);
             this.reverbDisplay.textContent = this.modifiers.reverb;
+            if (this.modifiers.reverb > 0) {
+                this.reverbSliderContainer.classList.add('has-value');
+            } else {
+                this.reverbSliderContainer.classList.remove('has-value');
+            }
+            this.updateSettingsIndicator();
         });
 
         this.reverbSlider.addEventListener('change', (e) => {
@@ -322,6 +331,12 @@ class DrumPad {
             e.stopPropagation();
             this.modifiers.distortion = parseInt(e.target.value);
             this.distortionDisplay.textContent = this.modifiers.distortion;
+            if (this.modifiers.distortion > 0) {
+                this.distortionSliderContainer.classList.add('has-value');
+            } else {
+                this.distortionSliderContainer.classList.remove('has-value');
+            }
+            this.updateSettingsIndicator();
         });
 
         this.distortionSlider.addEventListener('change', (e) => {
@@ -333,6 +348,12 @@ class DrumPad {
             e.stopPropagation();
             this.modifiers.pitchLevel = parseInt(e.target.value);
             this.settingsPitchDisplay.textContent = this.modifiers.pitchLevel > 0 ? `+${this.modifiers.pitchLevel}` : this.modifiers.pitchLevel;
+            if (this.modifiers.pitchLevel !== 0) {
+                this.pitchSliderContainer.classList.add('has-value');
+            } else {
+                this.pitchSliderContainer.classList.remove('has-value');
+            }
+            this.updateSettingsIndicator();
         });
 
         this.settingsPitchSlider.addEventListener('change', (e) => {
@@ -346,11 +367,16 @@ class DrumPad {
         });
 
         document.addEventListener('click', (e) => {
-            // Close settings menu when clicking outside (but not on pads)
+            // Close settings menu when clicking outside (but not on pads or in reset mode)
             if (!this.settingsMenuBtn.contains(e.target) &&
                 !this.settingsMenuDropdown.contains(e.target) &&
                 !e.target.closest('.drum-pad')) {
                 this.settingsMenuDropdown.classList.remove('visible');
+            }
+            // Don't close settings menu when clicking pads in reset mode
+            if (this.isDefaultSoundMode && e.target.closest('.drum-pad')) {
+                // Keep menu open
+                return;
             }
             // Close settings dropdowns when clicking outside
             // Check if click is outside both container AND dropdown
@@ -2054,6 +2080,7 @@ class DrumPad {
             this.settingsResetBtn.classList.remove('active');
             document.body.classList.remove('default-sound-mode');
         }
+        this.updateSettingsIndicator();
     }
 
     resetPadToDefault(soundType) {
@@ -2062,11 +2089,24 @@ class DrumPad {
             this.saveSamplesToStorage();
             this.updatePadSampleIndicators();
         }
+        // Check if all pads have been reset
+        if (Object.keys(this.customSamples).length === 0) {
+            // All pads are reset, exit reset mode
+            this.toggleDefaultSoundMode();
+        }
+    }
 
-        // Turn off default sound mode after resetting
-        this.isDefaultSoundMode = false;
-        this.settingsResetBtn.classList.remove('active');
-        document.body.classList.remove('default-sound-mode');
+    updateSettingsIndicator() {
+        // Show indicator if any effects are active OR reset mode is active
+        const hasEffects = this.modifiers.reverb > 0 ||
+            this.modifiers.distortion > 0 ||
+            this.modifiers.pitchLevel !== 0;
+
+        if (hasEffects || this.isDefaultSoundMode) {
+            this.settingsMenuBtn.classList.add('reset-mode-active');
+        } else {
+            this.settingsMenuBtn.classList.remove('reset-mode-active');
+        }
     }
 
     escapeHtml(text) {
