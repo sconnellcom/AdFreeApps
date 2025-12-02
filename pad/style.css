@@ -1094,3 +1094,84 @@ h1 {
     color: white;
     border-color: #dc2626;
 }
+
+/* Sample Recording Button */
+.sample-btn {
+    position: relative;
+}
+
+.sample-btn.recording {
+    background: #dc2626;
+    border-color: #dc2626;
+    animation: sample-recording-pulse 1s infinite;
+}
+
+.sample-btn.recording .modifier-label {
+    color: white;
+}
+
+@keyframes sample-recording-pulse {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 0 8px rgba(220, 38, 38, 0);
+    }
+}
+
+/* Sample Save Mode - Pads become save buttons */
+body.sample-save-mode .drum-pad {
+    background: linear-gradient(145deg, #16a34a 0%, #22c55e 100%);
+    border-color: #22c55e;
+    animation: save-mode-pulse 1.5s infinite;
+}
+
+body.sample-save-mode .drum-pad:hover {
+    background: linear-gradient(145deg, #15803d 0%, #16a34a 100%);
+}
+
+body.sample-save-mode .drum-pad:active,
+body.sample-save-mode .drum-pad.active {
+    background: linear-gradient(145deg, #166534 0%, #15803d 100%);
+}
+
+body.sample-save-mode .drum-pad .pad-icon::after {
+    content: '💾';
+    position: absolute;
+    font-size: 0.6em;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+body.sample-save-mode .drum-pad .pad-icon {
+    position: relative;
+    opacity: 0.3;
+}
+
+body.sample-save-mode .pad-label::before {
+    content: 'Save ';
+}
+
+@keyframes save-mode-pulse {
+    0%, 100% {
+        box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3), inset 0 2px 10px rgba(255, 255, 255, 0.1);
+    }
+    50% {
+        box-shadow: 0 4px 20px rgba(34, 197, 94, 0.6), inset 0 2px 10px rgba(255, 255, 255, 0.1);
+    }
+}
+
+/* Has custom sample indicator */
+.drum-pad.has-sample {
+    position: relative;
+}
+
+.drum-pad.has-sample::after {
+    content: '🎤';
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    font-size: 0.7em;
+    opacity: 0.8;
+}
