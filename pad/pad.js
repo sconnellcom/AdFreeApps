@@ -89,6 +89,11 @@ class DrumPad {
         localStorage.setItem('appTheme', theme);
     }
 
+    /**
+     * Updates the pitch display element to show the current pitch level.
+     * Called when pitch up or pitch down buttons are clicked.
+     * Shows "Pitch: 0" when neutral, or "Pitch: +N" / "Pitch: -N" when adjusted.
+     */
     updatePitchDisplay() {
         const pitchLevel = this.modifiers.pitchLevel;
         if (this.pitchDisplay) {
@@ -338,9 +343,7 @@ class DrumPad {
             }
             // Close settings dropdowns when clicking outside
             if (!e.target.closest('.beat-settings-container') && !e.target.closest('.sample-settings-container')) {
-                document.querySelectorAll('.beat-settings-dropdown.visible, .sample-settings-dropdown.visible').forEach(dd => {
-                    dd.classList.remove('visible');
-                });
+                this.closeOtherDropdowns();
             }
         });
     }
@@ -801,12 +804,16 @@ class DrumPad {
     normalizeModifiers(modifiers) {
         const normalized = { ...modifiers };
         
-        // Convert old pitchUp/pitchDown to pitchLevel
+        // Convert old pitchUp/pitchDown to pitchLevel.
+        // Old behavior used playback rates of 1.5 (pitchUp) and 0.7 (pitchDown).
+        // These correspond roughly to +7 and -6 semitones respectively.
+        // We use ±2 semitones as a reasonable middle-ground approximation
+        // that provides noticeable pitch change without being too extreme.
         if ('pitchUp' in normalized || 'pitchDown' in normalized) {
             if (normalized.pitchUp) {
-                normalized.pitchLevel = 2; // Approximate old behavior
+                normalized.pitchLevel = 2;
             } else if (normalized.pitchDown) {
-                normalized.pitchLevel = -2; // Approximate old behavior
+                normalized.pitchLevel = -2;
             } else {
                 normalized.pitchLevel = normalized.pitchLevel || 0;
             }
@@ -831,7 +838,7 @@ class DrumPad {
         
         if (beatEffects.reverb) merged.reverb = true;
         if (beatEffects.distortion) merged.distortion = true;
-        if (beatEffects.pitchLevel) {
+        if (beatEffects.pitchLevel !== undefined && beatEffects.pitchLevel !== 0) {
             merged.pitchLevel = Math.max(-5, Math.min(5, (merged.pitchLevel || 0) + beatEffects.pitchLevel));
         }
         
@@ -1030,6 +1037,31 @@ class DrumPad {
         });
     }
 
+    /**
+     * Parse a sample entry (supports both old string format and new object format).
+     * @param {string|object} sampleEntry - The sample entry from customSamples or sampleLibrary
+     * @returns {{data: string, effects: object|null}} Parsed sample data and effects
+     */
+    parseSampleEntry(sampleEntry) {
+        if (typeof sampleEntry === 'string') {
+            return { data: sampleEntry, effects: null };
+        }
+        return {
+            data: sampleEntry.data,
+            effects: sampleEntry.effects || null
+        };
+    }
+
+    /**
+     * Close all settings dropdowns except the specified one.
+     * @param {Element|null} exceptDropdown - Dropdown element to keep open, or null to close all
+     */
+    closeOtherDropdowns(exceptDropdown = null) {
+        document.querySelectorAll('.beat-settings-dropdown.visible, .sample-settings-dropdown.visible').forEach(dd => {
+            if (dd !== exceptDropdown) dd.classList.remove('visible');
+        });
+    }
+
     async playCustomSample(soundType) {
         if (!this.customSamples[soundType]) {
             return false;
@@ -1038,10 +1070,8 @@ class DrumPad {
         this.initAudioContext();
 
         try {
-            // Get sample data (supports both old string format and new object format)
-            const sampleEntry = this.customSamples[soundType];
-            const base64data = typeof sampleEntry === 'string' ? sampleEntry : sampleEntry.data;
-            const sampleEffects = typeof sampleEntry === 'object' && sampleEntry.effects ? sampleEntry.effects : null;
+            // Get sample data using helper (supports both old string format and new object format)
+            const { data: base64data, effects: sampleEffects } = this.parseSampleEntry(this.customSamples[soundType]);
             
             // Extract the base64 content from the data URL
             const base64Content = base64data.split(',')[1];
@@ -1199,10 +1229,7 @@ class DrumPad {
             
             settingsBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                // Close other dropdowns
-                document.querySelectorAll('.beat-settings-dropdown.visible, .sample-settings-dropdown.visible').forEach(dd => {
-                    if (dd !== settingsDropdown) dd.classList.remove('visible');
-                });
+                this.closeOtherDropdowns(settingsDropdown);
                 settingsDropdown.classList.toggle('visible');
             });
 
@@ -1337,10 +1364,7 @@ class DrumPad {
             
             settingsBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                // Close other dropdowns
-                document.querySelectorAll('.beat-settings-dropdown.visible, .sample-settings-dropdown.visible').forEach(dd => {
-                    if (dd !== settingsDropdown) dd.classList.remove('visible');
-                });
+                this.closeOtherDropdowns(settingsDropdown);
                 settingsDropdown.classList.toggle('visible');
             });
 
