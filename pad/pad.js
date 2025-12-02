@@ -13,9 +13,9 @@ class DrumPad {
     constructor() {
         this.audioContext = null;
         this.modifiers = {
-            reverb: false,
-            distortion: false,
-            pitchLevel: 0 // Range from -5 to +5
+            reverb: 0, // Range from 0 to 10
+            distortion: 0, // Range from 0 to 10
+            pitchLevel: 0 // Range from -10 to +10
         };
 
         // Reverb convolver
@@ -122,8 +122,10 @@ class DrumPad {
         // Settings menu
         this.settingsMenuBtn = document.getElementById('settingsMenuBtn');
         this.settingsMenuDropdown = document.getElementById('settingsMenuDropdown');
-        this.reverbCheckbox = document.getElementById('reverbCheckbox');
-        this.distortionCheckbox = document.getElementById('distortionCheckbox');
+        this.reverbSlider = document.getElementById('reverbSlider');
+        this.reverbDisplay = document.getElementById('reverbDisplay');
+        this.distortionSlider = document.getElementById('distortionSlider');
+        this.distortionDisplay = document.getElementById('distortionDisplay');
         this.settingsPitchSlider = document.getElementById('settingsPitchSlider');
         this.settingsPitchDisplay = document.getElementById('settingsPitchDisplay');
         this.settingsResetBtn = document.getElementById('settingsResetBtn');
@@ -304,22 +306,26 @@ class DrumPad {
             this.settingsMenuDropdown.classList.toggle('visible');
         });
 
-        // Reverb checkbox
-        this.reverbCheckbox.addEventListener('click', (e) => {
+        // Reverb slider
+        this.reverbSlider.addEventListener('input', (e) => {
             e.stopPropagation();
-        });
-        this.reverbCheckbox.addEventListener('change', (e) => {
-            e.stopPropagation();
-            this.modifiers.reverb = e.target.checked;
+            this.modifiers.reverb = parseInt(e.target.value);
+            this.reverbDisplay.textContent = this.modifiers.reverb;
         });
 
-        // Distortion checkbox
-        this.distortionCheckbox.addEventListener('click', (e) => {
+        this.reverbSlider.addEventListener('change', (e) => {
             e.stopPropagation();
         });
-        this.distortionCheckbox.addEventListener('change', (e) => {
+
+        // Distortion slider
+        this.distortionSlider.addEventListener('input', (e) => {
             e.stopPropagation();
-            this.modifiers.distortion = e.target.checked;
+            this.modifiers.distortion = parseInt(e.target.value);
+            this.distortionDisplay.textContent = this.modifiers.distortion;
+        });
+
+        this.distortionSlider.addEventListener('change', (e) => {
+            e.stopPropagation();
         });
 
         // Settings pitch slider
@@ -868,6 +874,7 @@ class DrumPad {
     /**
      * Normalize modifiers for backward compatibility.
      * Converts old pitchUp/pitchDown booleans to pitchLevel.
+     * Converts old boolean reverb/distortion to numeric (0 or 5).
      */
     normalizeModifiers(modifiers) {
         const normalized = { ...modifiers };
@@ -889,9 +896,29 @@ class DrumPad {
             delete normalized.pitchDown;
         }
 
+        // Convert old boolean reverb to numeric (0 or 5 for medium effect)
+        if (typeof normalized.reverb === 'boolean') {
+            normalized.reverb = normalized.reverb ? 5 : 0;
+        }
+
+        // Convert old boolean distortion to numeric (0 or 5 for medium effect)
+        if (typeof normalized.distortion === 'boolean') {
+            normalized.distortion = normalized.distortion ? 5 : 0;
+        }
+
         // Ensure pitchLevel is set
         if (normalized.pitchLevel === undefined) {
             normalized.pitchLevel = 0;
+        }
+
+        // Ensure reverb is set
+        if (normalized.reverb === undefined) {
+            normalized.reverb = 0;
+        }
+
+        // Ensure distortion is set
+        if (normalized.distortion === undefined) {
+            normalized.distortion = 0;
         }
 
         return normalized;
@@ -899,13 +926,22 @@ class DrumPad {
 
     /**
      * Merge beat-level effects with event modifiers.
-     * Beat effects are additive for pitch, and override for reverb/distortion.
+     * Beat effects are additive for pitch, and take maximum for reverb/distortion.
      */
     mergeEffects(modifiers, beatEffects) {
         const merged = { ...modifiers };
 
-        if (beatEffects.reverb) merged.reverb = true;
-        if (beatEffects.distortion) merged.distortion = true;
+        // Take the maximum reverb value
+        if (beatEffects.reverb !== undefined && beatEffects.reverb > (merged.reverb || 0)) {
+            merged.reverb = beatEffects.reverb;
+        }
+
+        // Take the maximum distortion value
+        if (beatEffects.distortion !== undefined && beatEffects.distortion > (merged.distortion || 0)) {
+            merged.distortion = beatEffects.distortion;
+        }
+
+        // Additive for pitch
         if (beatEffects.pitchLevel !== undefined && beatEffects.pitchLevel !== 0) {
             merged.pitchLevel = Math.max(-10, Math.min(10, (merged.pitchLevel || 0) + beatEffects.pitchLevel));
         }
@@ -920,8 +956,9 @@ class DrumPad {
      */
     async applyEffectsToBuffer(audioBuffer) {
         // Check if any effects are enabled
-        const hasEffects = this.modifiers.reverb || this.modifiers.distortion ||
-            this.modifiers.pitchLevel !== 0;
+        const hasEffects = (this.modifiers.reverb && this.modifiers.reverb > 0) || 
+                          (this.modifiers.distortion && this.modifiers.distortion > 0) ||
+                          this.modifiers.pitchLevel !== 0;
 
         if (!hasEffects) {
             return audioBuffer;
@@ -931,7 +968,7 @@ class DrumPad {
         const playbackRate = this.getPitchMultiplier();
 
         // Reverb adds extra time to the output
-        const reverbTail = this.modifiers.reverb ? DrumPad.REVERB_DURATION : 0;
+        const reverbTail = (this.modifiers.reverb && this.modifiers.reverb > 0) ? DrumPad.REVERB_DURATION : 0;
         const outputDuration = (audioBuffer.duration / playbackRate) + reverbTail;
         const outputLength = Math.ceil(outputDuration * audioBuffer.sampleRate);
 
@@ -950,14 +987,17 @@ class DrumPad {
         // Build effects chain
         let currentNode = source;
 
-        // Apply distortion
-        if (this.modifiers.distortion) {
+        // Apply distortion (if level > 0)
+        if (this.modifiers.distortion && this.modifiers.distortion > 0) {
+            const distortionLevel = this.modifiers.distortion;
+            const amount = 10 * distortionLevel;
+            
             const distortion = offlineContext.createWaveShaper();
             const curve = new Float32Array(DrumPad.WAVE_SHAPER_SAMPLES);
             for (let i = 0; i < DrumPad.WAVE_SHAPER_SAMPLES; i++) {
                 const x = (i * 2) / DrumPad.WAVE_SHAPER_SAMPLES - 1;
-                curve[i] = ((3 + DrumPad.DISTORTION_AMOUNT) * x * 20 * (Math.PI / 180)) /
-                    (Math.PI + DrumPad.DISTORTION_AMOUNT * Math.abs(x));
+                curve[i] = ((3 + amount) * x * 20 * (Math.PI / 180)) /
+                    (Math.PI + amount * Math.abs(x));
             }
             distortion.curve = curve;
             distortion.oversample = '4x';
@@ -965,8 +1005,8 @@ class DrumPad {
             currentNode = distortion;
         }
 
-        // Apply reverb
-        if (this.modifiers.reverb) {
+        // Apply reverb (if level > 0)
+        if (this.modifiers.reverb && this.modifiers.reverb > 0) {
             // Create reverb impulse response for offline context
             // Use the same channel count as the input audio buffer
             const reverbLength = offlineContext.sampleRate * DrumPad.REVERB_DURATION;
@@ -984,8 +1024,14 @@ class DrumPad {
 
             const dryGain = offlineContext.createGain();
             const wetGain = offlineContext.createGain();
-            dryGain.gain.value = 0.7;
-            wetGain.gain.value = 0.5;
+            
+            // Scale wet/dry mix based on reverb level (0-10)
+            const reverbLevel = this.modifiers.reverb;
+            const wetAmount = 0.05 + (reverbLevel / 10) * 0.85;
+            const dryAmount = 1.0 - (reverbLevel / 20);
+            
+            dryGain.gain.value = dryAmount;
+            wetGain.gain.value = wetAmount;
 
             currentNode.connect(dryGain);
             currentNode.connect(convolver);
@@ -1172,22 +1218,28 @@ class DrumPad {
             // Apply pitch modifier
             source.playbackRate.value = this.getPitchMultiplier(effectiveModifiers.pitchLevel);
 
-            // Distortion
-            if (effectiveModifiers.distortion) {
-                const distortion = this.createDistortion();
+            // Distortion (apply if level > 0)
+            if (effectiveModifiers.distortion && effectiveModifiers.distortion > 0) {
+                const distortion = this.createDistortion(effectiveModifiers.distortion);
                 currentNode.connect(distortion);
                 currentNode = distortion;
             }
 
-            // Reverb
-            if (effectiveModifiers.reverb && this.reverbBuffer) {
+            // Reverb (apply if level > 0)
+            if (effectiveModifiers.reverb && effectiveModifiers.reverb > 0 && this.reverbBuffer) {
                 const convolver = this.audioContext.createConvolver();
                 convolver.buffer = this.reverbBuffer;
 
                 const dryGain = this.audioContext.createGain();
                 const wetGain = this.audioContext.createGain();
-                dryGain.gain.value = 0.7;
-                wetGain.gain.value = 0.5;
+                
+                // Scale wet/dry mix based on reverb level (0-10)
+                const reverbLevel = effectiveModifiers.reverb;
+                const wetAmount = 0.05 + (reverbLevel / 10) * 0.85;
+                const dryAmount = 1.0 - (reverbLevel / 20);
+                
+                dryGain.gain.value = dryAmount;
+                wetGain.gain.value = wetAmount;
 
                 currentNode.connect(dryGain);
                 currentNode.connect(convolver);
@@ -1244,12 +1296,12 @@ class DrumPad {
             const beatItem = document.createElement('div');
             beatItem.className = 'beat-item';
 
-            // Build effects indicators
-            const effects = beat.effects || {};
+            // Build effects indicators - normalize for backward compatibility
+            const normalizedEffects = this.normalizeModifiers(beat.effects || {});
             const effectIndicators = [];
-            if (effects.reverb) effectIndicators.push('R');
-            if (effects.distortion) effectIndicators.push('D');
-            if (effects.pitchLevel && effects.pitchLevel !== 0) effectIndicators.push(`P${effects.pitchLevel > 0 ? '+' : ''}${effects.pitchLevel}`);
+            if (normalizedEffects.reverb && normalizedEffects.reverb > 0) effectIndicators.push(`R${normalizedEffects.reverb}`);
+            if (normalizedEffects.distortion && normalizedEffects.distortion > 0) effectIndicators.push(`D${normalizedEffects.distortion}`);
+            if (normalizedEffects.pitchLevel && normalizedEffects.pitchLevel !== 0) effectIndicators.push(`P${normalizedEffects.pitchLevel > 0 ? '+' : ''}${normalizedEffects.pitchLevel}`);
             const effectsText = effectIndicators.length > 0 ? ` [${effectIndicators.join(',')}]` : '';
 
             beatItem.innerHTML = `
@@ -1267,18 +1319,22 @@ class DrumPad {
                     </button>
                     <div class="beat-settings-dropdown" data-index="${index}">
                         <div class="beat-settings-label">Effects:</div>
-                        <label class="beat-settings-checkbox">
-                            <input type="checkbox" data-effect="reverb" ${effects.reverb ? 'checked' : ''}>
-                            Reverb
-                        </label>
-                        <label class="beat-settings-checkbox">
-                            <input type="checkbox" data-effect="distortion" ${effects.distortion ? 'checked' : ''}>
-                            Distortion
-                        </label>
+                        <div class="beat-settings-slider">
+                            <span>Reverb: <span class="slider-value">${normalizedEffects.reverb || 0}</span></span>
+                            <div class="slider-container">
+                                <input type="range" class="effect-slider" data-effect="reverb" min="0" max="10" step="1" value="${normalizedEffects.reverb || 0}">
+                            </div>
+                        </div>
+                        <div class="beat-settings-slider">
+                            <span>Distortion: <span class="slider-value">${normalizedEffects.distortion || 0}</span></span>
+                            <div class="slider-container">
+                                <input type="range" class="effect-slider" data-effect="distortion" min="0" max="10" step="1" value="${normalizedEffects.distortion || 0}">
+                            </div>
+                        </div>
                         <div class="beat-settings-pitch">
-                            <span>Pitch: <span class="pitch-value">${effects.pitchLevel || 0}</span></span>
+                            <span>Pitch: <span class="pitch-value">${normalizedEffects.pitchLevel || 0}</span></span>
                             <div class="pitch-slider-container">
-                                <input type="range" class="pitch-slider" min="-10" max="10" step="1" value="${effects.pitchLevel || 0}">
+                                <input type="range" class="pitch-slider" min="-10" max="10" step="1" value="${normalizedEffects.pitchLevel || 0}">
                             </div>
                         </div>
                         <div class="beat-settings-divider"></div>
@@ -1321,19 +1377,29 @@ class DrumPad {
                 settingsDropdown.classList.remove('visible');
             });
 
-            // Effect checkboxes
-            settingsDropdown.querySelectorAll('input[data-effect]').forEach(checkbox => {
-                checkbox.addEventListener('click', (e) => {
+            // Effect sliders (reverb and distortion)
+            settingsDropdown.querySelectorAll('input[data-effect]').forEach(slider => {
+                slider.addEventListener('click', (e) => {
                     e.stopPropagation();
                 });
-                checkbox.addEventListener('change', (e) => {
+                slider.addEventListener('input', (e) => {
                     e.stopPropagation();
                     const effect = e.target.dataset.effect;
+                    const value = parseInt(e.target.value);
+                    // Update display
+                    const valueSpan = e.target.closest('.beat-settings-slider').querySelector('.slider-value');
+                    if (valueSpan) valueSpan.textContent = value;
+                });
+                slider.addEventListener('change', (e) => {
+                    e.stopPropagation();
+                    const effect = e.target.dataset.effect;
+                    const value = parseInt(e.target.value);
                     if (!this.savedBeats[index].effects) {
                         this.savedBeats[index].effects = {};
                     }
-                    this.savedBeats[index].effects[effect] = e.target.checked;
+                    this.savedBeats[index].effects[effect] = value;
                     this.saveBeatsToStorage();
+                    this.renderBeatList();
                 });
             });
 
@@ -1387,12 +1453,12 @@ class DrumPad {
             const sampleItem = document.createElement('div');
             sampleItem.className = 'sample-item';
 
-            // Build effects indicators
-            const effects = sample.effects || {};
+            // Build effects indicators - normalize for backward compatibility
+            const normalizedEffects = this.normalizeModifiers(sample.effects || {});
             const effectIndicators = [];
-            if (effects.reverb) effectIndicators.push('R');
-            if (effects.distortion) effectIndicators.push('D');
-            if (effects.pitchLevel && effects.pitchLevel !== 0) effectIndicators.push(`P${effects.pitchLevel > 0 ? '+' : ''}${effects.pitchLevel}`);
+            if (normalizedEffects.reverb && normalizedEffects.reverb > 0) effectIndicators.push(`R${normalizedEffects.reverb}`);
+            if (normalizedEffects.distortion && normalizedEffects.distortion > 0) effectIndicators.push(`D${normalizedEffects.distortion}`);
+            if (normalizedEffects.pitchLevel && normalizedEffects.pitchLevel !== 0) effectIndicators.push(`P${normalizedEffects.pitchLevel > 0 ? '+' : ''}${normalizedEffects.pitchLevel}`);
             const effectsText = effectIndicators.length > 0 ? ` [${effectIndicators.join(',')}]` : '';
 
             sampleItem.innerHTML = `
@@ -1410,18 +1476,22 @@ class DrumPad {
                     </button>
                     <div class="sample-settings-dropdown" data-index="${index}">
                         <div class="sample-settings-label">Effects:</div>
-                        <label class="sample-settings-checkbox">
-                            <input type="checkbox" data-effect="reverb" ${effects.reverb ? 'checked' : ''}>
-                            Reverb
-                        </label>
-                        <label class="sample-settings-checkbox">
-                            <input type="checkbox" data-effect="distortion" ${effects.distortion ? 'checked' : ''}>
-                            Distortion
-                        </label>
+                        <div class="sample-settings-slider">
+                            <span>Reverb: <span class="slider-value">${normalizedEffects.reverb || 0}</span></span>
+                            <div class="slider-container">
+                                <input type="range" class="effect-slider" data-effect="reverb" min="0" max="10" step="1" value="${normalizedEffects.reverb || 0}">
+                            </div>
+                        </div>
+                        <div class="sample-settings-slider">
+                            <span>Distortion: <span class="slider-value">${normalizedEffects.distortion || 0}</span></span>
+                            <div class="slider-container">
+                                <input type="range" class="effect-slider" data-effect="distortion" min="0" max="10" step="1" value="${normalizedEffects.distortion || 0}">
+                            </div>
+                        </div>
                         <div class="sample-settings-pitch">
-                            <span>Pitch: <span class="pitch-value">${effects.pitchLevel || 0}</span></span>
+                            <span>Pitch: <span class="pitch-value">${normalizedEffects.pitchLevel || 0}</span></span>
                             <div class="pitch-slider-container">
-                                <input type="range" class="pitch-slider" min="-10" max="10" step="1" value="${effects.pitchLevel || 0}">
+                                <input type="range" class="pitch-slider" min="-10" max="10" step="1" value="${normalizedEffects.pitchLevel || 0}">
                             </div>
                         </div>
                         <div class="sample-settings-divider"></div>
@@ -1456,19 +1526,29 @@ class DrumPad {
                 settingsDropdown.classList.remove('visible');
             });
 
-            // Effect checkboxes
-            settingsDropdown.querySelectorAll('input[data-effect]').forEach(checkbox => {
-                checkbox.addEventListener('click', (e) => {
+            // Effect sliders (reverb and distortion)
+            settingsDropdown.querySelectorAll('input[data-effect]').forEach(slider => {
+                slider.addEventListener('click', (e) => {
                     e.stopPropagation();
                 });
-                checkbox.addEventListener('change', (e) => {
+                slider.addEventListener('input', (e) => {
                     e.stopPropagation();
                     const effect = e.target.dataset.effect;
+                    const value = parseInt(e.target.value);
+                    // Update display
+                    const valueSpan = e.target.closest('.sample-settings-slider').querySelector('.slider-value');
+                    if (valueSpan) valueSpan.textContent = value;
+                });
+                slider.addEventListener('change', (e) => {
+                    e.stopPropagation();
+                    const effect = e.target.dataset.effect;
+                    const value = parseInt(e.target.value);
                     if (!this.sampleLibrary[index].effects) {
                         this.sampleLibrary[index].effects = {};
                     }
-                    this.sampleLibrary[index].effects[effect] = e.target.checked;
+                    this.sampleLibrary[index].effects[effect] = value;
                     this.saveSampleLibraryToStorage();
+                    this.renderSampleList();
                 });
             });
 
@@ -1543,22 +1623,28 @@ class DrumPad {
             const pitchLevel = sampleEffects.pitchLevel || 0;
             source.playbackRate.value = this.getPitchMultiplier(pitchLevel);
 
-            // Distortion
-            if (sampleEffects.distortion) {
-                const distortion = this.createDistortion();
+            // Distortion (apply if level > 0)
+            if (sampleEffects.distortion && sampleEffects.distortion > 0) {
+                const distortion = this.createDistortion(sampleEffects.distortion);
                 currentNode.connect(distortion);
                 currentNode = distortion;
             }
 
-            // Reverb
-            if (sampleEffects.reverb && this.reverbBuffer) {
+            // Reverb (apply if level > 0)
+            if (sampleEffects.reverb && sampleEffects.reverb > 0 && this.reverbBuffer) {
                 const convolver = this.audioContext.createConvolver();
                 convolver.buffer = this.reverbBuffer;
 
                 const dryGain = this.audioContext.createGain();
                 const wetGain = this.audioContext.createGain();
-                dryGain.gain.value = 0.7;
-                wetGain.gain.value = 0.5;
+                
+                // Scale wet/dry mix based on reverb level (0-10)
+                const reverbLevel = sampleEffects.reverb;
+                const wetAmount = 0.05 + (reverbLevel / 10) * 0.85;
+                const dryAmount = 1.0 - (reverbLevel / 20);
+                
+                dryGain.gain.value = dryAmount;
+                wetGain.gain.value = wetAmount;
 
                 currentNode.connect(dryGain);
                 currentNode.connect(convolver);
@@ -1636,14 +1722,14 @@ class DrumPad {
             // Get the sound label with emoji
             const soundLabel = this.getSoundLabel(soundType);
 
-            // Get settings for this default sound
-            const settings = this.defaultSoundSettings[soundType] || { reverb: false, distortion: false, pitchLevel: 0 };
+            // Get settings for this default sound - normalize for backward compatibility
+            const normalizedSettings = this.normalizeModifiers(this.defaultSoundSettings[soundType] || { reverb: 0, distortion: 0, pitchLevel: 0 });
 
             // Build effects indicators
             const effectIndicators = [];
-            if (settings.reverb) effectIndicators.push('R');
-            if (settings.distortion) effectIndicators.push('D');
-            if (settings.pitchLevel && settings.pitchLevel !== 0) effectIndicators.push(`P${settings.pitchLevel > 0 ? '+' : ''}${settings.pitchLevel}`);
+            if (normalizedSettings.reverb && normalizedSettings.reverb > 0) effectIndicators.push(`R${normalizedSettings.reverb}`);
+            if (normalizedSettings.distortion && normalizedSettings.distortion > 0) effectIndicators.push(`D${normalizedSettings.distortion}`);
+            if (normalizedSettings.pitchLevel && normalizedSettings.pitchLevel !== 0) effectIndicators.push(`P${normalizedSettings.pitchLevel > 0 ? '+' : ''}${normalizedSettings.pitchLevel}`);
             const effectsText = effectIndicators.length > 0 ? ` [${effectIndicators.join(',')}]` : '';
 
             sampleItem.innerHTML = `
@@ -1660,18 +1746,22 @@ class DrumPad {
                     </button>
                     <div class="sample-settings-dropdown" data-sound="${soundType}">
                         <div class="sample-settings-label">Effects:</div>
-                        <label class="sample-settings-checkbox">
-                            <input type="checkbox" data-effect="reverb" ${settings.reverb ? 'checked' : ''}>
-                            Reverb
-                        </label>
-                        <label class="sample-settings-checkbox">
-                            <input type="checkbox" data-effect="distortion" ${settings.distortion ? 'checked' : ''}>
-                            Distortion
-                        </label>
+                        <div class="sample-settings-slider">
+                            <span>Reverb: <span class="slider-value">${normalizedSettings.reverb || 0}</span></span>
+                            <div class="slider-container">
+                                <input type="range" class="effect-slider" data-effect="reverb" min="0" max="10" step="1" value="${normalizedSettings.reverb || 0}">
+                            </div>
+                        </div>
+                        <div class="sample-settings-slider">
+                            <span>Distortion: <span class="slider-value">${normalizedSettings.distortion || 0}</span></span>
+                            <div class="slider-container">
+                                <input type="range" class="effect-slider" data-effect="distortion" min="0" max="10" step="1" value="${normalizedSettings.distortion || 0}">
+                            </div>
+                        </div>
                         <div class="sample-settings-pitch">
-                            <span>Pitch: <span class="pitch-value">${settings.pitchLevel || 0}</span></span>
+                            <span>Pitch: <span class="pitch-value">${normalizedSettings.pitchLevel || 0}</span></span>
                             <div class="pitch-slider-container">
-                                <input type="range" class="pitch-slider" min="-10" max="10" step="1" value="${settings.pitchLevel || 0}">
+                                <input type="range" class="pitch-slider" min="-10" max="10" step="1" value="${normalizedSettings.pitchLevel || 0}">
                             </div>
                         </div>
                     </div>
@@ -1694,18 +1784,27 @@ class DrumPad {
                 e.stopPropagation();
             });
 
-            // Effect checkboxes
-            settingsDropdown.querySelectorAll('input[data-effect]').forEach(checkbox => {
-                checkbox.addEventListener('click', (e) => {
+            // Effect sliders (reverb and distortion)
+            settingsDropdown.querySelectorAll('input[data-effect]').forEach(slider => {
+                slider.addEventListener('click', (e) => {
                     e.stopPropagation();
                 });
-                checkbox.addEventListener('change', (e) => {
+                slider.addEventListener('input', (e) => {
                     e.stopPropagation();
                     const effect = e.target.dataset.effect;
+                    const value = parseInt(e.target.value);
+                    // Update display
+                    const valueSpan = e.target.closest('.sample-settings-slider').querySelector('.slider-value');
+                    if (valueSpan) valueSpan.textContent = value;
+                });
+                slider.addEventListener('change', (e) => {
+                    e.stopPropagation();
+                    const effect = e.target.dataset.effect;
+                    const value = parseInt(e.target.value);
                     if (!this.defaultSoundSettings[soundType]) {
-                        this.defaultSoundSettings[soundType] = { reverb: false, distortion: false, pitchLevel: 0 };
+                        this.defaultSoundSettings[soundType] = { reverb: 0, distortion: 0, pitchLevel: 0 };
                     }
-                    this.defaultSoundSettings[soundType][effect] = e.target.checked;
+                    this.defaultSoundSettings[soundType][effect] = value;
                     this.saveDefaultSoundSettings();
                     // Update the display without re-rendering the entire list
                     this.updateDefaultSampleDisplay(soundType);
@@ -1756,14 +1855,14 @@ class DrumPad {
 
         if (!targetItem) return;
 
-        // Get updated settings
-        const settings = this.defaultSoundSettings[soundType] || { reverb: false, distortion: false, pitchLevel: 0 };
+        // Get updated settings - normalize for backward compatibility
+        const normalizedSettings = this.normalizeModifiers(this.defaultSoundSettings[soundType] || { reverb: 0, distortion: 0, pitchLevel: 0 });
 
         // Build effects indicators
         const effectIndicators = [];
-        if (settings.reverb) effectIndicators.push('R');
-        if (settings.distortion) effectIndicators.push('D');
-        if (settings.pitchLevel && settings.pitchLevel !== 0) effectIndicators.push(`P${settings.pitchLevel > 0 ? '+' : ''}${settings.pitchLevel}`);
+        if (normalizedSettings.reverb && normalizedSettings.reverb > 0) effectIndicators.push(`R${normalizedSettings.reverb}`);
+        if (normalizedSettings.distortion && normalizedSettings.distortion > 0) effectIndicators.push(`D${normalizedSettings.distortion}`);
+        if (normalizedSettings.pitchLevel && normalizedSettings.pitchLevel !== 0) effectIndicators.push(`P${normalizedSettings.pitchLevel > 0 ? '+' : ''}${normalizedSettings.pitchLevel}`);
         const effectsText = effectIndicators.length > 0 ? ` [${effectIndicators.join(',')}]` : '';
 
         // Update the name display
@@ -1841,22 +1940,28 @@ class DrumPad {
         // Apply effects chain
         let currentNode = soundNode;
 
-        // Distortion
-        if (settings.distortion) {
-            const distortion = this.createDistortion();
+        // Distortion (apply if level > 0)
+        if (settings.distortion && settings.distortion > 0) {
+            const distortion = this.createDistortion(settings.distortion);
             currentNode.connect(distortion);
             currentNode = distortion;
         }
 
-        // Reverb
-        if (settings.reverb && this.reverbBuffer) {
+        // Reverb (apply if level > 0)
+        if (settings.reverb && settings.reverb > 0 && this.reverbBuffer) {
             const convolver = this.audioContext.createConvolver();
             convolver.buffer = this.reverbBuffer;
 
             const dryGain = this.audioContext.createGain();
             const wetGain = this.audioContext.createGain();
-            dryGain.gain.value = 0.7;
-            wetGain.gain.value = 0.5;
+            
+            // Scale wet/dry mix based on reverb level (0-10)
+            const reverbLevel = settings.reverb;
+            const wetAmount = 0.05 + (reverbLevel / 10) * 0.85;
+            const dryAmount = 1.0 - (reverbLevel / 20);
+            
+            dryGain.gain.value = dryAmount;
+            wetGain.gain.value = wetAmount;
 
             currentNode.connect(dryGain);
             currentNode.connect(convolver);
@@ -2269,25 +2374,33 @@ class DrumPad {
         // Apply effects chain - use stored effects if available, otherwise use global modifiers
         let currentNode = soundNode;
 
-        const useDistortion = useStoredEffects ? storedEffects.distortion : this.modifiers.distortion;
-        const useReverb = useStoredEffects ? storedEffects.reverb : this.modifiers.reverb;
+        const distortionLevel = useStoredEffects ? storedEffects.distortion : this.modifiers.distortion;
+        const reverbLevel = useStoredEffects ? storedEffects.reverb : this.modifiers.reverb;
 
-        // Distortion
-        if (useDistortion) {
-            const distortion = this.createDistortion();
+        // Distortion (apply if level > 0)
+        if (distortionLevel > 0) {
+            const distortion = this.createDistortion(distortionLevel);
             currentNode.connect(distortion);
             currentNode = distortion;
         }
 
-        // Reverb
-        if (useReverb && this.reverbBuffer) {
+        // Reverb (apply if level > 0)
+        if (reverbLevel > 0 && this.reverbBuffer) {
             const convolver = this.audioContext.createConvolver();
             convolver.buffer = this.reverbBuffer;
 
             const dryGain = this.audioContext.createGain();
             const wetGain = this.audioContext.createGain();
-            dryGain.gain.value = 0.7;
-            wetGain.gain.value = 0.5;
+            
+            // Scale wet/dry mix based on reverb level (0-10)
+            // At level 1: 10% wet, 90% dry
+            // At level 5: 50% wet, 70% dry (default from before)
+            // At level 10: 90% wet, 50% dry
+            const wetAmount = 0.05 + (reverbLevel / 10) * 0.85; // 0.05 to 0.9
+            const dryAmount = 1.0 - (reverbLevel / 20); // 1.0 to 0.5
+            
+            dryGain.gain.value = dryAmount;
+            wetGain.gain.value = wetAmount;
 
             currentNode.connect(dryGain);
             currentNode.connect(convolver);
@@ -2598,13 +2711,20 @@ class DrumPad {
         return gain;
     }
 
-    createDistortion() {
+    createDistortion(level = 5) {
+        // Level ranges from 0-10, with 5 being the original default amount
         const distortion = this.audioContext.createWaveShaper();
         const curve = new Float32Array(DrumPad.WAVE_SHAPER_SAMPLES);
+        
+        // Scale distortion amount based on level (0-10)
+        // Level 1: minimal distortion (amount = 10)
+        // Level 5: medium distortion (amount = 50, original default)
+        // Level 10: maximum distortion (amount = 100)
+        const amount = 10 * level;
 
         for (let i = 0; i < DrumPad.WAVE_SHAPER_SAMPLES; i++) {
             const x = (i * 2) / DrumPad.WAVE_SHAPER_SAMPLES - 1;
-            curve[i] = ((3 + DrumPad.DISTORTION_AMOUNT) * x * 20 * (Math.PI / 180)) / (Math.PI + DrumPad.DISTORTION_AMOUNT * Math.abs(x));
+            curve[i] = ((3 + amount) * x * 20 * (Math.PI / 180)) / (Math.PI + amount * Math.abs(x));
         }
 
         distortion.curve = curve;

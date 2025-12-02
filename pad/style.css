@@ -1012,6 +1012,61 @@ h1 {
     margin-bottom: 8px;
 }
 
+.settings-menu-slider {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px 0;
+    font-size: 0.9em;
+    color: var(--text-color);
+}
+
+.settings-menu-slider .slider-label {
+    font-weight: 600;
+    font-size: 0.85em;
+}
+
+.settings-menu-slider .slider-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.settings-menu-slider .slider-value {
+    min-width: 30px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.85em;
+}
+
+.settings-menu-slider .effect-slider {
+    flex: 1;
+    height: 6px;
+    border-radius: 3px;
+    outline: none;
+    -webkit-appearance: none;
+    background: var(--border-color);
+}
+
+.settings-menu-slider .effect-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    cursor: pointer;
+}
+
+.settings-menu-slider .effect-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    cursor: pointer;
+    border: none;
+}
+
 .settings-menu-checkbox {
     display: flex;
     align-items: center;
@@ -1748,6 +1803,64 @@ body.default-sound-apply-mode .pad-label::before {
     font-weight: 600;
     color: var(--text-secondary);
     margin-bottom: 8px;
+}
+
+.beat-settings-slider,
+.sample-settings-slider {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0;
+    font-size: 0.9em;
+    color: var(--text-color);
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.beat-settings-slider .slider-container,
+.sample-settings-slider .slider-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.beat-settings-slider .slider-value,
+.sample-settings-slider .slider-value {
+    min-width: 30px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.85em;
+}
+
+.beat-settings-slider .effect-slider,
+.sample-settings-slider .effect-slider {
+    flex: 1;
+    height: 6px;
+    border-radius: 3px;
+    outline: none;
+    -webkit-appearance: none;
+    background: var(--border-color);
+}
+
+.beat-settings-slider .effect-slider::-webkit-slider-thumb,
+.sample-settings-slider .effect-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    cursor: pointer;
+}
+
+.beat-settings-slider .effect-slider::-moz-range-thumb,
+.sample-settings-slider .effect-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    cursor: pointer;
+    border: none;
 }
 
 .beat-settings-checkbox,

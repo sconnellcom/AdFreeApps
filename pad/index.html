@@ -148,14 +148,22 @@
                 </button>
                 <div id="settingsMenuDropdown" class="settings-menu-dropdown">
                     <div class="settings-menu-label">Global Effects:</div>
-                    <label class="settings-menu-checkbox">
-                        <input type="checkbox" id="reverbCheckbox" data-modifier="reverb">
-                        Reverb
-                    </label>
-                    <label class="settings-menu-checkbox">
-                        <input type="checkbox" id="distortionCheckbox" data-modifier="distortion">
-                        Distortion
-                    </label>
+                    <div class="settings-menu-slider">
+                        <label for="reverbSlider" class="slider-label">Reverb:</label>
+                        <div class="slider-container">
+                            <input type="range" id="reverbSlider" class="effect-slider" min="0" max="10"
+                                step="1" value="0">
+                        </div>
+                        <span id="reverbDisplay" class="slider-value">0</span>
+                    </div>
+                    <div class="settings-menu-slider">
+                        <label for="distortionSlider" class="slider-label">Distortion:</label>
+                        <div class="slider-container">
+                            <input type="range" id="distortionSlider" class="effect-slider" min="0" max="10"
+                                step="1" value="0">
+                        </div>
+                        <span id="distortionDisplay" class="slider-value">0</span>
+                    </div>
                     <div class="settings-menu-pitch">
                         <label for="settingsPitchSlider" class="pitch-label">Pitch:</label>
                         <div class="pitch-slider-container">
@@ -224,9 +232,9 @@
 
                     <h4>Effects Modifiers</h4>
                     <ul>
-                        <li><strong>Reverb:</strong> Adds echo/room effect to sounds</li>
-                        <li><strong>Distort:</strong> Adds gritty distortion</li>
-                        <li><strong>Pitch ↑/↓:</strong> Adjust pitch level from -5 to +5 (each step is one semitone)
+                        <li><strong>Reverb (0-10):</strong> Adds echo/room effect to sounds</li>
+                        <li><strong>Distortion (0-10):</strong> Adds gritty distortion</li>
+                        <li><strong>Pitch (-10 to +10):</strong> Adjust pitch level (each step is one semitone)
                         </li>
                     </ul>
 
