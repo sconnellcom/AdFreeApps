@@ -5,6 +5,7 @@ class DrumPad {
     static DISTORTION_AMOUNT = 50;
     static WAVE_SHAPER_SAMPLES = 44100;
     static STORAGE_KEY = 'drumPadBeats';
+    static SAMPLES_STORAGE_KEY = 'drumPadSamples';
     static RECORDING_BUFFER_MS = 200; // Buffer added to raw recordings for looping
 
     constructor() {
@@ -38,10 +39,18 @@ class DrumPad {
         // Playback state - Map of beatIndex -> timeoutIds array for multi-beat playback
         this.playingBeats = new Map();
 
+        // Sample recording state
+        this.isSampleRecording = false;
+        this.mediaRecorder = null;
+        this.recordedChunks = [];
+        this.customSamples = {}; // Map of soundType -> audio buffer
+        this.loadSamples();
+
         this.initializeUI();
         this.setupEventListeners();
         this.initializeTheme();
         this.renderBeatList();
+        this.updatePadSampleIndicators();
     }
 
     initializeTheme() {
@@ -86,6 +95,9 @@ class DrumPad {
         this.menuBtn = document.getElementById('menuBtn');
         this.menuDropdown = document.getElementById('menuDropdown');
         this.cleanupBtn = document.getElementById('cleanupBtn');
+
+        // Sample button
+        this.sampleBtn = document.getElementById('sampleBtn');
 
         // Beat list
         this.beatList = document.getElementById('beatList');
@@ -261,6 +273,11 @@ class DrumPad {
             this.saveBeat(true);
         });
 
+        // Sample button
+        this.sampleBtn.addEventListener('click', () => {
+            this.toggleSampleRecording();
+        });
+
         // Menu
         this.menuBtn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -348,6 +365,200 @@ class DrumPad {
 
         if (playAfterSave) {
             this.playBeat(this.savedBeats.length - 1);
+        }
+    }
+
+    // Sample recording methods
+    async toggleSampleRecording() {
+        if (this.isSampleRecording) {
+            this.cancelSampleRecording();
+        } else {
+            await this.startSampleRecording();
+        }
+    }
+
+    async startSampleRecording() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            
+            this.isSampleRecording = true;
+            this.recordedChunks = [];
+            
+            this.mediaRecorder = new MediaRecorder(stream);
+            
+            this.mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    this.recordedChunks.push(event.data);
+                }
+            };
+            
+            this.mediaRecorder.start();
+            
+            // Update UI
+            this.sampleBtn.classList.add('recording');
+            this.sampleBtn.querySelector('.modifier-label').textContent = 'Cancel';
+            document.body.classList.add('sample-save-mode');
+            
+        } catch (err) {
+            console.error('Error accessing microphone:', err);
+            alert('Could not access microphone. Please grant microphone permission.');
+        }
+    }
+
+    cancelSampleRecording() {
+        if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
+            this.mediaRecorder.stop();
+            // Stop all tracks to release the microphone
+            this.mediaRecorder.stream.getTracks().forEach(track => track.stop());
+        }
+        
+        this.isSampleRecording = false;
+        this.recordedChunks = [];
+        this.mediaRecorder = null;
+        
+        // Update UI
+        this.sampleBtn.classList.remove('recording');
+        this.sampleBtn.querySelector('.modifier-label').textContent = 'Sample';
+        document.body.classList.remove('sample-save-mode');
+    }
+
+    async saveSampleToPad(soundType) {
+        if (!this.isSampleRecording || !this.mediaRecorder) {
+            return;
+        }
+
+        return new Promise((resolve) => {
+            this.mediaRecorder.onstop = async () => {
+                // Stop all tracks to release the microphone
+                this.mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                
+                if (this.recordedChunks.length > 0) {
+                    const blob = new Blob(this.recordedChunks, { type: 'audio/webm' });
+                    
+                    // Store the sample as base64 for persistence
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        const base64data = reader.result;
+                        this.customSamples[soundType] = base64data;
+                        this.saveSamplesToStorage();
+                        this.updatePadSampleIndicators();
+                    };
+                    reader.readAsDataURL(blob);
+                }
+                
+                this.isSampleRecording = false;
+                this.recordedChunks = [];
+                this.mediaRecorder = null;
+                
+                // Update UI
+                this.sampleBtn.classList.remove('recording');
+                this.sampleBtn.querySelector('.modifier-label').textContent = 'Sample';
+                document.body.classList.remove('sample-save-mode');
+                
+                resolve();
+            };
+            
+            this.mediaRecorder.stop();
+        });
+    }
+
+    loadSamples() {
+        try {
+            const stored = localStorage.getItem(DrumPad.SAMPLES_STORAGE_KEY);
+            if (stored) {
+                this.customSamples = JSON.parse(stored);
+            }
+        } catch (e) {
+            console.error('Error loading samples:', e);
+            this.customSamples = {};
+        }
+    }
+
+    saveSamplesToStorage() {
+        try {
+            localStorage.setItem(DrumPad.SAMPLES_STORAGE_KEY, JSON.stringify(this.customSamples));
+        } catch (e) {
+            console.error('Error saving samples:', e);
+        }
+    }
+
+    updatePadSampleIndicators() {
+        document.querySelectorAll('.drum-pad').forEach(pad => {
+            const soundType = pad.dataset.sound;
+            if (this.customSamples[soundType]) {
+                pad.classList.add('has-sample');
+            } else {
+                pad.classList.remove('has-sample');
+            }
+        });
+    }
+
+    async playCustomSample(soundType) {
+        if (!this.customSamples[soundType]) {
+            return false;
+        }
+
+        this.initAudioContext();
+
+        try {
+            // Decode base64 to audio buffer
+            const base64data = this.customSamples[soundType];
+            const response = await fetch(base64data);
+            const arrayBuffer = await response.arrayBuffer();
+            const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
+
+            // Create buffer source
+            const source = this.audioContext.createBufferSource();
+            source.buffer = audioBuffer;
+
+            // Create gain node for volume control
+            const gainNode = this.audioContext.createGain();
+            gainNode.gain.setValueAtTime(0.8, this.audioContext.currentTime);
+
+            // Apply effects chain
+            let currentNode = source;
+
+            // Calculate pitch modifier
+            if (this.modifiers.pitchUp) {
+                source.playbackRate.value = 1.5;
+            } else if (this.modifiers.pitchDown) {
+                source.playbackRate.value = 0.7;
+            }
+
+            // Distortion
+            if (this.modifiers.distortion) {
+                const distortion = this.createDistortion();
+                currentNode.connect(distortion);
+                currentNode = distortion;
+            }
+
+            // Reverb
+            if (this.modifiers.reverb && this.reverbBuffer) {
+                const convolver = this.audioContext.createConvolver();
+                convolver.buffer = this.reverbBuffer;
+
+                const dryGain = this.audioContext.createGain();
+                const wetGain = this.audioContext.createGain();
+                dryGain.gain.value = 0.7;
+                wetGain.gain.value = 0.5;
+
+                currentNode.connect(dryGain);
+                currentNode.connect(convolver);
+                convolver.connect(wetGain);
+
+                dryGain.connect(gainNode);
+                wetGain.connect(gainNode);
+            } else {
+                currentNode.connect(gainNode);
+            }
+
+            gainNode.connect(this.audioContext.destination);
+            source.start();
+
+            return true;
+        } catch (e) {
+            console.error('Error playing custom sample:', e);
+            return false;
         }
     }
 
@@ -657,6 +868,12 @@ class DrumPad {
         // Add active class for visual feedback
         pad.classList.add('active');
 
+        // If in sample recording mode, save the sample to this pad
+        if (this.isSampleRecording) {
+            this.saveSampleToPad(soundType);
+            return;
+        }
+
         // Record the event if recording
         this.recordEvent(soundType);
 
@@ -698,6 +915,12 @@ class DrumPad {
 
     playSound(soundType) {
         if (!this.audioContext) return;
+
+        // Check for custom sample first
+        if (this.customSamples[soundType]) {
+            this.playCustomSample(soundType);
+            return;
+        }
 
         const time = this.audioContext.currentTime;
 
