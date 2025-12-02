@@ -487,7 +487,6 @@ h1 {
 
 .drum-pad-top {
     border-radius: 16px 16px 0 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .drum-pad-bottom {
@@ -736,8 +735,12 @@ h1 {
         gap: 12px;
     }
 
-    .drum-pad {
-        border-radius: 12px;
+    .drum-pad-top {
+        border-radius: 12px 12px 0 0;
+    }
+
+    .drum-pad-bottom {
+        border-radius: 0 0 12px 12px;
     }
 
     .pad-icon {
@@ -766,8 +769,12 @@ h1 {
         font-size: 1.1em;
     }
 
-    .drum-pad {
-        border-radius: 10px;
+    .drum-pad-top {
+        border-radius: 10px 10px 0 0;
+    }
+
+    .drum-pad-bottom {
+        border-radius: 0 0 10px 10px;
     }
 
     .pad-icon {
