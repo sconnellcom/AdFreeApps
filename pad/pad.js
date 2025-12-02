@@ -7,6 +7,7 @@ class DrumPad {
     static STORAGE_KEY = 'drumPadBeats';
     static SAMPLES_STORAGE_KEY = 'drumPadSamples';
     static SAMPLE_LIBRARY_KEY = 'drumPadSampleLibrary'; // For named samples
+    static PAD_LABELS_KEY = 'drumPadLabels'; // For pad label overrides
     static RECORDING_BUFFER_MS = 200; // Buffer added to raw recordings for looping
     static SILENCE_THRESHOLD = 0.01; // Amplitude threshold for silence/noise detection
 
@@ -64,6 +65,14 @@ class DrumPad {
         this.isDefaultSoundApplyMode = false;
         this.defaultSoundToApply = null;
 
+        // Beat apply mode state
+        this.isBeatApplyMode = false;
+        this.beatToApply = null;
+
+        // Pad label overrides
+        this.padLabels = {};
+        this.loadPadLabels();
+
         this.initializeUI();
         this.setupEventListeners();
         this.initializeTheme();
@@ -71,6 +80,7 @@ class DrumPad {
         this.renderSampleList();
         this.renderDefaultSampleList();
         this.updatePadSampleIndicators();
+        this.updatePadLabels();
     }
 
     initializeTheme() {
@@ -388,12 +398,15 @@ class DrumPad {
             }
 
             // Cancel apply modes when clicking outside drum pads and not on apply buttons
-            if (!e.target.closest('.drum-pad') && !e.target.closest('.sample-apply-btn')) {
+            if (!e.target.closest('.drum-pad') && !e.target.closest('.sample-apply-btn') && !e.target.closest('.beat-apply-btn')) {
                 if (this.isSampleApplyMode) {
                     this.cancelSampleApplyMode();
                 }
                 if (this.isDefaultSoundApplyMode) {
                     this.cancelDefaultSoundApplyMode();
+                }
+                if (this.isBeatApplyMode) {
+                    this.cancelBeatApplyMode();
                 }
             }
         });
@@ -819,6 +832,52 @@ class DrumPad {
         } catch (e) {
             console.error('Error saving default sound settings:', e);
         }
+    }
+
+    loadPadLabels() {
+        try {
+            const stored = localStorage.getItem(DrumPad.PAD_LABELS_KEY);
+            if (stored) {
+                this.padLabels = JSON.parse(stored);
+            }
+        } catch (e) {
+            console.error('Error loading pad labels:', e);
+            this.padLabels = {};
+        }
+    }
+
+    savePadLabels() {
+        try {
+            localStorage.setItem(DrumPad.PAD_LABELS_KEY, JSON.stringify(this.padLabels));
+        } catch (e) {
+            console.error('Error saving pad labels:', e);
+        }
+    }
+
+    updatePadLabels() {
+        document.querySelectorAll('.drum-pad-bottom').forEach(pad => {
+            const soundType = pad.dataset.sound;
+            const labelSpan = pad.querySelector('.pad-label');
+            if (labelSpan) {
+                if (this.padLabels[soundType]) {
+                    labelSpan.textContent = this.padLabels[soundType];
+                } else {
+                    // Reset to default label
+                    const defaultLabels = {
+                        'kick': 'Kick',
+                        'snare': 'Snare',
+                        'hihat': 'Hi-Hat',
+                        'tom': 'Tom',
+                        'cymbal': 'Cymbal',
+                        'clap': 'Clap',
+                        'cowbell': 'Cowbell',
+                        'rim': 'Rim',
+                        'shaker': 'Shaker'
+                    };
+                    labelSpan.textContent = defaultLabels[soundType] || soundType;
+                }
+            }
+        });
     }
 
     /**
@@ -1355,6 +1414,9 @@ class DrumPad {
             beatItem.innerHTML = `
                 <span class="beat-name">${this.escapeHtml(beat.name)}${mappingIndicator}${effectsText}</span>
                 <span class="beat-duration">${this.formatDuration(beat.duration)}</span>
+                <button class="beat-btn beat-apply-btn" data-index="${index}" title="Pin to Pad">
+                    📌
+                </button>
                 <button class="beat-btn beat-repeat-btn ${beat.repeat ? '' : 'off'}" data-index="${index}" title="Toggle Repeat">
                     🔁
                 </button>
@@ -1398,6 +1460,12 @@ class DrumPad {
                 </div>
             `;
             this.beatListItems.appendChild(beatItem);
+
+            // Pin button event listener
+            beatItem.querySelector('.beat-apply-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.startBeatApplyMode(index);
+            });
 
             // Settings button dropdown toggle
             const settingsBtn = beatItem.querySelector('.beat-settings-btn');
@@ -1772,6 +1840,36 @@ class DrumPad {
         this.sampleLibrary.splice(index, 1);
         this.saveSampleLibraryToStorage();
         this.renderSampleList();
+    }
+
+    startBeatApplyMode(index) {
+        this.isBeatApplyMode = true;
+        this.beatToApply = index;
+        document.body.classList.add('beat-apply-mode');
+        // Scroll to top to show the drum pads
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    cancelBeatApplyMode() {
+        this.isBeatApplyMode = false;
+        this.beatToApply = null;
+        document.body.classList.remove('beat-apply-mode');
+    }
+
+    applyBeatToPad(soundType) {
+        if (!this.isBeatApplyMode || this.beatToApply === null) return;
+
+        const beat = this.savedBeats[this.beatToApply];
+        if (!beat) {
+            this.cancelBeatApplyMode();
+            return;
+        }
+
+        // Update the pad label with the beat name
+        this.padLabels[soundType] = beat.name;
+        this.savePadLabels();
+        this.updatePadLabels();
+        this.cancelBeatApplyMode();
     }
 
     renderDefaultSampleList() {
@@ -2367,6 +2465,12 @@ class DrumPad {
         // If in sample apply mode, apply the sample to this pad
         if (this.isSampleApplyMode) {
             this.applySampleToPad(soundType);
+            return;
+        }
+
+        // If in beat apply mode, apply the beat to this pad
+        if (this.isBeatApplyMode) {
+            this.applyBeatToPad(soundType);
             return;
         }
 
