@@ -17,7 +17,7 @@ class Tuner {
 
         // Tuning settings
         this.referencePitch = 440; // A4 reference frequency
-        this.minFrequency = 60;    // Minimum detectable frequency
+        this.minFrequency = 30;    // Minimum detectable frequency (supports bass 5-string B0 at 30.87 Hz)
         this.maxFrequency = 1500;  // Maximum detectable frequency
 
         // Audio level meter thresholds (percentage values)
@@ -481,6 +481,11 @@ class Tuner {
         let bestCorrelation = 0;
         let foundGoodCorrelation = false;
         const correlations = new Array(MAX_SAMPLES);
+        
+        // To better detect low frequencies (like cello C string at 65.41 Hz),
+        // we need to search more thoroughly rather than short-circuiting early
+        // when harmonics might give false peaks
+        const MIN_LOW_FREQ_OFFSET = Math.floor(sampleRate / 300); // ~300 Hz threshold
 
         for (let offset = MIN_OFFSET; offset < MAX_SAMPLES; offset++) {
             let correlation = 0;
@@ -503,16 +508,22 @@ class Tuner {
                 bestOffset = offset;
                 foundGoodCorrelation = true;
             } else if (foundGoodCorrelation) {
-                // Short-circuit once we've found a good correlation and it starts decreasing
-                // At this point, bestOffset >= MIN_OFFSET since we only set foundGoodCorrelation
-                // when we also set bestOffset = offset (where offset >= MIN_OFFSET)
-                if (bestOffset >= MIN_OFFSET && bestOffset < MAX_SAMPLES - 1 && correlations[bestOffset] !== 0) {
-                    // Parabolic interpolation to refine the peak position
-                    // The factor 8 is an empirical refinement constant for pitch detection accuracy
-                    const shift = (correlations[bestOffset + 1] - correlations[bestOffset - 1]) / correlations[bestOffset];
-                    return sampleRate / (bestOffset + (8 * shift));
+                // For low frequencies (high offsets), continue searching a bit more
+                // to avoid being fooled by harmonics. This helps with cello C string.
+                const shouldContinueSearching = bestOffset < MIN_LOW_FREQ_OFFSET && offset < MIN_LOW_FREQ_OFFSET * 2;
+                
+                if (!shouldContinueSearching) {
+                    // Short-circuit once we've found a good correlation and it starts decreasing
+                    // At this point, bestOffset >= MIN_OFFSET since we only set foundGoodCorrelation
+                    // when we also set bestOffset = offset (where offset >= MIN_OFFSET)
+                    if (bestOffset >= MIN_OFFSET && bestOffset < MAX_SAMPLES - 1 && correlations[bestOffset] !== 0) {
+                        // Parabolic interpolation to refine the peak position
+                        // The factor 8 is an empirical refinement constant for pitch detection accuracy
+                        const shift = (correlations[bestOffset + 1] - correlations[bestOffset - 1]) / correlations[bestOffset];
+                        return sampleRate / (bestOffset + (8 * shift));
+                    }
+                    return sampleRate / bestOffset;
                 }
-                return sampleRate / bestOffset;
             }
         }
 
