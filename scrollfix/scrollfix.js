@@ -53,8 +53,8 @@ class ScrollFixApp {
         this.loadFromLocalStorage();
         this.initializeTheme();
         this.initializeEventListeners();
-        this.updateDisplay();
         this.checkCooldown();
+        this.updateDisplay();
     }
 
     initializeElements() {
