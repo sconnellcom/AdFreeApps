@@ -233,9 +233,15 @@ class ScrollFixApp {
             this.cardText.textContent = this.currentAfterMessage;
         }
 
-        // Calculate days since first scroll
-        const daysSinceStart = this.getDaysSinceFirstScroll();
-        this.daysCounter.textContent = `Day ${daysSinceStart}`;
+        // Calculate days since last scroll
+        const daysSinceLastScroll = this.getDaysSinceLastScroll();
+        if (daysSinceLastScroll === 0) {
+            this.daysCounter.textContent = `0 days with no scrolling`;
+        } else if (daysSinceLastScroll === 1) {
+            this.daysCounter.textContent = `1 day with no scrolling`;
+        } else {
+            this.daysCounter.textContent = `${daysSinceLastScroll} days with no scrolling`;
+        }
 
         // Update scroll count for today
         if (this.todayScrollCount > 0) {
@@ -311,15 +317,23 @@ class ScrollFixApp {
         }
     }
 
-    getDaysSinceFirstScroll() {
+    getDaysSinceLastScroll() {
         if (this.scrollHistory.length === 0) {
             return 0;
         }
 
-        const firstScroll = new Date(this.scrollHistory[0].timestamp);
+        // Get the most recent scroll entry
+        const lastScroll = new Date(this.scrollHistory[this.scrollHistory.length - 1].timestamp);
         const now = new Date();
-        const diffTime = Math.abs(now - firstScroll);
+        
+        // Set both dates to midnight to compare only dates, not times
+        const lastScrollDate = new Date(lastScroll.getFullYear(), lastScroll.getMonth(), lastScroll.getDate());
+        const todayDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        
+        // Calculate the difference in days
+        const diffTime = todayDate - lastScrollDate;
         const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        
         return diffDays;
     }
 
