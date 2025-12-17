@@ -40,6 +40,9 @@ class ScrollFixApp {
             "Scroll fix applied successfully."
         ];
 
+        // Available flip animations
+        this.flipAnimations = ['flip1', 'flip2', 'flip3', 'flip4', 'flip5'];
+
         this.firstVisit = true;
         this.canScroll = true;
         this.scrollHistory = [];
@@ -163,8 +166,7 @@ class ScrollFixApp {
         this.card.classList.add('after-scroll');
 
         // Select a random flip animation
-        const animations = ['flip1', 'flip2', 'flip3', 'flip4', 'flip5'];
-        const randomAnimation = animations[Math.floor(Math.random() * animations.length)];
+        const randomAnimation = this.flipAnimations[Math.floor(Math.random() * this.flipAnimations.length)];
         this.card.classList.add(randomAnimation);
 
         // Get a random "after scroll" message and save it
