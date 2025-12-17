@@ -40,21 +40,24 @@ class ScrollFixApp {
             "Scroll fix applied successfully."
         ];
 
+        // Available flip animations
+        this.flipAnimations = ['flip1', 'flip2', 'flip3', 'flip4', 'flip5'];
+
         this.firstVisit = true;
         this.canScroll = true;
         this.scrollHistory = [];
         this.todayScrollCount = 0;
-        this.consecutiveScrolls = 0;
         this.lastScrollTime = null;
         this.nextScrollAllowedTime = null;
         this.cooldownTimer = null;
+        this.currentAfterMessage = null;
         
         this.initializeElements();
         this.loadFromLocalStorage();
         this.initializeTheme();
         this.initializeEventListeners();
-        this.updateDisplay();
         this.checkCooldown();
+        this.updateDisplay();
     }
 
     initializeElements() {
@@ -157,43 +160,36 @@ class ScrollFixApp {
 
         const now = Date.now();
 
-        // Check if user is scrolling too quickly (within 30 minutes of last scroll)
-        const thirtyMinutes = 30 * 60 * 1000;
-        if (this.lastScrollTime && (now - this.lastScrollTime) < thirtyMinutes) {
-            this.consecutiveScrolls++;
-        } else {
-            // Reset if it's been more than 30 minutes
-            this.consecutiveScrolls = 1;
-        }
-
         // Disable further scrolling
         this.canScroll = false;
         this.card.classList.add('disabled');
+        this.card.classList.add('after-scroll');
 
-        // Play flip animation
-        this.card.classList.add('flipping');
+        // Select a random flip animation
+        const randomAnimation = this.flipAnimations[Math.floor(Math.random() * this.flipAnimations.length)];
+        this.card.classList.add(randomAnimation);
+
+        // Get a random "after scroll" message and save it
+        this.currentAfterMessage = this.getRandomAfterSaying();
 
         // Change text during flip
         setTimeout(() => {
-            this.cardText.textContent = this.getRandomAfterSaying();
+            this.cardText.textContent = this.currentAfterMessage;
         }, 300);
 
         // Log the scroll
         this.logScroll();
 
-        // Calculate cooldown time (exponential backoff: 2min, 4min, 8min, 16min, etc.)
-        const baseCooldown = 2 * 60 * 1000; // 2 minutes in milliseconds
-        const cooldownTime = baseCooldown * Math.pow(2, this.consecutiveScrolls - 1);
-        this.nextScrollAllowedTime = now + cooldownTime + 3000; // +3s for animation
+        // Fixed 2-minute cooldown
+        const cooldownTime = 2 * 60 * 1000; // 2 minutes in milliseconds
+        this.nextScrollAllowedTime = now + cooldownTime + 600; // +600ms for animation
         this.lastScrollTime = now;
 
-        // Show the feel-good message for 3 seconds, then start cooldown
+        // Remove animation class after animation completes
         setTimeout(() => {
-            this.card.classList.remove('flipping');
-            this.cardText.textContent = this.getRandomBeforeSaying();
-            this.updateDisplay();
+            this.card.classList.remove(randomAnimation);
             this.startCooldown();
-        }, 3000);
+        }, 600);
 
         this.saveToLocalStorage();
     }
@@ -229,9 +225,12 @@ class ScrollFixApp {
     }
 
     updateDisplay() {
-        // Update card text only if scrolling is allowed
+        // Update card text based on cooldown state
         if (this.canScroll) {
             this.cardText.textContent = this.getRandomBeforeSaying();
+        } else if (this.currentAfterMessage) {
+            // Keep showing the saved "after scroll" message during cooldown
+            this.cardText.textContent = this.currentAfterMessage;
         }
 
         // Calculate days since first scroll
@@ -262,13 +261,16 @@ class ScrollFixApp {
         if (remaining <= 0) {
             this.canScroll = true;
             this.card.classList.remove('disabled');
+            this.card.classList.remove('after-scroll');
             this.nextScrollAllowedTime = null;
+            this.currentAfterMessage = null;
             this.instructions.textContent = '👆 Swipe up on the card to scroll';
             if (this.cooldownTimer) {
                 clearInterval(this.cooldownTimer);
                 this.cooldownTimer = null;
             }
             this.updateDisplay();
+            this.saveToLocalStorage();
             return;
         }
 
@@ -299,10 +301,12 @@ class ScrollFixApp {
             if (now < this.nextScrollAllowedTime) {
                 this.canScroll = false;
                 this.card.classList.add('disabled');
+                this.card.classList.add('after-scroll');
                 this.startCooldown();
             } else {
                 this.canScroll = true;
                 this.nextScrollAllowedTime = null;
+                this.currentAfterMessage = null;
             }
         }
     }
@@ -360,9 +364,9 @@ class ScrollFixApp {
         const data = {
             scrollHistory: this.scrollHistory,
             lastSaveDate: new Date().toLocaleDateString(),
-            consecutiveScrolls: this.consecutiveScrolls,
             lastScrollTime: this.lastScrollTime,
-            nextScrollAllowedTime: this.nextScrollAllowedTime
+            nextScrollAllowedTime: this.nextScrollAllowedTime,
+            currentAfterMessage: this.currentAfterMessage
         };
         localStorage.setItem('scrollFixData', JSON.stringify(data));
     }
@@ -373,9 +377,9 @@ class ScrollFixApp {
             try {
                 const parsed = JSON.parse(data);
                 this.scrollHistory = parsed.scrollHistory || [];
-                this.consecutiveScrolls = parsed.consecutiveScrolls || 0;
                 this.lastScrollTime = parsed.lastScrollTime || null;
                 this.nextScrollAllowedTime = parsed.nextScrollAllowedTime || null;
+                this.currentAfterMessage = parsed.currentAfterMessage || null;
                 
                 // Reset today's count based on actual data
                 const today = new Date().toLocaleDateString();
@@ -384,16 +388,6 @@ class ScrollFixApp {
                 // If it's a new day, reset the daily count
                 if (parsed.lastSaveDate !== today) {
                     this.saveToLocalStorage(); // Update the last save date
-                }
-
-                // Reset consecutive scrolls if it's been more than 30 minutes
-                if (this.lastScrollTime) {
-                    const now = Date.now();
-                    const thirtyMinutes = 30 * 60 * 1000;
-                    if ((now - this.lastScrollTime) >= thirtyMinutes) {
-                        this.consecutiveScrolls = 0;
-                        this.nextScrollAllowedTime = null;
-                    }
                 }
             } catch (e) {
                 console.error('Failed to load data from localStorage:', e);
