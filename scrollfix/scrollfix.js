@@ -121,6 +121,8 @@ class ScrollFixApp {
         this.nextScrollAllowedTime = null;
         this.cooldownTimer = null;
         this.currentAfterMessage = null;
+        this.daysFixed = 0; // Track number of unique days the app has been used
+        this.usageDates = new Set(); // Track unique dates when the app was used
         
         this.initializeElements();
         this.loadFromLocalStorage();
@@ -135,6 +137,7 @@ class ScrollFixApp {
         this.cardText = document.getElementById('card-text');
         this.instructions = document.getElementById('instructions');
         this.daysCounter = document.getElementById('days-counter');
+        this.daysFixedElement = document.getElementById('days-fixed');
         this.scrollCount = document.getElementById('scroll-count');
         this.historyToggle = document.getElementById('history-toggle');
         this.historyList = document.getElementById('history-list');
@@ -303,6 +306,9 @@ class ScrollFixApp {
             this.cardText.textContent = this.currentAfterMessage;
         }
 
+        // Update days fixed counter
+        this.daysFixedElement.textContent = `Days fixed: ${this.daysFixed}`;
+
         // Calculate days since last scroll
         const daysSinceLastScroll = this.getDaysSinceLastScroll();
         if (daysSinceLastScroll === 0) {
@@ -450,7 +456,8 @@ class ScrollFixApp {
             lastSaveDate: new Date().toLocaleDateString(),
             lastScrollTime: this.lastScrollTime,
             nextScrollAllowedTime: this.nextScrollAllowedTime,
-            currentAfterMessage: this.currentAfterMessage
+            currentAfterMessage: this.currentAfterMessage,
+            usageDates: Array.from(this.usageDates)
         };
         localStorage.setItem('scrollFixData', JSON.stringify(data));
     }
@@ -465,8 +472,23 @@ class ScrollFixApp {
                 this.nextScrollAllowedTime = parsed.nextScrollAllowedTime || null;
                 this.currentAfterMessage = parsed.currentAfterMessage || null;
                 
-                // Reset today's count based on actual data
+                // Load usage dates
+                if (parsed.usageDates) {
+                    this.usageDates = new Set(parsed.usageDates);
+                } else {
+                    // If usageDates doesn't exist, calculate it from scrollHistory
+                    this.usageDates = new Set();
+                    this.scrollHistory.forEach(entry => {
+                        this.usageDates.add(entry.date);
+                    });
+                }
+                
+                // Add today to usage dates
                 const today = new Date().toLocaleDateString();
+                this.usageDates.add(today);
+                this.daysFixed = this.usageDates.size;
+                
+                // Reset today's count based on actual data
                 this.todayScrollCount = this.getScrollsToday();
 
                 // If it's a new day, reset the daily count
@@ -476,6 +498,11 @@ class ScrollFixApp {
             } catch (e) {
                 console.error('Failed to load data from localStorage:', e);
             }
+        } else {
+            // First time using the app
+            const today = new Date().toLocaleDateString();
+            this.usageDates.add(today);
+            this.daysFixed = 1;
         }
     }
 }
