@@ -215,20 +215,20 @@
         <div class="left">
             <div class="settings-box">
                 <div>
-                    <label>Characters</label><input name=characters value=5 />
+                    <label>Characters</label><input name="characters" value="5" />
                 </div>
                 <div>
-                    <label>Exposure Time</label><input name=seconds value=2 />
+                    <label>Exposure Time</label><input name="seconds" value="2" />
                 </div>
                 <div>
                     <label>Type</label><br />
-                    <label><input type=radio name=content value="abcdefghijklmnopqrstuvwxyz" checked="checked" />
+                    <label><input type="radio" name="content" value="abcdefghijklmnopqrstuvwxyz" checked="checked" />
                         Lowercase</label><br />
-                    <label><input type=radio name=content value="ABCDEFGHIJKLMNOPQRSTUVWXYZ" />
+                    <label><input type="radio" name="content" value="ABCDEFGHIJKLMNOPQRSTUVWXYZ" />
                         Uppercase</label><br />
-                    <label><input type=radio name=content value="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" />
+                    <label><input type="radio" name="content" value="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" />
                         Mixedcase</label><br />
-                    <label><input type=radio name=content value="0123456789" /> Numbers</label>
+                    <label><input type="radio" name="content" value="0123456789" /> Numbers</label>
                 </div>
             </div>
 
@@ -236,9 +236,9 @@
                 <h3>
                     Score
                 </h3>
-                <div>Correct <span id=correct>0</span></div>
-                <div>Incorrect <span id=incorrect>0</span></div>
-                <div>Total Trials <span id=total>0</span></div>
+                <div>Correct <span id="correct">0</span></div>
+                <div>Incorrect <span id="incorrect">0</span></div>
+                <div>Total Trials <span id="total">0</span></div>
             </div>
         </div>
 
@@ -256,7 +256,7 @@
         </div>
 
         <div class="input-row">
-            <input name=answer />
+            <input name="answer" aria-label="Enter the letters you memorized" />
             <button class="go-button" id="goButton">Go!</button>
         </div>
 
@@ -274,8 +274,8 @@
             var totalSpan = document.getElementById("total");
 
             answerInput.addEventListener("keyup", function (event) {
-                if (event.key == "Enter") {
-                    if (displayText != "")
+                if (event.key === "Enter") {
+                    if (displayText !== "")
                         answer();
                     else
                         start();
@@ -284,7 +284,7 @@
 
             goButton.addEventListener("click", function () {
                 answerInput.focus();
-                if (displayText != "")
+                if (displayText !== "")
                     answer();
                 else
                     start();
@@ -293,7 +293,7 @@
             function answer() {
                 var userAnswer = answerInput.value;
 
-                if (userAnswer == displayText) {
+                if (userAnswer === displayText) {
                     correctSpan.textContent = ++correct;
                     mainDisplay.innerHTML = "Correct!<br><span class='countdown' id='countdown'>Next in 3...</span>";
                     errorDisplay.style.display = "none";
