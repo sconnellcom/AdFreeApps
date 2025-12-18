@@ -671,6 +671,12 @@
             }
 
             function start() {
+                // Clear any existing countdown to prevent word from changing unexpectedly
+                if (countdownInterval) {
+                    clearInterval(countdownInterval);
+                    countdownInterval = null;
+                }
+                
                 gameStarted = true;
                 errorDisplay.style.display = "none";
                 instructions.classList.remove("visible");
