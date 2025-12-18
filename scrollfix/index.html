@@ -359,6 +359,12 @@
             border-radius: 12px;
         }
 
+        .days-fixed {
+            font-size: 1.1em;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+
         .days-counter {
             font-size: 2em;
             font-weight: bold;
@@ -406,7 +412,7 @@
         }
 
         .card.after-scroll {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
         }
 
         .card-text {
@@ -623,6 +629,7 @@
         </div>
 
         <div class="stats-header">
+            <div class="days-fixed" id="days-fixed">Days fixed: 0</div>
             <div class="days-counter" id="days-counter">Day 0</div>
             <div class="scroll-count" id="scroll-count"></div>
         </div>

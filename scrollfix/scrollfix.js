@@ -121,6 +121,8 @@ class ScrollFixApp {
         this.nextScrollAllowedTime = null;
         this.cooldownTimer = null;
         this.currentAfterMessage = null;
+        this.daysFixed = 0; // Track number of unique days the app has been used
+        this.usageDates = new Set(); // Track unique dates when the app was used
         
         this.initializeElements();
         this.loadFromLocalStorage();
@@ -135,6 +137,7 @@ class ScrollFixApp {
         this.cardText = document.getElementById('card-text');
         this.instructions = document.getElementById('instructions');
         this.daysCounter = document.getElementById('days-counter');
+        this.daysFixedElement = document.getElementById('days-fixed');
         this.scrollCount = document.getElementById('scroll-count');
         this.historyToggle = document.getElementById('history-toggle');
         this.historyList = document.getElementById('history-list');
@@ -274,6 +277,9 @@ class ScrollFixApp {
 
         this.scrollHistory.push(scrollEntry);
         this.todayScrollCount++;
+        
+        // Update days fixed when a scroll is logged
+        this.updateDaysFixed();
 
         console.log('Scroll logged:', scrollEntry);
 
@@ -302,6 +308,9 @@ class ScrollFixApp {
             // Keep showing the saved "after scroll" message during cooldown
             this.cardText.textContent = this.currentAfterMessage;
         }
+
+        // Update days fixed counter
+        this.daysFixedElement.textContent = `Days fixed: ${this.daysFixed}`;
 
         // Calculate days since last scroll
         const daysSinceLastScroll = this.getDaysSinceLastScroll();
@@ -407,6 +416,12 @@ class ScrollFixApp {
         return diffDays;
     }
 
+    updateDaysFixed() {
+        const today = new Date().toLocaleDateString();
+        this.usageDates.add(today);
+        this.daysFixed = this.usageDates.size;
+    }
+
     getScrollsToday() {
         const today = new Date().toLocaleDateString();
         return this.scrollHistory.filter(entry => entry.date === today).length;
@@ -450,12 +465,14 @@ class ScrollFixApp {
             lastSaveDate: new Date().toLocaleDateString(),
             lastScrollTime: this.lastScrollTime,
             nextScrollAllowedTime: this.nextScrollAllowedTime,
-            currentAfterMessage: this.currentAfterMessage
+            currentAfterMessage: this.currentAfterMessage,
+            usageDates: Array.from(this.usageDates)
         };
         localStorage.setItem('scrollFixData', JSON.stringify(data));
     }
 
     loadFromLocalStorage() {
+        const today = new Date().toLocaleDateString();
         const data = localStorage.getItem('scrollFixData');
         if (data) {
             try {
@@ -465,8 +482,21 @@ class ScrollFixApp {
                 this.nextScrollAllowedTime = parsed.nextScrollAllowedTime || null;
                 this.currentAfterMessage = parsed.currentAfterMessage || null;
                 
+                // Load usage dates
+                if (parsed.usageDates) {
+                    this.usageDates = new Set(parsed.usageDates);
+                } else {
+                    // If usageDates doesn't exist, calculate it from scrollHistory
+                    this.usageDates = new Set();
+                    this.scrollHistory.forEach(entry => {
+                        this.usageDates.add(entry.date);
+                    });
+                }
+                
+                // Add today to usage dates (counts as "using" the app)
+                this.updateDaysFixed();
+                
                 // Reset today's count based on actual data
-                const today = new Date().toLocaleDateString();
                 this.todayScrollCount = this.getScrollsToday();
 
                 // If it's a new day, reset the daily count
@@ -476,6 +506,9 @@ class ScrollFixApp {
             } catch (e) {
                 console.error('Failed to load data from localStorage:', e);
             }
+        } else {
+            // First time using the app
+            this.updateDaysFixed();
         }
     }
 }
