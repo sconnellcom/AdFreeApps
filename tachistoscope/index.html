@@ -718,7 +718,8 @@
                         var theme = btn.dataset.theme;
 
                         // Remove all theme classes
-                        document.body.className = '';
+                        document.body.classList.remove('theme-light', 'theme-dark', 'theme-warm-light', 'theme-warm-dark',
+                            'theme-red', 'theme-pink', 'theme-red-dark', 'theme-pink-dark', 'theme-black', 'theme-blue', 'theme-blue-dark');
                         themeBtnActive.className = 'theme-btn-active';
 
                         // Apply new theme
