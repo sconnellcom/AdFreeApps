@@ -277,6 +277,9 @@ class ScrollFixApp {
 
         this.scrollHistory.push(scrollEntry);
         this.todayScrollCount++;
+        
+        // Update days fixed when a scroll is logged
+        this.updateDaysFixed();
 
         console.log('Scroll logged:', scrollEntry);
 
@@ -413,6 +416,12 @@ class ScrollFixApp {
         return diffDays;
     }
 
+    updateDaysFixed() {
+        const today = new Date().toLocaleDateString();
+        this.usageDates.add(today);
+        this.daysFixed = this.usageDates.size;
+    }
+
     getScrollsToday() {
         const today = new Date().toLocaleDateString();
         return this.scrollHistory.filter(entry => entry.date === today).length;
@@ -485,8 +494,7 @@ class ScrollFixApp {
                 }
                 
                 // Add today to usage dates (counts as "using" the app)
-                this.usageDates.add(today);
-                this.daysFixed = this.usageDates.size;
+                this.updateDaysFixed();
                 
                 // Reset today's count based on actual data
                 this.todayScrollCount = this.getScrollsToday();
@@ -500,8 +508,7 @@ class ScrollFixApp {
             }
         } else {
             // First time using the app
-            this.usageDates.add(today);
-            this.daysFixed = 1;
+            this.updateDaysFixed();
         }
     }
 }
