@@ -284,6 +284,9 @@ class ScrollFixApp {
         console.log('Scroll logged:', scrollEntry);
 
         this.saveToLocalStorage();
+        
+        // Update display to show new counts
+        this.updateDisplay();
     }
 
     getRandomBeforeSaying() {
