@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ad-free-apps-v4';
+const CACHE_NAME = 'ad-free-apps-v5';
 const urlsToCache = [
     '/',
     '/index.html',
@@ -13,8 +13,6 @@ const urlsToCache = [
     '/draw/index.html',
     '/level/',
     '/level/index.html',
-    '/scanner/',
-    '/scanner/index.html',
     '/pad/',
     '/pad/index.html',
     '/pad/style.css?v=2',
