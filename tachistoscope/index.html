@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="../manifest.json">
+    <link rel="apple-touch-icon" href="../icons/icon-152x152.png">
+    <title>Tachistoscope</title>
+    <style>
+        body {
+            background-color: #f4f4ea;
+            color: #474140;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        .wrapper {
+            margin: 0 auto;
+            width: 900px;
+            max-width: 95%;
+        }
+
+        .left {
+            float: left;
+        }
+
+        .settings-box {
+            border: solid #8f482e 3px;
+            background-color: #e6cb99;
+            width: 200px;
+            padding: 10px;
+            border-radius: 20px;
+            margin: 10px;
+        }
+
+        .game-box {
+            float: right;
+            border: solid #8f482e 3px;
+            background-color: #fcfcf7;
+            width: 600px;
+            height: 400px;
+            padding: 10px;
+            border-radius: 20px;
+            margin: 10px;
+            text-align: center;
+        }
+
+        .game-box span {
+            display: block;
+            margin-top: 120px;
+            font-size: 22px;
+        }
+
+        .instructions {
+            font-size: 16px;
+            color: #8f482e;
+            margin-top: 10px;
+            font-weight: bold;
+            display: none;
+        }
+
+        .instructions.visible {
+            display: block;
+        }
+
+        .initial-instructions {
+            font-size: 18px;
+            color: #8f482e;
+            margin-top: 80px;
+            font-weight: bold;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .input-row {
+            clear: both;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .input-row input {
+            font-size: 22px;
+            padding: 10px;
+            width: 200px;
+            margin-right: 10px;
+        }
+
+        .go-button {
+            font-size: 22px;
+            padding: 10px 20px;
+            background-color: #8f482e;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        .go-button:hover {
+            background-color: #a55f3e;
+        }
+
+        .error-display {
+            margin-top: 20px;
+            font-family: monospace;
+            font-size: 20px;
+            text-align: center;
+        }
+
+        .error-table {
+            border-collapse: collapse;
+            margin: 10px auto;
+            display: inline-block;
+            font-family: monospace;
+        }
+
+        .error-table td {
+            border: 2px solid #8f482e;
+            padding: 12px 8px;
+            min-width: 30px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .correct-char {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .wrong-char {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .empty-char {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .header-cell {
+            background-color: #f0f0f0;
+            color: #333;
+            font-weight: bold;
+            font-size: 14px;
+            padding: 8px 4px;
+        }
+
+        .countdown {
+            font-size: 18px;
+            color: #8f482e;
+            font-weight: bold;
+            margin-top: 10px;
+            display: block;
+        }
+
+        .home-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            text-decoration: none;
+            font-size: 1.5em;
+            padding: 5px;
+            transition: transform 0.2s ease, opacity 0.2s ease;
+            opacity: 0.8;
+        }
+
+        .home-btn:hover {
+            transform: scale(1.1);
+            opacity: 1;
+        }
+
+        @media (max-width: 768px) {
+            .wrapper {
+                width: 100%;
+            }
+
+            .left {
+                float: none;
+            }
+
+            .settings-box {
+                width: auto;
+                max-width: 400px;
+                margin: 10px auto;
+            }
+
+            .game-box {
+                float: none;
+                width: auto;
+                margin: 10px auto;
+            }
+
+            .input-row input {
+                width: 150px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <a href="../" class="home-btn" title="Back to Home">🏠</a>
+
+    <div class="wrapper">
+
+        <h1>
+            Tachistoscope
+        </h1>
+        <div class="left">
+            <div class="settings-box">
+                <div>
+                    <label>Characters</label><input name=characters value=5 />
+                </div>
+                <div>
+                    <label>Exposure Time</label><input name=seconds value=2 />
+                </div>
+                <div>
+                    <label>Type</label><br />
+                    <label><input type=radio name=content value="abcdefghijklmnopqrstuvwxyz" checked="checked" />
+                        Lowercase</label><br />
+                    <label><input type=radio name=content value="ABCDEFGHIJKLMNOPQRSTUVWXYZ" />
+                        Uppercase</label><br />
+                    <label><input type=radio name=content value="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" />
+                        Mixedcase</label><br />
+                    <label><input type=radio name=content value="0123456789" /> Numbers</label>
+                </div>
+            </div>
+
+            <div class="settings-box">
+                <h3>
+                    Score
+                </h3>
+                <div>Correct <span id=correct>0</span></div>
+                <div>Incorrect <span id=incorrect>0</span></div>
+                <div>Total Trials <span id=total>0</span></div>
+            </div>
+        </div>
+
+        <div class="game-box">
+            <span id="mainDisplay">
+                <div class="initial-instructions">
+                    <strong>Welcome to Tachistoscope!</strong><br><br>
+                    Memorize the letters that are displayed,<br>
+                    then type them in the input box below.<br><br>
+                    Hit Go to start!
+                </div>
+            </span>
+            <div class="instructions" id="instructions">Type in the letters and hit Enter or Go!</div>
+            <div class="error-display" style="display:none;" id="errorDisplay"></div>
+        </div>
+
+        <div class="input-row">
+            <input name=answer />
+            <button class="go-button" id="goButton">Go!</button>
+        </div>
+
+    </div>
+    <script>
+        (function () {
+            var displayText = "", correct = 0, incorrect = 0, gameStarted = false;
+            var answerInput = document.querySelector("[name=answer]");
+            var goButton = document.getElementById("goButton");
+            var mainDisplay = document.getElementById("mainDisplay");
+            var instructions = document.getElementById("instructions");
+            var errorDisplay = document.getElementById("errorDisplay");
+            var correctSpan = document.getElementById("correct");
+            var incorrectSpan = document.getElementById("incorrect");
+            var totalSpan = document.getElementById("total");
+
+            answerInput.addEventListener("keyup", function (event) {
+                if (event.key == "Enter") {
+                    if (displayText != "")
+                        answer();
+                    else
+                        start();
+                }
+            });
+
+            goButton.addEventListener("click", function () {
+                answerInput.focus();
+                if (displayText != "")
+                    answer();
+                else
+                    start();
+            });
+
+            function answer() {
+                var userAnswer = answerInput.value;
+
+                if (userAnswer == displayText) {
+                    correctSpan.textContent = ++correct;
+                    mainDisplay.innerHTML = "Correct!<br><span class='countdown' id='countdown'>Next in 3...</span>";
+                    errorDisplay.style.display = "none";
+                    instructions.classList.remove("visible");
+
+                    // Countdown and auto-advance
+                    var timeLeft = 3;
+                    var countdownInterval = setInterval(function () {
+                        timeLeft--;
+                        var countdownEl = document.getElementById("countdown");
+                        if (countdownEl) {
+                            countdownEl.textContent = "Next in " + timeLeft + "...";
+                        }
+                        if (timeLeft <= 0) {
+                            clearInterval(countdownInterval);
+                            start();
+                        }
+                    }, 1000);
+
+                } else {
+                    incorrectSpan.textContent = ++incorrect;
+                    mainDisplay.textContent = "Nice try! The answer was: " + displayText;
+                    showErrorComparison(displayText, userAnswer);
+                    instructions.classList.remove("visible");
+                }
+                totalSpan.textContent = correct + incorrect;
+                answerInput.value = "";
+                displayText = "";
+            }
+
+            function showErrorComparison(correctText, userText) {
+                var maxLength = Math.max(correctText.length, userText.length);
+                var tableHtml = '<table class="error-table">';
+
+                // Single row with all characters
+                tableHtml += '<tr>';
+
+                // Correct header
+                tableHtml += '<td class="header-cell" colspan="1">Correct</td>';
+
+                // Correct characters
+                for (var i = 0; i < maxLength; i++) {
+                    var correctChar = correctText[i] || "";
+                    var correctClass = correctChar ? "correct-char" : "empty-char";
+                    tableHtml += '<td class="' + correctClass + '">' + (correctChar || ' ') + '</td>';
+                }
+
+                // Separator
+                tableHtml += '</tr><tr>';
+
+                // User header  
+                tableHtml += '<td class="header-cell" colspan="1">Your</td>';
+
+                // User characters
+                for (var i = 0; i < maxLength; i++) {
+                    var userChar = userText[i] || "";
+                    var correctChar = correctText[i] || "";
+                    var userClass = userChar ? (correctChar === userChar ? "correct-char" : "wrong-char") : "empty-char";
+                    tableHtml += '<td class="' + userClass + '">' + (userChar || ' ') + '</td>';
+                }
+
+                tableHtml += '</tr>';
+                tableHtml += '</table>';
+
+                errorDisplay.innerHTML = tableHtml;
+                errorDisplay.style.display = "block";
+            }
+
+            function start() {
+                gameStarted = true;
+                errorDisplay.style.display = "none";
+                instructions.classList.remove("visible");
+                var contentValue = document.querySelector("[name=content]:checked").value;
+                var charactersValue = document.querySelector("[name=characters]").value;
+                displayText = randomText(contentValue, charactersValue);
+                mainDisplay.textContent = displayText;
+                var secondsValue = parseFloat(document.querySelector("[name=seconds]").value);
+                setTimeout(end, secondsValue * 1000);
+            }
+
+            function end() {
+                mainDisplay.textContent = "";
+                instructions.classList.add("visible");
+            }
+
+            function randomText(possible, length) {
+                var text = "";
+                for (var i = 0; i < length; i++)
+                    text += possible.charAt(Math.floor(Math.random() * possible.length));
+                return text;
+            }
+        })();
+    </script>
+</body>
+
+</html>
