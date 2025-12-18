@@ -463,6 +463,7 @@ class ScrollFixApp {
     }
 
     loadFromLocalStorage() {
+        const today = new Date().toLocaleDateString();
         const data = localStorage.getItem('scrollFixData');
         if (data) {
             try {
@@ -483,8 +484,7 @@ class ScrollFixApp {
                     });
                 }
                 
-                // Add today to usage dates
-                const today = new Date().toLocaleDateString();
+                // Add today to usage dates (counts as "using" the app)
                 this.usageDates.add(today);
                 this.daysFixed = this.usageDates.size;
                 
@@ -500,7 +500,6 @@ class ScrollFixApp {
             }
         } else {
             // First time using the app
-            const today = new Date().toLocaleDateString();
             this.usageDates.add(today);
             this.daysFixed = 1;
         }
