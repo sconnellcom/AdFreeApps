@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="../manifest.json">
+    <link rel="apple-touch-icon" href="../icons/icon-152x152.png">
+    <title>MTG Score Tracker</title>
+
+    <style>
+        :root {
+            /* Default Theme (Purple) */
+            --bg-gradient-start: #667eea;
+            --bg-gradient-end: #764ba2;
+            --primary-color: #667eea;
+            --primary-hover: #764ba2;
+            --container-bg: #ffffff;
+            --text-color: #333333;
+            --text-secondary: #555555;
+            --border-color: #e2e8f0;
+            --surface-bg: #f7fafc;
+            --button-bg: #667eea;
+            --button-hover: #764ba2;
+            --danger-color: #ef4444;
+            --success-color: #10b981;
+        }
+
+        body.theme-light {
+            --bg-gradient-start: #97B22D;
+            --bg-gradient-end: #89751B;
+            --primary-color: #97B22D;
+            --primary-hover: #89751B;
+            --container-bg: #FEFCAD;
+            --text-color: #2d3748;
+            --text-secondary: #4a5568;
+            --border-color: #d2cc54;
+            --surface-bg: #f1ff72;
+            --button-bg: #97B22D;
+            --button-hover: #89751B;
+        }
+
+        body.theme-dark {
+            --bg-gradient-start: #2d3d0f;
+            --bg-gradient-end: #1a2208;
+            --primary-color: #97B22D;
+            --primary-hover: #d2cc54;
+            --container-bg: #1f2d0a;
+            --text-color: #E3DAB2;
+            --text-secondary: #d2cc54;
+            --border-color: #3d4d1f;
+            --surface-bg: #2a3a12;
+            --button-bg: #97B22D;
+            --button-hover: #d2cc54;
+        }
+
+        body.theme-warm-light {
+            --bg-gradient-start: #C6BE28;
+            --bg-gradient-end: #97B22D;
+            --primary-color: #E49A32;
+            --primary-hover: #C6BE28;
+            --container-bg: #FEFCAD;
+            --text-color: #3d3d1f;
+            --text-secondary: #5d5d3f;
+            --border-color: #E3DAB2;
+            --surface-bg: #faedb6;
+            --button-bg: #E49A32;
+            --button-hover: #C6BE28;
+        }
+
+        body.theme-warm-dark {
+            --bg-gradient-start: #2a2510;
+            --bg-gradient-end: #1a1808;
+            --primary-color: #E49A32;
+            --primary-hover: #C6BE28;
+            --container-bg: #2d2815;
+            --text-color: #FEFCAD;
+            --text-secondary: #E3DAB2;
+            --border-color: #4a3f1a;
+            --surface-bg: #3a3220;
+            --button-bg: #E49A32;
+            --button-hover: #C6BE28;
+        }
+
+        body.theme-red {
+            --bg-gradient-start: #dc2626;
+            --bg-gradient-end: #991b1b;
+            --primary-color: #ef4444;
+            --primary-hover: #dc2626;
+            --container-bg: #ffffff;
+            --text-color: #1f2937;
+            --text-secondary: #374151;
+            --border-color: #fecaca;
+            --surface-bg: #fef2f2;
+            --button-bg: #ef4444;
+            --button-hover: #dc2626;
+        }
+
+        body.theme-pink {
+            --bg-gradient-start: #ec4899;
+            --bg-gradient-end: #be185d;
+            --primary-color: #f472b6;
+            --primary-hover: #ec4899;
+            --container-bg: #ffffff;
+            --text-color: #1f2937;
+            --text-secondary: #374151;
+            --border-color: #fbcfe8;
+            --surface-bg: #fdf2f8;
+            --button-bg: #f472b6;
+            --button-hover: #ec4899;
+        }
+
+        body.theme-red-dark {
+            --bg-gradient-start: #7f1d1d;
+            --bg-gradient-end: #450a0a;
+            --primary-color: #ef4444;
+            --primary-hover: #f87171;
+            --container-bg: #1a0505;
+            --text-color: #fecaca;
+            --text-secondary: #fca5a5;
+            --border-color: #7f1d1d;
+            --surface-bg: #450a0a;
+            --button-bg: #ef4444;
+            --button-hover: #f87171;
+        }
+
+        body.theme-pink-dark {
+            --bg-gradient-start: #831843;
+            --bg-gradient-end: #500724;
+            --primary-color: #f472b6;
+            --primary-hover: #f9a8d4;
+            --container-bg: #1a050f;
+            --text-color: #fce7f3;
+            --text-secondary: #fbcfe8;
+            --border-color: #831843;
+            --surface-bg: #500724;
+            --button-bg: #f472b6;
+            --button-hover: #f9a8d4;
+        }
+
+        body.theme-black {
+            --bg-gradient-start: #1f2937;
+            --bg-gradient-end: #111827;
+            --primary-color: #6b7280;
+            --primary-hover: #9ca3af;
+            --container-bg: #0f172a;
+            --text-color: #f3f4f6;
+            --text-secondary: #d1d5db;
+            --border-color: #374151;
+            --surface-bg: #1e293b;
+            --button-bg: #6b7280;
+            --button-hover: #9ca3af;
+        }
+
+        body.theme-blue {
+            --bg-gradient-start: #3b82f6;
+            --bg-gradient-end: #1e40af;
+            --primary-color: #60a5fa;
+            --primary-hover: #3b82f6;
+            --container-bg: #ffffff;
+            --text-color: #1f2937;
+            --text-secondary: #374151;
+            --border-color: #bfdbfe;
+            --surface-bg: #eff6ff;
+            --button-bg: #60a5fa;
+            --button-hover: #3b82f6;
+        }
+
+        body.theme-blue-dark {
+            --bg-gradient-start: #0c4a6e;
+            --bg-gradient-end: #082f49;
+            --primary-color: #38bdf8;
+            --primary-hover: #0ea5e9;
+            --container-bg: #0a1929;
+            --text-color: #e0f2fe;
+            --text-secondary: #7dd3fc;
+            --border-color: #0e7490;
+            --surface-bg: #164e63;
+            --button-bg: #38bdf8;
+            --button-hover: #0ea5e9;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        body.custom-bg {
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        body.custom-bg::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: 0;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Setup Screen */
+        #setupScreen {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            padding: 20px;
+        }
+
+        .setup-card {
+            background: var(--container-bg);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .setup-card h1 {
+            color: var(--text-color);
+            font-size: 2em;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .setup-card p {
+            color: var(--text-secondary);
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .player-count-buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .player-count-btn {
+            padding: 20px;
+            font-size: 1.5em;
+            font-weight: bold;
+            background: var(--button-bg);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .player-count-btn:hover {
+            background: var(--button-hover);
+            transform: scale(1.05);
+        }
+
+        .player-count-btn:active {
+            transform: scale(0.95);
+        }
+
+        .start-btn {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.2em;
+            font-weight: bold;
+            background: var(--success-color);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .start-btn:hover {
+            opacity: 0.9;
+            transform: scale(1.02);
+        }
+
+        .start-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Game Screen */
+        #gameScreen {
+            display: none;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .game-grid {
+            display: grid;
+            height: 100%;
+            width: 100%;
+        }
+
+        .game-grid.players-2 {
+            grid-template-columns: 1fr;
+            grid-template-rows: 1fr 1fr;
+        }
+
+        .game-grid.players-3 {
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+        }
+
+        .game-grid.players-4 {
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+        }
+
+        .game-grid.players-5,
+        .game-grid.players-6 {
+            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+        }
+
+        .player-zone {
+            position: relative;
+            background: var(--container-bg);
+            border: 3px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .player-zone.rotate-180 {
+            transform: rotate(180deg);
+        }
+
+        .player-zone.rotate-90 {
+            transform: rotate(90deg);
+        }
+
+        .player-zone.rotate-270 {
+            transform: rotate(270deg);
+        }
+
+        .player-name {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: var(--text-color);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .life-total {
+            font-size: 6em;
+            font-weight: bold;
+            color: var(--text-color);
+            margin: 20px 0;
+            user-select: none;
+        }
+
+        .score-controls {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            margin: 20px 0;
+        }
+
+        .score-btn {
+            width: 80px;
+            height: 80px;
+            font-size: 3em;
+            font-weight: bold;
+            background: var(--button-bg);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .score-btn:hover {
+            background: var(--button-hover);
+            transform: scale(1.1);
+        }
+
+        .score-btn:active {
+            transform: scale(0.9);
+        }
+
+        .secondary-counters {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+            font-size: 0.9em;
+        }
+
+        .counter-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .counter-label {
+            color: var(--text-secondary);
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+
+        .counter-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: var(--text-color);
+        }
+
+        .counter-controls {
+            display: flex;
+            gap: 5px;
+        }
+
+        .counter-btn {
+            width: 35px;
+            height: 35px;
+            font-size: 1.2em;
+            background: var(--surface-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .counter-btn:hover {
+            background: var(--button-bg);
+            color: white;
+        }
+
+        .log-btn {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            padding: 8px 15px;
+            font-size: 0.9em;
+            background: var(--surface-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .log-btn:hover {
+            background: var(--button-bg);
+            color: white;
+        }
+
+        /* Control Bar */
+        .control-bar {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            gap: 10px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 15px;
+            z-index: 1000;
+        }
+
+        .control-btn {
+            padding: 10px 20px;
+            font-size: 1em;
+            font-weight: bold;
+            background: var(--button-bg);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .control-btn:hover {
+            background: var(--button-hover);
+            transform: scale(1.05);
+        }
+
+        .control-btn.danger {
+            background: var(--danger-color);
+        }
+
+        /* Log Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--container-bg);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+            width: 90%;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h2 {
+            color: var(--text-color);
+            font-size: 1.5em;
+        }
+
+        .close-btn {
+            font-size: 2em;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 0;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-btn:hover {
+            color: var(--danger-color);
+        }
+
+        .log-entries {
+            list-style: none;
+        }
+
+        .log-entry {
+            padding: 10px;
+            margin-bottom: 8px;
+            background: var(--surface-bg);
+            border-radius: 8px;
+            color: var(--text-color);
+            font-size: 0.95em;
+        }
+
+        .log-entry .timestamp {
+            color: var(--text-secondary);
+            font-size: 0.85em;
+        }
+
+        /* Theme picker */
+        .theme-picker {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1001;
+        }
+
+        .theme-btn-active {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 3px solid white;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .theme-dropdown {
+            position: absolute;
+            top: 50px;
+            right: 0;
+            background: var(--container-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 10px;
+            display: none;
+            grid-template-columns: 32px 32px;
+            gap: 8px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .theme-dropdown.visible {
+            display: grid;
+        }
+
+        .theme-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .theme-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .theme-btn-active.theme-default,
+        .theme-btn.theme-default {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .theme-btn-active.theme-black,
+        .theme-btn.theme-black {
+            background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+        }
+
+        .theme-btn-active.theme-blue,
+        .theme-btn.theme-blue {
+            background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+        }
+
+        .theme-btn-active.theme-blue-dark,
+        .theme-btn.theme-blue-dark {
+            background: linear-gradient(135deg, #0c4a6e 0%, #38bdf8 100%);
+        }
+
+        .theme-btn-active.theme-light,
+        .theme-btn.theme-light {
+            background: linear-gradient(135deg, #97B22D 0%, #E3DE81 100%);
+        }
+
+        .theme-btn-active.theme-dark,
+        .theme-btn.theme-dark {
+            background: linear-gradient(135deg, #2d3d0f 0%, #97B22D 100%);
+        }
+
+        .theme-btn-active.theme-warm-light,
+        .theme-btn.theme-warm-light {
+            background: linear-gradient(135deg, #E49A32 0%, #FEFCAD 100%);
+        }
+
+        .theme-btn-active.theme-warm-dark,
+        .theme-btn.theme-warm-dark {
+            background: linear-gradient(135deg, #2a2510 0%, #E49A32 100%);
+        }
+
+        .theme-btn-active.theme-red,
+        .theme-btn.theme-red {
+            background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+        }
+
+        .theme-btn-active.theme-red-dark,
+        .theme-btn.theme-red-dark {
+            background: linear-gradient(135deg, #7f1d1d 0%, #ef4444 100%);
+        }
+
+        .theme-btn-active.theme-pink,
+        .theme-btn.theme-pink {
+            background: linear-gradient(135deg, #ec4899 0%, #be185d 100%);
+        }
+
+        .theme-btn-active.theme-pink-dark,
+        .theme-btn.theme-pink-dark {
+            background: linear-gradient(135deg, #831843 0%, #f472b6 100%);
+        }
+
+        /* Background Image Upload */
+        .bg-upload-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .bg-upload-section h3 {
+            color: var(--text-color);
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
+
+        .bg-upload-btn {
+            width: 100%;
+            padding: 12px;
+            font-size: 1em;
+            background: var(--button-bg);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 10px;
+        }
+
+        .bg-upload-btn:hover {
+            background: var(--button-hover);
+        }
+
+        .clear-bg-btn {
+            width: 100%;
+            padding: 10px;
+            font-size: 0.9em;
+            background: var(--danger-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .clear-bg-btn:hover {
+            opacity: 0.9;
+        }
+
+        #bgImageInput {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Theme Picker -->
+    <div class="theme-picker">
+        <button class="theme-btn-active theme-default" data-theme="default" title="Change Theme"></button>
+        <div class="theme-dropdown">
+            <button class="theme-btn theme-default" data-theme="default" title="Purple Theme"></button>
+            <button class="theme-btn theme-black" data-theme="black" title="Black Theme"></button>
+            <button class="theme-btn theme-blue" data-theme="blue" title="Blue Theme"></button>
+            <button class="theme-btn theme-blue-dark" data-theme="blue-dark" title="Dark Blue Theme"></button>
+            <button class="theme-btn theme-light" data-theme="light" title="Olive Theme"></button>
+            <button class="theme-btn theme-dark" data-theme="dark" title="Dark Olive Theme"></button>
+            <button class="theme-btn theme-warm-light" data-theme="warm-light" title="Warm Light Theme"></button>
+            <button class="theme-btn theme-warm-dark" data-theme="warm-dark" title="Warm Dark Theme"></button>
+            <button class="theme-btn theme-red" data-theme="red" title="Red Theme"></button>
+            <button class="theme-btn theme-red-dark" data-theme="red-dark" title="Dark Red Theme"></button>
+            <button class="theme-btn theme-pink" data-theme="pink" title="Pink Theme"></button>
+            <button class="theme-btn theme-pink-dark" data-theme="pink-dark" title="Dark Pink Theme"></button>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Setup Screen -->
+        <div id="setupScreen">
+            <div class="setup-card">
+                <h1>⚔️ MTG Score Tracker</h1>
+                <p>Select number of players</p>
+                <div class="player-count-buttons">
+                    <button class="player-count-btn" data-players="2">2</button>
+                    <button class="player-count-btn" data-players="3">3</button>
+                    <button class="player-count-btn" data-players="4">4</button>
+                    <button class="player-count-btn" data-players="5">5</button>
+                    <button class="player-count-btn" data-players="6">6</button>
+                </div>
+                <button class="start-btn" id="startGameBtn" disabled>Start Game</button>
+                
+                <!-- Background Image Upload -->
+                <div class="bg-upload-section">
+                    <h3>Background Image</h3>
+                    <button class="bg-upload-btn" onclick="document.getElementById('bgImageInput').click()">
+                        📸 Choose Background Image
+                    </button>
+                    <button class="clear-bg-btn" id="clearBgBtn">Clear Background</button>
+                    <input type="file" id="bgImageInput" accept="image/*">
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="gameScreen">
+            <div class="game-grid" id="gameGrid"></div>
+            <div class="control-bar">
+                <button class="control-btn" id="resetBtn">🔄 Reset Scores</button>
+                <button class="control-btn danger" id="newGameBtn">🏠 New Game</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Log Modal -->
+    <div class="modal" id="logModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Score History</h2>
+                <button class="close-btn" id="closeLogBtn">&times;</button>
+            </div>
+            <ul class="log-entries" id="logEntries"></ul>
+        </div>
+    </div>
+
+    <script>
+        // Game State
+        let playerCount = 0;
+        let players = [];
+        let currentLogPlayer = null;
+
+        // Theme Management
+        function initializeTheme() {
+            const themeBtnActive = document.querySelector('.theme-btn-active');
+            const themeDropdown = document.querySelector('.theme-dropdown');
+            const themeButtons = document.querySelectorAll('.theme-btn');
+
+            const savedTheme = localStorage.getItem('appTheme') || 'default';
+            if (savedTheme !== 'default') {
+                document.body.classList.add(`theme-${savedTheme}`);
+                themeBtnActive.className = `theme-btn-active theme-${savedTheme}`;
+            }
+
+            themeBtnActive.addEventListener('click', (e) => {
+                e.stopPropagation();
+                themeDropdown.classList.toggle('visible');
+            });
+
+            themeButtons.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const theme = btn.dataset.theme;
+
+                    document.body.className = '';
+                    themeBtnActive.className = 'theme-btn-active';
+
+                    if (theme !== 'default') {
+                        document.body.classList.add(`theme-${theme}`);
+                    }
+                    themeBtnActive.classList.add(`theme-${theme}`);
+
+                    // Restore custom background if it exists
+                    const savedBg = localStorage.getItem('mtgBackground');
+                    if (savedBg) {
+                        document.body.classList.add('custom-bg');
+                    }
+
+                    localStorage.setItem('appTheme', theme);
+                    themeDropdown.classList.remove('visible');
+                });
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!themeBtnActive.contains(e.target) && !themeDropdown.contains(e.target)) {
+                    themeDropdown.classList.remove('visible');
+                }
+            });
+        }
+
+        // Background Image Management
+        function initializeBackgroundImage() {
+            const bgInput = document.getElementById('bgImageInput');
+            const clearBgBtn = document.getElementById('clearBgBtn');
+
+            // Load saved background
+            const savedBg = localStorage.getItem('mtgBackground');
+            if (savedBg) {
+                document.body.style.backgroundImage = `url(${savedBg})`;
+                document.body.classList.add('custom-bg');
+            }
+
+            bgInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const imageData = event.target.result;
+                        localStorage.setItem('mtgBackground', imageData);
+                        document.body.style.backgroundImage = `url(${imageData})`;
+                        document.body.classList.add('custom-bg');
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            clearBgBtn.addEventListener('click', () => {
+                localStorage.removeItem('mtgBackground');
+                document.body.style.backgroundImage = '';
+                document.body.classList.remove('custom-bg');
+            });
+        }
+
+        // Player Count Selection
+        function initializePlayerSelection() {
+            const playerCountBtns = document.querySelectorAll('.player-count-btn');
+            const startGameBtn = document.getElementById('startGameBtn');
+
+            playerCountBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    playerCountBtns.forEach(b => b.style.opacity = '0.6');
+                    btn.style.opacity = '1';
+                    playerCount = parseInt(btn.dataset.players);
+                    startGameBtn.disabled = false;
+                });
+            });
+
+            startGameBtn.addEventListener('click', startGame);
+        }
+
+        // Start Game
+        function startGame() {
+            players = [];
+            for (let i = 0; i < playerCount; i++) {
+                players.push({
+                    name: `Player ${i + 1}`,
+                    life: 40,
+                    poison: 0,
+                    commander: 0,
+                    log: []
+                });
+            }
+
+            document.getElementById('setupScreen').style.display = 'none';
+            document.getElementById('gameScreen').style.display = 'block';
+            renderGameBoard();
+        }
+
+        // Render Game Board
+        function renderGameBoard() {
+            const gameGrid = document.getElementById('gameGrid');
+            gameGrid.className = `game-grid players-${playerCount}`;
+            gameGrid.innerHTML = '';
+
+            const rotations = getRotations(playerCount);
+
+            players.forEach((player, index) => {
+                const playerZone = document.createElement('div');
+                playerZone.className = `player-zone ${rotations[index]}`;
+                playerZone.innerHTML = `
+                    <button class="log-btn" onclick="showLog(${index})">📋 Log</button>
+                    <div class="player-name">${player.name}</div>
+                    <div class="life-total" id="life-${index}">${player.life}</div>
+                    <div class="score-controls">
+                        <button class="score-btn" onclick="adjustLife(${index}, -1)">−</button>
+                        <button class="score-btn" onclick="adjustLife(${index}, 1)">+</button>
+                    </div>
+                    <div class="secondary-counters">
+                        <div class="counter-item">
+                            <div class="counter-label">☠️ Poison</div>
+                            <div class="counter-value" id="poison-${index}">${player.poison}</div>
+                            <div class="counter-controls">
+                                <button class="counter-btn" onclick="adjustCounter(${index}, 'poison', -1)">−</button>
+                                <button class="counter-btn" onclick="adjustCounter(${index}, 'poison', 1)">+</button>
+                            </div>
+                        </div>
+                        <div class="counter-item">
+                            <div class="counter-label">⚔️ Commander</div>
+                            <div class="counter-value" id="commander-${index}">${player.commander}</div>
+                            <div class="counter-controls">
+                                <button class="counter-btn" onclick="adjustCounter(${index}, 'commander', -1)">−</button>
+                                <button class="counter-btn" onclick="adjustCounter(${index}, 'commander', 1)">+</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                gameGrid.appendChild(playerZone);
+            });
+        }
+
+        // Get Rotations for Players
+        function getRotations(count) {
+            if (count === 2) {
+                return ['', 'rotate-180'];
+            } else if (count === 3) {
+                return ['', 'rotate-180', 'rotate-180', ''];
+            } else if (count === 4) {
+                return ['', 'rotate-180', 'rotate-180', ''];
+            } else if (count === 5) {
+                return ['', 'rotate-180', 'rotate-180', '', 'rotate-180', ''];
+            } else if (count === 6) {
+                return ['', 'rotate-180', 'rotate-180', '', 'rotate-180', ''];
+            }
+            return [];
+        }
+
+        // Adjust Life
+        function adjustLife(playerIndex, amount) {
+            const player = players[playerIndex];
+            player.life += amount;
+            
+            const timestamp = new Date().toLocaleTimeString();
+            const changeText = amount > 0 ? `+${amount}` : amount;
+            player.log.push({
+                time: timestamp,
+                text: `Life ${changeText} (${player.life})`
+            });
+
+            document.getElementById(`life-${playerIndex}`).textContent = player.life;
+        }
+
+        // Adjust Counter
+        function adjustCounter(playerIndex, counterType, amount) {
+            const player = players[playerIndex];
+            player[counterType] += amount;
+            if (player[counterType] < 0) player[counterType] = 0;
+
+            const timestamp = new Date().toLocaleTimeString();
+            const changeText = amount > 0 ? `+${amount}` : amount;
+            const label = counterType === 'poison' ? 'Poison' : 'Commander Damage';
+            player.log.push({
+                time: timestamp,
+                text: `${label} ${changeText} (${player[counterType]})`
+            });
+
+            document.getElementById(`${counterType}-${playerIndex}`).textContent = player[counterType];
+        }
+
+        // Show Log
+        function showLog(playerIndex) {
+            currentLogPlayer = playerIndex;
+            const player = players[playerIndex];
+            const logModal = document.getElementById('logModal');
+            const logEntries = document.getElementById('logEntries');
+
+            logEntries.innerHTML = '';
+            
+            if (player.log.length === 0) {
+                logEntries.innerHTML = '<li class="log-entry">No history yet</li>';
+            } else {
+                player.log.slice().reverse().forEach(entry => {
+                    const li = document.createElement('li');
+                    li.className = 'log-entry';
+                    li.innerHTML = `
+                        <div class="timestamp">${entry.time}</div>
+                        <div>${entry.text}</div>
+                    `;
+                    logEntries.appendChild(li);
+                });
+            }
+
+            logModal.classList.add('active');
+        }
+
+        // Control Buttons
+        function initializeControls() {
+            document.getElementById('resetBtn').addEventListener('click', () => {
+                if (confirm('Reset all scores to starting values?')) {
+                    players.forEach((player, index) => {
+                        player.life = 40;
+                        player.poison = 0;
+                        player.commander = 0;
+                        player.log.push({
+                            time: new Date().toLocaleTimeString(),
+                            text: 'Game reset'
+                        });
+                    });
+                    renderGameBoard();
+                }
+            });
+
+            document.getElementById('newGameBtn').addEventListener('click', () => {
+                if (confirm('Start a new game? Current game will be lost.')) {
+                    document.getElementById('gameScreen').style.display = 'none';
+                    document.getElementById('setupScreen').style.display = 'flex';
+                    playerCount = 0;
+                    players = [];
+                    document.querySelectorAll('.player-count-btn').forEach(b => b.style.opacity = '0.6');
+                    document.getElementById('startGameBtn').disabled = true;
+                }
+            });
+
+            document.getElementById('closeLogBtn').addEventListener('click', () => {
+                document.getElementById('logModal').classList.remove('active');
+            });
+
+            document.getElementById('logModal').addEventListener('click', (e) => {
+                if (e.target.id === 'logModal') {
+                    document.getElementById('logModal').classList.remove('active');
+                }
+            });
+        }
+
+        // Initialize App
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeTheme();
+            initializeBackgroundImage();
+            initializePlayerSelection();
+            initializeControls();
+        });
+    </script>
+</body>
+
+</html>
