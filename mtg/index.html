@@ -901,7 +901,7 @@
         <div class="menu-modal-content">
             <div class="menu-modal-header">
                 <h2>⚙️ Menu</h2>
-                <button class="close-btn" id="closeMenuBtn">&times;</button>
+                <button class="close-btn" id="closeMenuBtn" aria-label="Close menu">&times;</button>
             </div>
             
             <div class="menu-section">
@@ -1134,7 +1134,7 @@
                 playerZone.dataset.playerIndex = playerIndex;
                 playerZone.innerHTML = `
                     <button class="log-btn" onclick="showLog(${playerIndex})">📋 Log</button>
-                    ${playerIndex === 0 ? '<button class="menu-btn" onclick="showMenu()">☰</button>' : ''}
+                    ${playerIndex === 0 ? '<button class="menu-btn" onclick="showMenu()" aria-label="Open menu" role="button">☰</button>' : ''}
                     <div class="player-name" onclick="renamePlayer(${playerIndex})" style="cursor: pointer;">${player.name}</div>
                     <div class="life-total" id="life-${playerIndex}">${player.life}</div>
                     <div class="score-controls">
@@ -1306,6 +1306,11 @@
             menuModal.classList.add('active');
         }
 
+        // Close Menu
+        function closeMenu() {
+            document.getElementById('menuModal').classList.remove('active');
+        }
+
         // Control Buttons
         function initializeControls() {
             // Reset button in menu
@@ -1322,7 +1327,7 @@
                     });
                     renderGameBoard();
                     saveGameState();
-                    document.getElementById('menuModal').classList.remove('active');
+                    closeMenu();
                 }
             });
 
@@ -1338,19 +1343,17 @@
                     players = [];
                     document.querySelectorAll('.player-count-btn').forEach(b => b.style.opacity = '0.6');
                     document.getElementById('startGameBtn').disabled = true;
-                    document.getElementById('menuModal').classList.remove('active');
+                    closeMenu();
                 }
             });
 
             // Close menu button
-            document.getElementById('closeMenuBtn').addEventListener('click', () => {
-                document.getElementById('menuModal').classList.remove('active');
-            });
+            document.getElementById('closeMenuBtn').addEventListener('click', closeMenu);
 
             // Close menu on backdrop click
             document.getElementById('menuModal').addEventListener('click', (e) => {
                 if (e.target.id === 'menuModal') {
-                    document.getElementById('menuModal').classList.remove('active');
+                    closeMenu();
                 }
             });
 
