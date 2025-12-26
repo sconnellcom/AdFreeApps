@@ -380,7 +380,7 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            padding: 20px;
+            padding: 10px;
         }
 
         .player-zone.rotate-180 {
@@ -396,32 +396,32 @@
         }
 
         .player-name {
-            font-size: 1.5em;
+            font-size: 1em;
             font-weight: bold;
             color: var(--text-color);
-            margin-bottom: 20px;
+            margin-bottom: 10px;
             text-align: center;
         }
 
         .life-total {
-            font-size: 6em;
+            font-size: 3.5em;
             font-weight: bold;
             color: var(--text-color);
-            margin: 20px 0;
+            margin: 10px 0;
             user-select: none;
         }
 
         .score-controls {
             display: flex;
-            gap: 20px;
+            gap: 10px;
             align-items: center;
-            margin: 20px 0;
+            margin: 10px 0;
         }
 
         .score-btn {
-            width: 80px;
-            height: 80px;
-            font-size: 3em;
+            width: 60px;
+            height: 60px;
+            font-size: 2em;
             font-weight: bold;
             background: var(--button-bg);
             color: white;
@@ -445,39 +445,39 @@
 
         .secondary-counters {
             display: flex;
-            gap: 15px;
-            margin-top: 15px;
-            font-size: 0.9em;
+            gap: 10px;
+            margin-top: 8px;
+            font-size: 0.75em;
         }
 
         .counter-item {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 5px;
+            gap: 3px;
         }
 
         .counter-label {
             color: var(--text-secondary);
-            font-size: 0.8em;
+            font-size: 0.7em;
             font-weight: bold;
         }
 
         .counter-value {
-            font-size: 1.5em;
+            font-size: 1.2em;
             font-weight: bold;
             color: var(--text-color);
         }
 
         .counter-controls {
             display: flex;
-            gap: 5px;
+            gap: 3px;
         }
 
         .counter-btn {
-            width: 35px;
-            height: 35px;
-            font-size: 1.2em;
+            width: 28px;
+            height: 28px;
+            font-size: 1em;
             background: var(--surface-bg);
             color: var(--text-color);
             border: 1px solid var(--border-color);
@@ -493,10 +493,10 @@
 
         .log-btn {
             position: absolute;
-            top: 10px;
-            left: 10px;
-            padding: 8px 15px;
-            font-size: 0.9em;
+            top: 5px;
+            left: 5px;
+            padding: 5px 10px;
+            font-size: 0.75em;
             background: var(--surface-bg);
             color: var(--text-color);
             border: 1px solid var(--border-color);
@@ -572,6 +572,11 @@
             max-height: 80vh;
             overflow-y: auto;
             width: 90%;
+            transition: transform 0.3s;
+        }
+
+        .modal-content.rotate-180 {
+            transform: rotate(180deg);
         }
 
         .modal-header {
@@ -868,6 +873,61 @@
         let gameFormat = 'commander';
         let startingLife = 40;
 
+        // LocalStorage functions
+        function saveGameState() {
+            const gameState = {
+                playerCount,
+                players,
+                gameFormat,
+                startingLife
+            };
+            localStorage.setItem('mtgGameState', JSON.stringify(gameState));
+        }
+
+        function loadGameState() {
+            const saved = localStorage.getItem('mtgGameState');
+            if (saved) {
+                try {
+                    const gameState = JSON.parse(saved);
+                    // Validate the loaded data
+                    if (gameState && 
+                        typeof gameState.playerCount === 'number' &&
+                        Array.isArray(gameState.players) &&
+                        typeof gameState.gameFormat === 'string' &&
+                        typeof gameState.startingLife === 'number') {
+                        playerCount = gameState.playerCount;
+                        players = gameState.players;
+                        gameFormat = gameState.gameFormat;
+                        startingLife = gameState.startingLife;
+                        return true;
+                    }
+                    return false;
+                } catch (e) {
+                    console.error('Error loading game state:', e);
+                    return false;
+                }
+            }
+            return false;
+        }
+
+        function savePlayerNames() {
+            const names = players.map(p => p.name);
+            localStorage.setItem('mtgPlayerNames', JSON.stringify(names));
+        }
+
+        function loadPlayerNames() {
+            const saved = localStorage.getItem('mtgPlayerNames');
+            if (saved) {
+                try {
+                    return JSON.parse(saved);
+                } catch (e) {
+                    console.error('Error loading player names:', e);
+                    return [];
+                }
+            }
+            return [];
+        }
+
         // Theme Management
         function initializeTheme() {
             const themeBtnActive = document.querySelector('.theme-btn-active');
@@ -980,10 +1040,13 @@
 
         // Start Game
         function startGame() {
+            // Load saved player names if available
+            const savedNames = loadPlayerNames();
+            
             players = [];
             for (let i = 0; i < playerCount; i++) {
                 players.push({
-                    name: `Player ${i + 1}`,
+                    name: savedNames[i] || `Player ${i + 1}`,
                     life: startingLife,
                     poison: 0,
                     commander: 0,
@@ -994,6 +1057,7 @@
             document.getElementById('setupScreen').style.display = 'none';
             document.getElementById('gameScreen').style.display = 'block';
             renderGameBoard();
+            saveGameState();
         }
 
         // Render Game Board
@@ -1008,7 +1072,10 @@
             displayOrder.forEach((playerIndex, position) => {
                 const player = players[playerIndex];
                 const playerZone = document.createElement('div');
-                playerZone.className = `player-zone ${rotations[position]}`;
+                const rotation = rotations[position];
+                playerZone.className = `player-zone ${rotation}`;
+                playerZone.dataset.rotation = rotation;
+                playerZone.dataset.playerIndex = playerIndex;
                 playerZone.innerHTML = `
                     <button class="log-btn" onclick="showLog(${playerIndex})">📋 Log</button>
                     <div class="player-name" onclick="renamePlayer(${playerIndex})" style="cursor: pointer;">${player.name}</div>
@@ -1044,9 +1111,9 @@
         function getDisplayOrder(count) {
             // Returns array of player indices (0-based) for grid positions
             // Clockwise order: Player 1 at bottom-left, Player 2 at top-left, Player 3 at top-right, etc.
-            // For 2 players: 1 (top), 2 (bottom)
+            // For 2 players: Player 2 (top), Player 1 (bottom)
             if (count === 2) {
-                return [0, 1];
+                return [1, 0];
             }
             // For 3 players: 2 (top-left), 3 (top-right), 1 (bottom)
             else if (count === 3) {
@@ -1056,9 +1123,9 @@
             else if (count === 4) {
                 return [1, 2, 0, 3];
             }
-            // For 5 players: 2 (top-left), 3 (top-right), 1 (bottom-left), 4 (bottom-middle), 5 (bottom-right)
+            // For 5 players: 2 (top-left), 3 (top-middle), 4 (top-right), 1 (bottom-left), 5 (bottom-right)
             else if (count === 5) {
-                return [1, 2, 0, 3, 4];
+                return [1, 2, 3, 0, 4];
             }
             // For 6 players: 2 (top-left), 3 (top-middle), 4 (top-right), 1 (bottom-left), 6 (bottom-middle), 5 (bottom-right)
             else if (count === 6) {
@@ -1069,7 +1136,7 @@
 
         // Get Rotations for Players
         function getRotations(count) {
-            // For 2 players: Player 1 upside down (top), Player 2 right side up (bottom)
+            // For 2 players: Player 2 upside down (top), Player 1 right side up (bottom)
             if (count === 2) {
                 return ['rotate-180', ''];
             } 
@@ -1081,9 +1148,9 @@
             else if (count === 4) {
                 return ['rotate-180', 'rotate-180', '', ''];
             } 
-            // For 5 players: 2 on top upside down, 3 on bottom right side up (3x2 grid)
+            // For 5 players: Players 2, 3, 4 on top upside down, Players 1, 5 on bottom right side up (3x2 grid)
             else if (count === 5) {
-                return ['rotate-180', 'rotate-180', '', '', ''];
+                return ['rotate-180', 'rotate-180', 'rotate-180', '', ''];
             } 
             // For 6 players: 3 on top upside down, 3 on bottom right side up (3x2 grid)
             else if (count === 6) {
@@ -1105,6 +1172,7 @@
             });
 
             document.getElementById(`life-${playerIndex}`).textContent = player.life;
+            saveGameState();
         }
 
         // Adjust Counter
@@ -1122,6 +1190,7 @@
             });
 
             document.getElementById(`${counterType}-${playerIndex}`).textContent = player[counterType];
+            saveGameState();
         }
 
         // Rename Player
@@ -1132,6 +1201,8 @@
             if (newName && newName.trim()) {
                 player.name = newName.trim();
                 renderGameBoard();
+                savePlayerNames();
+                saveGameState();
             }
         }
 
@@ -1140,7 +1211,18 @@
             currentLogPlayer = playerIndex;
             const player = players[playerIndex];
             const logModal = document.getElementById('logModal');
+            const modalContent = logModal.querySelector('.modal-content');
             const logEntries = document.getElementById('logEntries');
+
+            // Find the player zone to get rotation
+            const playerZone = document.querySelector(`[data-player-index="${playerIndex}"]`);
+            const rotation = playerZone ? playerZone.dataset.rotation : '';
+            
+            // Apply rotation to modal content
+            modalContent.className = 'modal-content';
+            if (rotation === 'rotate-180') {
+                modalContent.classList.add('rotate-180');
+            }
 
             logEntries.innerHTML = '';
             
@@ -1175,11 +1257,15 @@
                         });
                     });
                     renderGameBoard();
+                    saveGameState();
                 }
             });
 
             document.getElementById('newGameBtn').addEventListener('click', () => {
-                if (confirm('Start a new game? Current game will be lost.')) {
+                if (confirm('Start a new game? The current game will be ended but player names will be kept.')) {
+                    // Save current names before clearing
+                    savePlayerNames();
+                    
                     document.getElementById('gameScreen').style.display = 'none';
                     document.getElementById('setupScreen').style.display = 'flex';
                     playerCount = 0;
@@ -1206,6 +1292,16 @@
             initializeBackgroundImage();
             initializePlayerSelection();
             initializeControls();
+            
+            // Try to restore game state
+            if (loadGameState()) {
+                // Restore the game screen if there was a saved game
+                if (players.length > 0) {
+                    document.getElementById('setupScreen').style.display = 'none';
+                    document.getElementById('gameScreen').style.display = 'block';
+                    renderGameBoard();
+                }
+            }
         });
     </script>
 </body>
