@@ -905,11 +905,23 @@
             </div>
             
             <div class="menu-section">
+                <h3>Navigation</h3>
+                <button class="menu-button" id="menuHomeBtn">🏠 Home</button>
+            </div>
+
+            <div class="menu-section">
                 <h3>Game Controls</h3>
                 <button class="menu-button" id="menuResetBtn">🔄 Reset Scores</button>
-                <button class="menu-button danger" id="menuNewGameBtn">🏠 New Game</button>
+                <button class="menu-button danger" id="menuNewGameBtn">🆕 New Game</button>
             </div>
             
+            <div class="menu-section">
+                <h3>Background</h3>
+                <button class="menu-button" id="menuChooseBgBtn">📸 Choose Background Image</button>
+                <button class="menu-button" id="menuClearBgBtn">🗑️ Clear Background</button>
+                <input type="file" id="menuBgImageInput" accept="image/*" style="display: none;">
+            </div>
+
             <div class="menu-section theme-picker-section">
                 <h3>Theme</h3>
                 <div style="display: flex; align-items: center; margin-bottom: 10px;">
@@ -1318,6 +1330,13 @@
 
         // Control Buttons
         function initializeControls() {
+            // Home button in menu
+            document.getElementById('menuHomeBtn').addEventListener('click', () => {
+                if (confirm('Return to AdFreeApps home? Your current game will be saved.')) {
+                    window.location.href = '../index.html';
+                }
+            });
+
             // Reset button in menu
             document.getElementById('menuResetBtn').addEventListener('click', () => {
                 if (confirm('Reset all scores to starting values?')) {
@@ -1349,6 +1368,33 @@
                     document.querySelectorAll('.player-count-btn').forEach(b => b.style.opacity = '0.6');
                     document.getElementById('startGameBtn').disabled = true;
                     closeMenu();
+                }
+            });
+
+            // Background image controls in menu
+            document.getElementById('menuChooseBgBtn').addEventListener('click', () => {
+                document.getElementById('menuBgImageInput').click();
+            });
+
+            document.getElementById('menuBgImageInput').addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const imageData = event.target.result;
+                        localStorage.setItem('mtgBackground', imageData);
+                        document.body.style.backgroundImage = `url(${imageData})`;
+                        document.body.classList.add('custom-bg');
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            document.getElementById('menuClearBgBtn').addEventListener('click', () => {
+                if (confirm('Clear the background image?')) {
+                    localStorage.removeItem('mtgBackground');
+                    document.body.style.backgroundImage = '';
+                    document.body.classList.remove('custom-bg');
                 }
             });
 
