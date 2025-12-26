@@ -912,7 +912,7 @@
             <div class="menu-section">
                 <h3>Game Controls</h3>
                 <button class="menu-button" id="menuResetBtn">🔄 Reset Scores</button>
-                <button class="menu-button danger" id="menuNewGameBtn">🆕 New Game</button>
+                <button class="menu-button danger" id="menuNewGameBtn">🎮 New Game</button>
             </div>
             
             <div class="menu-section">
@@ -1379,12 +1379,32 @@
             document.getElementById('menuBgImageInput').addEventListener('change', (e) => {
                 const file = e.target.files[0];
                 if (file) {
+                    // Validate file type
+                    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+                    if (!validTypes.includes(file.type)) {
+                        alert('Please select a valid image file (JPEG, PNG, GIF, or WebP)');
+                        e.target.value = '';
+                        return;
+                    }
+                    
+                    // Validate file size (max 5MB)
+                    const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+                    if (file.size > maxSize) {
+                        alert('Image file is too large. Please select an image smaller than 5MB.');
+                        e.target.value = '';
+                        return;
+                    }
+                    
                     const reader = new FileReader();
                     reader.onload = (event) => {
                         const imageData = event.target.result;
                         localStorage.setItem('mtgBackground', imageData);
                         document.body.style.backgroundImage = `url(${imageData})`;
                         document.body.classList.add('custom-bg');
+                    };
+                    reader.onerror = () => {
+                        alert('Error reading image file. Please try again.');
+                        e.target.value = '';
                     };
                     reader.readAsDataURL(file);
                 }
