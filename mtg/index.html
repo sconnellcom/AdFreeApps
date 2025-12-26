@@ -1134,7 +1134,7 @@
                 playerZone.dataset.playerIndex = playerIndex;
                 playerZone.innerHTML = `
                     <button class="log-btn" onclick="showLog(${playerIndex})">📋 Log</button>
-                    ${playerIndex === 0 ? '<button class="menu-btn" onclick="showMenu()" aria-label="Open menu" role="button">☰</button>' : ''}
+                    ${playerIndex === 0 ? '<button class="menu-btn" onclick="showMenu()" aria-label="Open menu">☰</button>' : ''}
                     <div class="player-name" onclick="renamePlayer(${playerIndex})" style="cursor: pointer;">${player.name}</div>
                     <div class="life-total" id="life-${playerIndex}">${player.life}</div>
                     <div class="score-controls">
