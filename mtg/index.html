@@ -1003,39 +1003,66 @@
             gameGrid.innerHTML = '';
 
             const rotations = getRotations(playerCount);
+            const displayOrder = getDisplayOrder(playerCount);
 
-            players.forEach((player, index) => {
+            displayOrder.forEach((playerIndex, position) => {
+                const player = players[playerIndex];
                 const playerZone = document.createElement('div');
-                playerZone.className = `player-zone ${rotations[index]}`;
+                playerZone.className = `player-zone ${rotations[position]}`;
                 playerZone.innerHTML = `
-                    <button class="log-btn" onclick="showLog(${index})">📋 Log</button>
-                    <div class="player-name">${player.name}</div>
-                    <div class="life-total" id="life-${index}">${player.life}</div>
+                    <button class="log-btn" onclick="showLog(${playerIndex})">📋 Log</button>
+                    <div class="player-name" onclick="renamePlayer(${playerIndex})" style="cursor: pointer;">${player.name}</div>
+                    <div class="life-total" id="life-${playerIndex}">${player.life}</div>
                     <div class="score-controls">
-                        <button class="score-btn" onclick="adjustLife(${index}, -1)">−</button>
-                        <button class="score-btn" onclick="adjustLife(${index}, 1)">+</button>
+                        <button class="score-btn" onclick="adjustLife(${playerIndex}, -1)">−</button>
+                        <button class="score-btn" onclick="adjustLife(${playerIndex}, 1)">+</button>
                     </div>
                     <div class="secondary-counters">
                         <div class="counter-item">
                             <div class="counter-label">☠️ Poison</div>
-                            <div class="counter-value" id="poison-${index}">${player.poison}</div>
+                            <div class="counter-value" id="poison-${playerIndex}">${player.poison}</div>
                             <div class="counter-controls">
-                                <button class="counter-btn" onclick="adjustCounter(${index}, 'poison', -1)">−</button>
-                                <button class="counter-btn" onclick="adjustCounter(${index}, 'poison', 1)">+</button>
+                                <button class="counter-btn" onclick="adjustCounter(${playerIndex}, 'poison', -1)">−</button>
+                                <button class="counter-btn" onclick="adjustCounter(${playerIndex}, 'poison', 1)">+</button>
                             </div>
                         </div>
                         <div class="counter-item">
                             <div class="counter-label">⚔️ Commander</div>
-                            <div class="counter-value" id="commander-${index}">${player.commander}</div>
+                            <div class="counter-value" id="commander-${playerIndex}">${player.commander}</div>
                             <div class="counter-controls">
-                                <button class="counter-btn" onclick="adjustCounter(${index}, 'commander', -1)">−</button>
-                                <button class="counter-btn" onclick="adjustCounter(${index}, 'commander', 1)">+</button>
+                                <button class="counter-btn" onclick="adjustCounter(${playerIndex}, 'commander', -1)">−</button>
+                                <button class="counter-btn" onclick="adjustCounter(${playerIndex}, 'commander', 1)">+</button>
                             </div>
                         </div>
                     </div>
                 `;
                 gameGrid.appendChild(playerZone);
             });
+        }
+
+        // Get Display Order for Players (so numbers increase left to right)
+        function getDisplayOrder(count) {
+            // For 2 players: 1 (top), 2 (bottom)
+            if (count === 2) {
+                return [0, 1];
+            }
+            // For 3 players: 2 (top-left), 1 (top-right), 3 (bottom)
+            else if (count === 3) {
+                return [1, 0, 2];
+            }
+            // For 4 players: 2 (top-left), 1 (top-right), 3 (bottom-left), 4 (bottom-right)
+            else if (count === 4) {
+                return [1, 0, 2, 3];
+            }
+            // For 5 players: 2 (top-left), 1 (top-right), 3 (bottom-left), 4 (bottom-middle), 5 (bottom-right)
+            else if (count === 5) {
+                return [1, 0, 2, 3, 4];
+            }
+            // For 6 players: 3 (top-left), 2 (top-middle), 1 (top-right), 4 (bottom-left), 5 (bottom-middle), 6 (bottom-right)
+            else if (count === 6) {
+                return [2, 1, 0, 3, 4, 5];
+            }
+            return Array.from({length: count}, (_, i) => i);
         }
 
         // Get Rotations for Players
@@ -1093,6 +1120,17 @@
             });
 
             document.getElementById(`${counterType}-${playerIndex}`).textContent = player[counterType];
+        }
+
+        // Rename Player
+        function renamePlayer(playerIndex) {
+            const player = players[playerIndex];
+            const newName = prompt('Enter new player name:', player.name);
+            
+            if (newName && newName.trim()) {
+                player.name = newName.trim();
+                renderGameBoard();
+            }
         }
 
         // Show Log
