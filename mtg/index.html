@@ -889,11 +889,19 @@
             if (saved) {
                 try {
                     const gameState = JSON.parse(saved);
-                    playerCount = gameState.playerCount;
-                    players = gameState.players;
-                    gameFormat = gameState.gameFormat;
-                    startingLife = gameState.startingLife;
-                    return true;
+                    // Validate the loaded data
+                    if (gameState && 
+                        typeof gameState.playerCount === 'number' &&
+                        Array.isArray(gameState.players) &&
+                        typeof gameState.gameFormat === 'string' &&
+                        typeof gameState.startingLife === 'number') {
+                        playerCount = gameState.playerCount;
+                        players = gameState.players;
+                        gameFormat = gameState.gameFormat;
+                        startingLife = gameState.startingLife;
+                        return true;
+                    }
+                    return false;
                 } catch (e) {
                     console.error('Error loading game state:', e);
                     return false;
@@ -1254,7 +1262,7 @@
             });
 
             document.getElementById('newGameBtn').addEventListener('click', () => {
-                if (confirm('Start a new game? Current scores will be reset but names will be preserved.')) {
+                if (confirm('Start a new game? Current game will be ended but player names will be kept.')) {
                     // Save current names before clearing
                     savePlayerNames();
                     
