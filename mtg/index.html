@@ -1040,25 +1040,25 @@
 
         // Get Rotations for Players
         function getRotations(count) {
-            // For 2 players: top and bottom of table
+            // For 2 players: Player 1 upside down (top), Player 2 right side up (bottom)
             if (count === 2) {
-                return ['', 'rotate-180'];
+                return ['rotate-180', ''];
             } 
-            // For 3 players: 2 on top, 1 on bottom (2x2 grid with one empty spot)
+            // For 3 players: 2 on top upside down, 1 on bottom right side up (2x2 grid with one empty spot)
             else if (count === 3) {
-                return ['', 'rotate-180', ''];
+                return ['rotate-180', 'rotate-180', ''];
             } 
-            // For 4 players: 2 on top facing down, 2 on bottom facing up
+            // For 4 players: Players 1-2 upside down (top), Players 3-4 right side up (bottom)
             else if (count === 4) {
-                return ['', '', 'rotate-180', 'rotate-180'];
+                return ['rotate-180', 'rotate-180', '', ''];
             } 
-            // For 5 players: 2 on top, 3 on bottom (3x2 grid)
+            // For 5 players: 2 on top upside down, 3 on bottom right side up (3x2 grid)
             else if (count === 5) {
-                return ['', '', 'rotate-180', 'rotate-180', 'rotate-180'];
+                return ['rotate-180', 'rotate-180', '', '', ''];
             } 
-            // For 6 players: 3 on top, 3 on bottom (3x2 grid)
+            // For 6 players: 3 on top upside down, 3 on bottom right side up (3x2 grid)
             else if (count === 6) {
-                return ['', '', '', 'rotate-180', 'rotate-180', 'rotate-180'];
+                return ['rotate-180', 'rotate-180', 'rotate-180', '', '', ''];
             }
             return [];
         }
