@@ -1311,6 +1311,11 @@
             document.getElementById('menuModal').classList.remove('active');
         }
 
+        // Close Log
+        function closeLog() {
+            document.getElementById('logModal').classList.remove('active');
+        }
+
         // Control Buttons
         function initializeControls() {
             // Reset button in menu
@@ -1357,13 +1362,11 @@
                 }
             });
 
-            document.getElementById('closeLogBtn').addEventListener('click', () => {
-                document.getElementById('logModal').classList.remove('active');
-            });
+            document.getElementById('closeLogBtn').addEventListener('click', closeLog);
 
             document.getElementById('logModal').addEventListener('click', (e) => {
                 if (e.target.id === 'logModal') {
-                    document.getElementById('logModal').classList.remove('active');
+                    closeLog();
                 }
             });
         }
