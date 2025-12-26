@@ -1060,9 +1060,9 @@
             else if (count === 5) {
                 return [1, 2, 0, 3, 4];
             }
-            // For 6 players: 3 (top-left), 4 (top-middle), 5 (top-right), 1 (bottom-left), 2 (bottom-middle), 6 (bottom-right)
+            // For 6 players: 2 (top-left), 3 (top-middle), 4 (top-right), 1 (bottom-left), 6 (bottom-middle), 5 (bottom-right)
             else if (count === 6) {
-                return [2, 3, 4, 0, 1, 5];
+                return [1, 2, 3, 0, 5, 4];
             }
             return Array.from({length: count}, (_, i) => i);
         }
