@@ -255,7 +255,36 @@
         .setup-card p {
             color: var(--text-secondary);
             text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .format-selection {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
             margin-bottom: 30px;
+        }
+
+        .format-btn {
+            padding: 15px 30px;
+            font-size: 1.1em;
+            font-weight: bold;
+            background: var(--surface-bg);
+            color: var(--text-color);
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .format-btn.selected {
+            background: var(--button-bg);
+            color: white;
+            border-color: var(--button-bg);
+        }
+
+        .format-btn:hover {
+            transform: scale(1.05);
         }
 
         .player-count-buttons {
@@ -484,13 +513,13 @@
         /* Control Bar */
         .control-bar {
             position: fixed;
-            top: 50%;
+            bottom: 20px;
             left: 50%;
-            transform: translate(-50%, -50%);
+            transform: translateX(-50%);
             display: flex;
             gap: 10px;
             padding: 15px;
-            background: rgba(0, 0, 0, 0.7);
+            background: rgba(0, 0, 0, 0.8);
             border-radius: 15px;
             z-index: 1000;
         }
@@ -779,6 +808,15 @@
         <div id="setupScreen">
             <div class="setup-card">
                 <h1>⚔️ MTG Score Tracker</h1>
+                <p>Select game format</p>
+                <div class="format-selection">
+                    <button class="format-btn selected" data-format="commander" data-life="40">
+                        Commander (40 life)
+                    </button>
+                    <button class="format-btn" data-format="standard" data-life="20">
+                        Standard (20 life)
+                    </button>
+                </div>
                 <p>Select number of players</p>
                 <div class="player-count-buttons">
                     <button class="player-count-btn" data-players="2">2</button>
@@ -827,6 +865,8 @@
         let playerCount = 0;
         let players = [];
         let currentLogPlayer = null;
+        let gameFormat = 'commander';
+        let startingLife = 40;
 
         // Theme Management
         function initializeTheme() {
@@ -911,9 +951,21 @@
 
         // Player Count Selection
         function initializePlayerSelection() {
+            const formatBtns = document.querySelectorAll('.format-btn');
             const playerCountBtns = document.querySelectorAll('.player-count-btn');
             const startGameBtn = document.getElementById('startGameBtn');
 
+            // Format selection
+            formatBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    formatBtns.forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                    gameFormat = btn.dataset.format;
+                    startingLife = parseInt(btn.dataset.life);
+                });
+            });
+
+            // Player count selection
             playerCountBtns.forEach(btn => {
                 btn.addEventListener('click', () => {
                     playerCountBtns.forEach(b => b.style.opacity = '0.6');
@@ -932,7 +984,7 @@
             for (let i = 0; i < playerCount; i++) {
                 players.push({
                     name: `Player ${i + 1}`,
-                    life: 40,
+                    life: startingLife,
                     poison: 0,
                     commander: 0,
                     log: []
@@ -988,16 +1040,25 @@
 
         // Get Rotations for Players
         function getRotations(count) {
+            // For 2 players: top and bottom of table
             if (count === 2) {
                 return ['', 'rotate-180'];
-            } else if (count === 3) {
-                return ['', 'rotate-180', 'rotate-180'];
-            } else if (count === 4) {
-                return ['', 'rotate-180', 'rotate-180', ''];
-            } else if (count === 5) {
-                return ['', 'rotate-180', 'rotate-180', '', 'rotate-180'];
-            } else if (count === 6) {
-                return ['', 'rotate-180', 'rotate-180', '', 'rotate-180', ''];
+            } 
+            // For 3 players: 2x2 grid with one empty spot
+            else if (count === 3) {
+                return ['', 'rotate-180', ''];
+            } 
+            // For 4 players: corners of table
+            else if (count === 4) {
+                return ['', '', 'rotate-180', 'rotate-180'];
+            } 
+            // For 5 players: 3x2 grid
+            else if (count === 5) {
+                return ['', '', 'rotate-180', 'rotate-180', 'rotate-180'];
+            } 
+            // For 6 players: 3x2 grid
+            else if (count === 6) {
+                return ['', '', '', 'rotate-180', 'rotate-180', 'rotate-180'];
             }
             return [];
         }
@@ -1065,7 +1126,7 @@
             document.getElementById('resetBtn').addEventListener('click', () => {
                 if (confirm('Reset all scores to starting values?')) {
                     players.forEach((player, index) => {
-                        player.life = 40;
+                        player.life = startingLife;
                         player.poison = 0;
                         player.commander = 0;
                         player.log.push({
