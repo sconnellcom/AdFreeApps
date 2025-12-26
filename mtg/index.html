@@ -916,6 +916,13 @@
             </div>
             
             <div class="menu-section">
+                <h3>Display Options</h3>
+                <button class="menu-button" id="menuBoardFlipBtn">
+                    <span id="boardFlipStatus">🔄 Board Flip: ON</span>
+                </button>
+            </div>
+            
+            <div class="menu-section">
                 <h3>Background</h3>
                 <button class="menu-button" id="menuChooseBgBtn">📸 Choose Background Image</button>
                 <button class="menu-button" id="menuClearBgBtn">🗑️ Clear Background</button>
@@ -957,6 +964,7 @@
         let currentLogPlayer = null;
         let gameFormat = 'commander';
         let startingLife = 40;
+        let boardFlipEnabled = true;
 
         // LocalStorage functions
         function saveGameState() {
@@ -964,7 +972,8 @@
                 playerCount,
                 players,
                 gameFormat,
-                startingLife
+                startingLife,
+                boardFlipEnabled
             };
             localStorage.setItem('mtgGameState', JSON.stringify(gameState));
         }
@@ -984,6 +993,8 @@
                         players = gameState.players;
                         gameFormat = gameState.gameFormat;
                         startingLife = gameState.startingLife;
+                        // Load boardFlipEnabled, default to true if not present
+                        boardFlipEnabled = gameState.boardFlipEnabled !== undefined ? gameState.boardFlipEnabled : true;
                         return true;
                     }
                     return false;
@@ -1166,6 +1177,7 @@
                                 <button class="counter-btn" onclick="adjustCounter(${playerIndex}, 'poison', 1)">+</button>
                             </div>
                         </div>
+                        ${gameFormat === 'commander' ? `
                         <div class="counter-item">
                             <div class="counter-label">⚔️ Commander</div>
                             <div class="counter-value" id="commander-${playerIndex}">${player.commander}</div>
@@ -1174,6 +1186,7 @@
                                 <button class="counter-btn" onclick="adjustCounter(${playerIndex}, 'commander', 1)">+</button>
                             </div>
                         </div>
+                        ` : ''}
                     </div>
                 `;
                 gameGrid.appendChild(playerZone);
@@ -1209,6 +1222,11 @@
 
         // Get Rotations for Players
         function getRotations(count) {
+            // If board flip is disabled, return empty rotations (all players upright)
+            if (!boardFlipEnabled) {
+                return Array(count).fill('');
+            }
+            
             // For 2 players: Player 2 upside down (top), Player 1 right side up (bottom)
             if (count === 2) {
                 return ['rotate-180', ''];
@@ -1334,6 +1352,25 @@
 
         // Control Buttons
         function initializeControls() {
+            // Update board flip button text
+            function updateBoardFlipButton() {
+                const boardFlipBtn = document.getElementById('boardFlipStatus');
+                if (boardFlipBtn) {
+                    boardFlipBtn.textContent = boardFlipEnabled ? '🔄 Board Flip: ON' : '🔄 Board Flip: OFF';
+                }
+            }
+            
+            // Initialize board flip button
+            updateBoardFlipButton();
+            
+            // Board flip toggle
+            document.getElementById('menuBoardFlipBtn').addEventListener('click', () => {
+                boardFlipEnabled = !boardFlipEnabled;
+                updateBoardFlipButton();
+                renderGameBoard();
+                saveGameState();
+            });
+            
             // Home button in menu
             document.getElementById('menuHomeBtn').addEventListener('click', () => {
                 if (confirm('Return to AdFreeApps home? Your current game will be saved.')) {
