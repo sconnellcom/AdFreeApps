@@ -1042,7 +1042,8 @@
 
         // Get Display Order for Players (clockwise from each player's perspective)
         function getDisplayOrder(count) {
-            // Clockwise order: bottom-left = 1, top-left = 2, top-right = 3, etc.
+            // Returns array of player indices (0-based) for grid positions
+            // Clockwise order: Player 1 at bottom-left, Player 2 at top-left, Player 3 at top-right, etc.
             // For 2 players: 1 (top), 2 (bottom)
             if (count === 2) {
                 return [0, 1];
