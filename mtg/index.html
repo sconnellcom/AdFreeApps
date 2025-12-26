@@ -947,6 +947,9 @@
     </div>
 
     <script>
+        // Constants
+        const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
+        
         // Game State
         let playerCount = 0;
         let players = [];
@@ -1380,16 +1383,15 @@
                 const file = e.target.files[0];
                 if (file) {
                     // Validate file type
-                    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+                    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
                     if (!validTypes.includes(file.type)) {
                         alert('Please select a valid image file (JPEG, PNG, GIF, or WebP)');
                         e.target.value = '';
                         return;
                     }
                     
-                    // Validate file size (max 5MB)
-                    const maxSize = 5 * 1024 * 1024; // 5MB in bytes
-                    if (file.size > maxSize) {
+                    // Validate file size
+                    if (file.size > MAX_IMAGE_SIZE) {
                         alert('Image file is too large. Please select an image smaller than 5MB.');
                         e.target.value = '';
                         return;
