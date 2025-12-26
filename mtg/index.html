@@ -510,41 +510,7 @@
             color: white;
         }
 
-        /* Control Bar */
-        .control-bar {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 10px;
-            padding: 15px;
-            background: rgba(0, 0, 0, 0.8);
-            border-radius: 15px;
-            z-index: 1000;
-        }
 
-        .control-btn {
-            padding: 10px 20px;
-            font-size: 1em;
-            font-weight: bold;
-            background: var(--button-bg);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s;
-            white-space: nowrap;
-        }
-
-        .control-btn:hover {
-            background: var(--button-hover);
-            transform: scale(1.05);
-        }
-
-        .control-btn.danger {
-            background: var(--danger-color);
-        }
 
         /* Log Modal */
         .modal {
@@ -627,40 +593,128 @@
             font-size: 0.85em;
         }
 
-        /* Theme picker */
-        .theme-picker {
+        /* Menu Button for Player 1 */
+        .menu-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            width: 36px;
+            height: 36px;
+            font-size: 1.5em;
+            background: var(--button-bg);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+
+        .menu-btn:hover {
+            background: var(--button-hover);
+            transform: scale(1.05);
+        }
+
+        /* Menu Modal */
+        .menu-modal {
+            display: none;
             position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1001;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .menu-modal.active {
+            display: flex;
+        }
+
+        .menu-modal-content {
+            background: var(--container-bg);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 400px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .menu-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .menu-modal-header h2 {
+            color: var(--text-color);
+            font-size: 1.5em;
+        }
+
+        .menu-section {
+            margin-bottom: 25px;
+        }
+
+        .menu-section h3 {
+            color: var(--text-color);
+            font-size: 1.1em;
+            margin-bottom: 10px;
+        }
+
+        .menu-button {
+            width: 100%;
+            padding: 12px 20px;
+            font-size: 1em;
+            font-weight: bold;
+            background: var(--button-bg);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 10px;
+        }
+
+        .menu-button:hover {
+            background: var(--button-hover);
+        }
+
+        .menu-button.danger {
+            background: var(--danger-color);
+        }
+
+        .menu-button.danger:hover {
+            opacity: 0.9;
+        }
+
+        /* Theme picker in menu */
+        .theme-picker-section {
+            margin-bottom: 20px;
         }
 
         .theme-btn-active {
             width: 40px;
             height: 40px;
             border-radius: 50%;
-            border: 3px solid white;
+            border: 3px solid var(--border-color);
             cursor: pointer;
             transition: all 0.2s;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            margin-bottom: 10px;
         }
 
-        .theme-dropdown {
-            position: absolute;
-            top: 50px;
-            right: 0;
-            background: var(--container-bg);
-            border: 2px solid var(--border-color);
-            border-radius: 12px;
-            padding: 10px;
-            display: none;
-            grid-template-columns: 32px 32px;
-            gap: 8px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
-        }
-
-        .theme-dropdown.visible {
+        .theme-grid {
             display: grid;
+            grid-template-columns: repeat(4, 32px);
+            gap: 8px;
+            justify-content: center;
         }
 
         .theme-btn {
@@ -789,25 +843,6 @@
 </head>
 
 <body>
-    <!-- Theme Picker -->
-    <div class="theme-picker">
-        <button class="theme-btn-active theme-default" data-theme="default" title="Change Theme"></button>
-        <div class="theme-dropdown">
-            <button class="theme-btn theme-default" data-theme="default" title="Purple Theme"></button>
-            <button class="theme-btn theme-black" data-theme="black" title="Black Theme"></button>
-            <button class="theme-btn theme-blue" data-theme="blue" title="Blue Theme"></button>
-            <button class="theme-btn theme-blue-dark" data-theme="blue-dark" title="Dark Blue Theme"></button>
-            <button class="theme-btn theme-light" data-theme="light" title="Olive Theme"></button>
-            <button class="theme-btn theme-dark" data-theme="dark" title="Dark Olive Theme"></button>
-            <button class="theme-btn theme-warm-light" data-theme="warm-light" title="Warm Light Theme"></button>
-            <button class="theme-btn theme-warm-dark" data-theme="warm-dark" title="Warm Dark Theme"></button>
-            <button class="theme-btn theme-red" data-theme="red" title="Red Theme"></button>
-            <button class="theme-btn theme-red-dark" data-theme="red-dark" title="Dark Red Theme"></button>
-            <button class="theme-btn theme-pink" data-theme="pink" title="Pink Theme"></button>
-            <button class="theme-btn theme-pink-dark" data-theme="pink-dark" title="Dark Pink Theme"></button>
-        </div>
-    </div>
-
     <div class="container">
         <!-- Setup Screen -->
         <div id="setupScreen">
@@ -847,10 +882,6 @@
         <!-- Game Screen -->
         <div id="gameScreen">
             <div class="game-grid" id="gameGrid"></div>
-            <div class="control-bar">
-                <button class="control-btn" id="resetBtn">🔄 Reset Scores</button>
-                <button class="control-btn danger" id="newGameBtn">🏠 New Game</button>
-            </div>
         </div>
     </div>
 
@@ -862,6 +893,44 @@
                 <button class="close-btn" id="closeLogBtn">&times;</button>
             </div>
             <ul class="log-entries" id="logEntries"></ul>
+        </div>
+    </div>
+
+    <!-- Menu Modal -->
+    <div class="menu-modal" id="menuModal">
+        <div class="menu-modal-content">
+            <div class="menu-modal-header">
+                <h2>⚙️ Menu</h2>
+                <button class="close-btn" id="closeMenuBtn">&times;</button>
+            </div>
+            
+            <div class="menu-section">
+                <h3>Game Controls</h3>
+                <button class="menu-button" id="menuResetBtn">🔄 Reset Scores</button>
+                <button class="menu-button danger" id="menuNewGameBtn">🏠 New Game</button>
+            </div>
+            
+            <div class="menu-section theme-picker-section">
+                <h3>Theme</h3>
+                <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                    <span style="color: var(--text-color); margin-right: 10px;">Current:</span>
+                    <button class="theme-btn-active theme-default" id="currentThemeBtn" data-theme="default" title="Current Theme"></button>
+                </div>
+                <div class="theme-grid">
+                    <button class="theme-btn theme-default" data-theme="default" title="Purple Theme"></button>
+                    <button class="theme-btn theme-black" data-theme="black" title="Black Theme"></button>
+                    <button class="theme-btn theme-blue" data-theme="blue" title="Blue Theme"></button>
+                    <button class="theme-btn theme-blue-dark" data-theme="blue-dark" title="Dark Blue Theme"></button>
+                    <button class="theme-btn theme-light" data-theme="light" title="Olive Theme"></button>
+                    <button class="theme-btn theme-dark" data-theme="dark" title="Dark Olive Theme"></button>
+                    <button class="theme-btn theme-warm-light" data-theme="warm-light" title="Warm Light Theme"></button>
+                    <button class="theme-btn theme-warm-dark" data-theme="warm-dark" title="Warm Dark Theme"></button>
+                    <button class="theme-btn theme-red" data-theme="red" title="Red Theme"></button>
+                    <button class="theme-btn theme-red-dark" data-theme="red-dark" title="Dark Red Theme"></button>
+                    <button class="theme-btn theme-pink" data-theme="pink" title="Pink Theme"></button>
+                    <button class="theme-btn theme-pink-dark" data-theme="pink-dark" title="Dark Pink Theme"></button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -930,8 +999,7 @@
 
         // Theme Management
         function initializeTheme() {
-            const themeBtnActive = document.querySelector('.theme-btn-active');
-            const themeDropdown = document.querySelector('.theme-dropdown');
+            const themeBtnActive = document.getElementById('currentThemeBtn');
             const themeButtons = document.querySelectorAll('.theme-btn');
 
             const savedTheme = localStorage.getItem('appTheme') || 'default';
@@ -939,11 +1007,6 @@
                 document.body.classList.add(`theme-${savedTheme}`);
                 themeBtnActive.className = `theme-btn-active theme-${savedTheme}`;
             }
-
-            themeBtnActive.addEventListener('click', (e) => {
-                e.stopPropagation();
-                themeDropdown.classList.toggle('visible');
-            });
 
             themeButtons.forEach(btn => {
                 btn.addEventListener('click', (e) => {
@@ -965,14 +1028,7 @@
                     }
 
                     localStorage.setItem('appTheme', theme);
-                    themeDropdown.classList.remove('visible');
                 });
-            });
-
-            document.addEventListener('click', (e) => {
-                if (!themeBtnActive.contains(e.target) && !themeDropdown.contains(e.target)) {
-                    themeDropdown.classList.remove('visible');
-                }
             });
         }
 
@@ -1078,6 +1134,7 @@
                 playerZone.dataset.playerIndex = playerIndex;
                 playerZone.innerHTML = `
                     <button class="log-btn" onclick="showLog(${playerIndex})">📋 Log</button>
+                    ${playerIndex === 0 ? '<button class="menu-btn" onclick="showMenu()">☰</button>' : ''}
                     <div class="player-name" onclick="renamePlayer(${playerIndex})" style="cursor: pointer;">${player.name}</div>
                     <div class="life-total" id="life-${playerIndex}">${player.life}</div>
                     <div class="score-controls">
@@ -1243,9 +1300,16 @@
             logModal.classList.add('active');
         }
 
+        // Show Menu
+        function showMenu() {
+            const menuModal = document.getElementById('menuModal');
+            menuModal.classList.add('active');
+        }
+
         // Control Buttons
         function initializeControls() {
-            document.getElementById('resetBtn').addEventListener('click', () => {
+            // Reset button in menu
+            document.getElementById('menuResetBtn').addEventListener('click', () => {
                 if (confirm('Reset all scores to starting values?')) {
                     players.forEach((player, index) => {
                         player.life = startingLife;
@@ -1258,10 +1322,12 @@
                     });
                     renderGameBoard();
                     saveGameState();
+                    document.getElementById('menuModal').classList.remove('active');
                 }
             });
 
-            document.getElementById('newGameBtn').addEventListener('click', () => {
+            // New game button in menu
+            document.getElementById('menuNewGameBtn').addEventListener('click', () => {
                 if (confirm('Start a new game? The current game will be ended but player names will be kept.')) {
                     // Save current names before clearing
                     savePlayerNames();
@@ -1272,6 +1338,19 @@
                     players = [];
                     document.querySelectorAll('.player-count-btn').forEach(b => b.style.opacity = '0.6');
                     document.getElementById('startGameBtn').disabled = true;
+                    document.getElementById('menuModal').classList.remove('active');
+                }
+            });
+
+            // Close menu button
+            document.getElementById('closeMenuBtn').addEventListener('click', () => {
+                document.getElementById('menuModal').classList.remove('active');
+            });
+
+            // Close menu on backdrop click
+            document.getElementById('menuModal').addEventListener('click', (e) => {
+                if (e.target.id === 'menuModal') {
+                    document.getElementById('menuModal').classList.remove('active');
                 }
             });
 
