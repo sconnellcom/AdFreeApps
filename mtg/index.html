@@ -338,6 +338,24 @@
             cursor: not-allowed;
         }
 
+        .home-btn {
+            width: 100%;
+            padding: 12px;
+            font-size: 1em;
+            font-weight: bold;
+            background: var(--button-bg);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 15px;
+        }
+
+        .home-btn:hover {
+            background: var(--button-hover);
+        }
+
         /* Game Screen */
         #gameScreen {
             display: none;
@@ -381,6 +399,45 @@
             justify-content: center;
             align-items: center;
             padding: 10px;
+        }
+
+        /* Default white backgrounds for light themes */
+        body.custom-bg .player-zone,
+        body.custom-bg.theme-red .player-zone,
+        body.custom-bg.theme-pink .player-zone,
+        body.custom-bg.theme-blue .player-zone {
+            background: rgba(255, 255, 255, 0.85);
+        }
+
+        /* Yellow-tinted backgrounds */
+        body.custom-bg.theme-light .player-zone,
+        body.custom-bg.theme-warm-light .player-zone {
+            background: rgba(254, 252, 173, 0.85);
+        }
+
+        /* Dark theme backgrounds */
+        body.custom-bg.theme-dark .player-zone {
+            background: rgba(31, 45, 10, 0.85);
+        }
+
+        body.custom-bg.theme-warm-dark .player-zone {
+            background: rgba(45, 40, 21, 0.85);
+        }
+
+        body.custom-bg.theme-red-dark .player-zone {
+            background: rgba(26, 5, 5, 0.85);
+        }
+
+        body.custom-bg.theme-pink-dark .player-zone {
+            background: rgba(26, 5, 15, 0.85);
+        }
+
+        body.custom-bg.theme-black .player-zone {
+            background: rgba(15, 23, 42, 0.85);
+        }
+
+        body.custom-bg.theme-blue-dark .player-zone {
+            background: rgba(10, 25, 41, 0.85);
         }
 
         .player-zone.rotate-180 {
@@ -866,6 +923,7 @@
                     <button class="player-count-btn" data-players="6">6</button>
                 </div>
                 <button class="start-btn" id="startGameBtn" disabled>Start Game</button>
+                <button class="home-btn" id="homeBtn">🏠 Home</button>
                 
                 <!-- Background Image Upload -->
                 <div class="bg-upload-section">
@@ -1119,6 +1177,11 @@
             });
 
             startGameBtn.addEventListener('click', startGame);
+            
+            // Home button
+            document.getElementById('homeBtn').addEventListener('click', () => {
+                window.location.href = '../index.html';
+            });
         }
 
         // Start Game
