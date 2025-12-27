@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Free online metronome with no ads - Practice music with precision timing, multiple modes including auto-detection, and visual feedback. No installation required.">
+    <meta name="keywords" content="metronome, free metronome, online metronome, music practice, bpm, tempo, no ads, ad-free metronome">
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/icon-152x152.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192x192.png">
+    <title>Free Online Metronome - No Ads | AdFreeApps.com</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-gradient-start: #667eea;
+            --bg-gradient-end: #764ba2;
+            --primary-color: #667eea;
+            --primary-hover: #764ba2;
+            --container-bg: #ffffff;
+            --text-color: #333333;
+            --text-secondary: #555555;
+            --border-color: #e2e8f0;
+            --surface-bg: #f7fafc;
+            --card-shadow: rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .home-btn {
+            display: inline-block;
+            font-size: 2em;
+            text-decoration: none;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px 15px;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .home-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            color: white;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .subtitle {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1.2em;
+            font-weight: 300;
+        }
+
+        .content-card {
+            background: var(--container-bg);
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 10px 30px var(--card-shadow);
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            color: var(--primary-color);
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            margin-top: 30px;
+        }
+
+        h2:first-child {
+            margin-top: 0;
+        }
+
+        h3 {
+            color: var(--text-color);
+            font-size: 1.3em;
+            margin-top: 25px;
+            margin-bottom: 15px;
+        }
+
+        p {
+            color: var(--text-secondary);
+            line-height: 1.8;
+            margin-bottom: 15px;
+            font-size: 1.05em;
+        }
+
+        ul, ol {
+            margin-left: 25px;
+            margin-bottom: 20px;
+            color: var(--text-secondary);
+            line-height: 1.8;
+        }
+
+        li {
+            margin-bottom: 10px;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: var(--primary-color);
+            color: white;
+            padding: 15px 40px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-size: 1.2em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin: 20px 0;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .cta-button:hover {
+            background: var(--primary-hover);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .feature-box {
+            background: var(--surface-bg);
+            padding: 25px;
+            border-radius: 12px;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .feature-box h3 {
+            margin-top: 0;
+            font-size: 1.2em;
+        }
+
+        .screenshot {
+            width: 100%;
+            max-width: 600px;
+            height: auto;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            margin: 30px auto;
+            display: block;
+        }
+
+        .benefits-list {
+            background: var(--surface-bg);
+            padding: 30px;
+            border-radius: 12px;
+            margin: 25px 0;
+        }
+
+        .netguava-footer {
+            background: #f8f9fa;
+            border-top: 3px solid var(--primary-color);
+            padding: 30px;
+            margin-top: 40px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .netguava-footer h3 {
+            color: var(--text-color);
+            margin-top: 0;
+        }
+
+        .netguava-footer p {
+            margin-bottom: 20px;
+        }
+
+        .netguava-links {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .netguava-link {
+            display: inline-block;
+            padding: 12px 25px;
+            background: var(--primary-color);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .netguava-link:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .content-card {
+                padding: 25px;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            h2 {
+                font-size: 1.5em;
+            }
+
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .netguava-links {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <a href="/" class="home-btn" title="Back to Home">🏠</a>
+
+        <header>
+            <h1>🎵 Free Online Metronome</h1>
+            <p class="subtitle">Practice with precision - No ads, no tracking, no installation</p>
+        </header>
+
+        <div class="content-card">
+            <a href="metronome/" class="cta-button">Launch Metronome App →</a>
+
+            <h2>What is the AdFreeApps Metronome?</h2>
+            <p>
+                Our free online metronome is a powerful practice tool designed for musicians of all skill levels.
+                Whether you're a beginner learning to keep time or a professional musician practicing complex rhythms,
+                this metronome provides everything you need without the distractions of advertisements or invasive tracking.
+            </p>
+            <p>
+                Unlike many other online metronomes cluttered with ads that interrupt your practice, our tool offers
+                a clean, focused interface that lets you concentrate on what matters - improving your timing and musical skills.
+            </p>
+
+            <h2>Key Features</h2>
+            <div class="feature-grid">
+                <div class="feature-box">
+                    <h3>🎼 Three Operating Modes</h3>
+                    <p>Regular mode with audio, silent mode for visual practice, and auto mode with intelligent beat detection using your device's accelerometer.</p>
+                </div>
+                <div class="feature-box">
+                    <h3>🎚️ Flexible BPM Range</h3>
+                    <p>Adjust tempo from 40 to 240 BPM with an easy-to-use slider, perfect for any style from slow ballads to fast metal.</p>
+                </div>
+                <div class="feature-box">
+                    <h3>🔊 Multiple Sound Options</h3>
+                    <p>Choose from beep, bass drum, cymbal, tock, and custom rhythm patterns including 4-count and 8-count riffs.</p>
+                </div>
+                <div class="feature-box">
+                    <h3>👁️ Visual Feedback</h3>
+                    <p>Animated pulse circle provides clear visual timing cues, essential for silent practice or noisy environments.</p>
+                </div>
+                <div class="feature-box">
+                    <h3>🎯 Beat Detection</h3>
+                    <p>Auto mode detects your taps and shows accuracy feedback, only alerting you when you drift off beat.</p>
+                </div>
+                <div class="feature-box">
+                    <h3>💾 Saves Your Settings</h3>
+                    <p>All preferences stored locally in your browser - no account needed, no data sent to servers.</p>
+                </div>
+            </div>
+
+            <h2>How It Works</h2>
+            <p>
+                Using our metronome is simple and intuitive:
+            </p>
+            <ol>
+                <li><strong>Choose Your Mode:</strong> Select between Regular (audio + visual), Silent (visual only), or Auto (intelligent beat detection).</li>
+                <li><strong>Set Your Tempo:</strong> Use the BPM slider to select your desired tempo between 40-240 beats per minute.</li>
+                <li><strong>Pick a Sound:</strong> In Regular mode, choose from six different sound options to match your preference.</li>
+                <li><strong>Start Practicing:</strong> Click the Start button and practice along with the beat.</li>
+                <li><strong>Track Progress:</strong> In Auto mode, watch real-time feedback on your timing accuracy.</li>
+            </ol>
+
+            <h3>Auto Mode - Advanced Practice</h3>
+            <p>
+                The Auto mode is perfect for practicing with acoustic instruments. Place your device on a surface or hold it
+                while you play, and the metronome will detect the physical motion of your playing. It calculates your actual
+                tempo and only beeps when you drift off beat, helping you develop internal timing without becoming dependent
+                on constant audible cues.
+            </p>
+
+            <h2>Why Choose Our Metronome?</h2>
+            <div class="benefits-list">
+                <h3>✨ Completely Ad-Free</h3>
+                <p>
+                    Practice without interruption. No advertisements popping up, no video ads disrupting your flow,
+                    no sponsored content. Just a pure, focused practice tool.
+                </p>
+
+                <h3>🔒 Privacy Focused</h3>
+                <p>
+                    We don't track your usage, collect analytics, or store your data on our servers. Everything stays
+                    on your device in local storage. No account required, no email signup, no data collection.
+                </p>
+
+                <h3>📱 Works Everywhere</h3>
+                <p>
+                    Access from any device with a modern web browser - desktop, laptop, tablet, or smartphone.
+                    No app installation required. Once loaded, it even works offline.
+                </p>
+
+                <h3>🆓 Always Free</h3>
+                <p>
+                    All features are completely free with no premium tiers, subscriptions, or hidden costs.
+                    What you see is what you get - a professional-quality metronome at no charge.
+                </p>
+
+                <h3>⚡ Fast and Responsive</h3>
+                <p>
+                    Built with modern web technologies for precise timing and smooth performance. The Web Audio API
+                    ensures accurate beat generation with minimal latency.
+                </p>
+            </div>
+
+            <h2>Who Is This For?</h2>
+            <p>Our metronome is perfect for:</p>
+            <ul>
+                <li><strong>Musicians:</strong> Guitarists, pianists, drummers, violinists, and players of any instrument who need to practice timing</li>
+                <li><strong>Music Students:</strong> Learn proper tempo and develop internal timing skills</li>
+                <li><strong>Music Teachers:</strong> A reliable tool to use with students without ad distractions</li>
+                <li><strong>Dancers:</strong> Practice choreography with consistent tempo</li>
+                <li><strong>Composers:</strong> Test different tempos while writing music</li>
+                <li><strong>Anyone:</strong> Who needs a reliable timing tool without ads or tracking</li>
+            </ul>
+
+            <h2>Technical Excellence</h2>
+            <p>
+                Built using cutting-edge web technologies, our metronome leverages the Web Audio API for high-precision
+                audio generation and the DeviceMotion API for advanced motion detection. The interface uses CSS animations
+                for smooth visual feedback, and the entire application is responsive, working seamlessly across all screen
+                sizes and devices.
+            </p>
+
+            <h2>Why We Built This</h2>
+            <p>
+                As musicians ourselves, we were frustrated by the abundance of metronome apps filled with intrusive
+                advertisements that disrupted practice sessions. We wanted a simple, reliable tool that just works -
+                no registration, no tracking, no interruptions. So we built one and made it free for everyone.
+            </p>
+            <p>
+                This metronome is part of AdFreeApps.com, a collection of simple, useful web tools created without
+                the clutter and tracking found on most free online tools. We believe utility apps should serve users,
+                not advertisers.
+            </p>
+
+            <a href="metronome/" class="cta-button">Start Practicing Now →</a>
+        </div>
+
+        <div class="content-card netguava-footer">
+            <h3>Custom App Development by Netguava</h3>
+            <p>
+                This site was created by <strong>Netguava</strong>, a custom app development company.
+                We build web applications, mobile apps, and custom software solutions for businesses and individuals.
+            </p>
+            <p>
+                Have an idea for an app we should add to AdFreeApps.com? Need a custom application for your business?
+                We'd love to hear from you.
+            </p>
+            <div class="netguava-links">
+                <a href="https://netguava.com/" class="netguava-link" target="_blank" rel="noopener">Learn About Netguava</a>
+                <a href="https://netguava.com/contact" class="netguava-link" target="_blank" rel="noopener">Contact Us</a>
+                <a href="https://netguava.com/custom-web-app-development/" class="netguava-link" target="_blank" rel="noopener">Custom Web Development</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then((registration) => {
+                        console.log('ServiceWorker registration successful');
+                    })
+                    .catch((err) => {
+                        console.log('ServiceWorker registration failed: ', err);
+                    });
+            });
+        }
+    </script>
+</body>
+
+</html>
