@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Ad-free scrolling experience - Satisfy your scroll cravings without ads, tracking, or distractions.">
+    <meta name="theme-color" content="#667eea">
+    <link rel="manifest" href="manifest.json">
+    <title>Free Ad-Free Scrolling App | AdFreeApps.com</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg-gradient-start: #667eea; --bg-gradient-end: #764ba2;
+            --primary-color: #667eea; --primary-hover: #764ba2;
+            --container-bg: #ffffff; --text-color: #333333;
+            --text-secondary: #555555; --surface-bg: #f7fafc;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+            min-height: 100vh; padding: 20px;
+        }
+        .container { max-width: 900px; margin: 0 auto; }
+        .home-btn {
+            display: inline-block; font-size: 2em; text-decoration: none;
+            background: rgba(255, 255, 255, 0.2); padding: 10px 15px;
+            border-radius: 12px; transition: all 0.3s ease; margin-bottom: 20px;
+        }
+        .home-btn:hover { background: rgba(255, 255, 255, 0.3); transform: scale(1.05); }
+        header { text-align: center; margin-bottom: 40px; }
+        h1 { color: white; font-size: 2.5em; margin-bottom: 10px; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2); }
+        .subtitle { color: rgba(255, 255, 255, 0.9); font-size: 1.2em; font-weight: 300; }
+        .content-card {
+            background: var(--container-bg); border-radius: 16px; padding: 40px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); margin-bottom: 30px;
+        }
+        h2 { color: var(--primary-color); font-size: 1.8em; margin-bottom: 20px; margin-top: 30px; }
+        h2:first-child { margin-top: 0; }
+        h3 { color: var(--text-color); font-size: 1.3em; margin-top: 25px; margin-bottom: 15px; }
+        p { color: var(--text-secondary); line-height: 1.8; margin-bottom: 15px; font-size: 1.05em; }
+        ul { margin-left: 25px; margin-bottom: 20px; color: var(--text-secondary); line-height: 1.8; }
+        li { margin-bottom: 10px; }
+        .cta-button {
+            display: inline-block; background: var(--primary-color); color: white;
+            padding: 15px 40px; border-radius: 12px; text-decoration: none;
+            font-size: 1.2em; font-weight: 600; transition: all 0.3s ease;
+            margin: 20px 0; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        .cta-button:hover {
+            background: var(--primary-hover); transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+        .benefits-list { background: var(--surface-bg); padding: 30px; border-radius: 12px; margin: 25px 0; }
+        .netguava-footer {
+            background: #f8f9fa; border-top: 3px solid var(--primary-color);
+            padding: 30px; margin-top: 40px; border-radius: 12px; text-align: center;
+        }
+        .netguava-footer h3 { color: var(--text-color); margin-top: 0; }
+        .netguava-footer p { margin-bottom: 20px; }
+        .netguava-links { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; }
+        .netguava-link {
+            display: inline-block; padding: 12px 25px; background: var(--primary-color);
+            color: white; text-decoration: none; border-radius: 8px;
+            transition: all 0.3s ease; font-weight: 600;
+        }
+        .netguava-link:hover { background: var(--primary-hover); transform: translateY(-2px); }
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .content-card { padding: 25px; }
+            h1 { font-size: 2em; }
+            .netguava-links { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="home-btn" title="Back to Home">🏠</a>
+        <header>
+            <h1>📜 Ad-Free Scrolling Experience</h1>
+            <p class="subtitle">Scroll without limits - No ads, no tracking, no manipulation</p>
+        </header>
+        <div class="content-card">
+            <a href="scrollfix/" class="cta-button">Launch Scroll Fix →</a>
+            <h2>What is Scroll Fix?</h2>
+            <p>
+                Scroll Fix provides an endless scrolling experience without the algorithmic manipulation, advertisements,
+                and privacy invasion found on social media platforms. It's designed to satisfy the natural urge to scroll
+                without the negative impacts of traditional social media feeds.
+            </p>
+            <p>
+                This is a mindful scrolling experience - content without manipulation, scrolling without exploitation,
+                and satisfaction without regret.
+            </p>
+            <h2>Why Scroll Fix?</h2>
+            <div class="benefits-list">
+                <h3>✨ Zero Advertisements</h3>
+                <p>
+                    No ads interrupting your scroll. No sponsored content disguised as organic posts. Just pure,
+                    uninterrupted scrolling.
+                </p>
+                <h3>🔒 Complete Privacy</h3>
+                <p>
+                    We don't track what you view, how long you scroll, or build profiles about you. Your scrolling
+                    is completely private.
+                </p>
+                <h3>🧠 Non-Manipulative</h3>
+                <p>
+                    No algorithmic manipulation trying to keep you scrolling longer. No rage-bait, no clickbait,
+                    no engagement tricks.
+                </p>
+                <h3>🆓 Always Free</h3>
+                <p>
+                    Free to use with no hidden costs, no data harvesting to monetize, and no premium upsells.
+                </p>
+            </div>
+            <h2>What You'll Find</h2>
+            <ul>
+                <li>Calming, visually pleasing content</li>
+                <li>Interesting facts and information</li>
+                <li>Beautiful imagery without clickbait</li>
+                <li>A scroll experience that respects your time and attention</li>
+            </ul>
+            <h2>Why We Built This</h2>
+            <p>
+                We recognized that scrolling itself isn't inherently bad - it's a natural, sometimes relaxing activity.
+                What's problematic is how social media companies exploit this behavior with manipulative algorithms,
+                invasive tracking, and endless advertisements. Scroll Fix provides the satisfying experience of scrolling
+                without the exploitation.
+            </p>
+            <a href="scrollfix/" class="cta-button">Start Scrolling →</a>
+        </div>
+        <div class="content-card netguava-footer">
+            <h3>Custom App Development by Netguava</h3>
+            <p>
+                This site was created by <strong>Netguava</strong>, a custom app development company.
+                We build web applications, mobile apps, and custom software solutions for businesses and individuals.
+            </p>
+            <p>
+                Have an idea for an app we should add to AdFreeApps.com? Need a custom application for your business?
+                We'd love to hear from you.
+            </p>
+            <div class="netguava-links">
+                <a href="https://netguava.com/" class="netguava-link" target="_blank" rel="noopener">Learn About Netguava</a>
+                <a href="https://netguava.com/contact" class="netguava-link" target="_blank" rel="noopener">Contact Us</a>
+                <a href="https://netguava.com/custom-web-app-development/" class="netguava-link" target="_blank" rel="noopener">Custom Web Development</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
