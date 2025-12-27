@@ -298,25 +298,121 @@
                 </div>
             </div>
 
-            <h2>How It Works</h2>
-            <p>
-                Using our metronome is simple and intuitive:
-            </p>
-            <ol>
-                <li><strong>Choose Your Mode:</strong> Select between Regular (audio + visual), Silent (visual only), or Auto (intelligent beat detection).</li>
-                <li><strong>Set Your Tempo:</strong> Use the BPM slider to select your desired tempo between 40-240 beats per minute.</li>
-                <li><strong>Pick a Sound:</strong> In Regular mode, choose from six different sound options to match your preference.</li>
-                <li><strong>Start Practicing:</strong> Click the Start button and practice along with the beat.</li>
-                <li><strong>Track Progress:</strong> In Auto mode, watch real-time feedback on your timing accuracy.</li>
-            </ol>
+            <h2>How to Use</h2>
+            
+            <h3>Getting Started</h3>
+            <ul>
+                <li><strong>Start/Stop:</strong> Click the "Metronome" pulse or the Start/Stop button</li>
+                <li><strong>Set Tempo:</strong> Click the BPM number to open the tempo slider and quick presets</li>
+                <li><strong>Choose Sound:</strong> Select from the dropdown (Beep, Bass, Cymbal, Tock, Riffs, Vibrate, or Silent)</li>
+                <li><strong>Change Theme:</strong> Click the colored circle in the top-left corner</li>
+            </ul>
 
-            <h3>Auto Mode - Advanced Practice</h3>
-            <p>
-                The Auto mode is perfect for practicing with acoustic instruments. Place your device on a surface or hold it
-                while you play, and the metronome will detect the physical motion of your playing. It calculates your actual
-                tempo and only beeps when you drift off beat, helping you develop internal timing without becoming dependent
-                on constant audible cues.
-            </p>
+            <h3>Visual Indicators</h3>
+            <ul>
+                <li><strong>Metronome (left pulse):</strong> Flashes on each beat to keep you in sync</li>
+                <li><strong>Your Beat (right meter):</strong> Shows your tapping/movement intensity in real-time</li>
+                <li>Tap the "Your Beat" meter to enable/disable beat detection</li>
+            </ul>
+
+            <h3>Beat Detection Modes</h3>
+            <p>Choose from three beat detection modes:</p>
+            <ul>
+                <li><strong>No Beat Detection:</strong> Standard metronome - plays continuously</li>
+                <li><strong>Tap Beat Detection:</strong> Uses your device's accelerometer to detect taps/movements</li>
+                <li><strong>Audio Beat Detection:</strong> Uses your microphone to detect beats from your instrument (optimized for cello and violin)</li>
+            </ul>
+
+            <h4>How Tap Detection Works:</h4>
+            <ul>
+                <li>Enable by selecting "Tap Beat Detection" from the dropdown</li>
+                <li>The metronome runs silently while you practice</li>
+                <li>Your device's accelerometer detects taps/movements</li>
+                <li>The system evaluates <strong>both timing and tempo</strong>:
+                    <ul>
+                        <li><strong>Timing:</strong> Are you within tolerance of the beat? (in milliseconds)</li>
+                        <li><strong>Tempo:</strong> Is your overall BPM within range?</li>
+                    </ul>
+                </li>
+                <li>If you're on beat → Silent (green status)</li>
+                <li>If you drift off → Metronome beeps to guide you back</li>
+            </ul>
+
+            <h4>How Audio Detection Works:</h4>
+            <ul>
+                <li>Enable by selecting "Audio Beat Detection" from the dropdown</li>
+                <li>Grant microphone permission when prompted</li>
+                <li>Play your cello or violin - the app analyzes audio for beats</li>
+                <li>Uses low-pass filtering optimized for string instruments</li>
+                <li>Detects note attacks/peaks to identify beats</li>
+                <li>Same on/off beat feedback as Tap Detection</li>
+            </ul>
+
+            <h3>Beat Detection Settings</h3>
+            <p>These appear when Beat Detection is enabled:</p>
+            <ul>
+                <li><strong>Beat Detection (0-100%):</strong> Motion sensitivity
+                    <ul>
+                        <li>Higher % = detects lighter taps</li>
+                        <li>Lower % = requires harder hits</li>
+                        <li>Default: 50%</li>
+                    </ul>
+                </li>
+                <li><strong>Timing Tolerance (5-1000ms):</strong> How precise your timing must be
+                    <ul>
+                        <li>100ms = within 0.1 seconds of the beat</li>
+                        <li>Lower = stricter timing required</li>
+                        <li>Higher = more forgiving</li>
+                    </ul>
+                </li>
+                <li><strong>BPM Tolerance (0-20):</strong> How consistent your tempo must be
+                    <ul>
+                        <li>5 BPM = stay within ±5 BPM of target (e.g., 115-125 when target is 120)</li>
+                        <li>0 = must match target exactly</li>
+                        <li>Higher = more tempo drift allowed</li>
+                    </ul>
+                </li>
+            </ul>
+
+            <p><strong>Pro Tip:</strong> Focus on one skill at a time!</p>
+            <ul>
+                <li>Practice tempo consistency: Set Timing Tolerance to 1000ms (max)</li>
+                <li>Practice precise timing: Set BPM Tolerance to 20 (max)</li>
+            </ul>
+
+            <h3>Status Display</h3>
+            <p>When Beat Detection is active, you'll see three indicators at the top:</p>
+            <ul>
+                <li><strong>Status:</strong> "On beat" (green) or "Off beat!" (red)</li>
+                <li><strong>Detected BPM:</strong> Your actual tempo based on your taps</li>
+                <li><strong>Accuracy:</strong> Milliseconds off from the metronome beat</li>
+            </ul>
+
+            <h3>Tempo Control</h3>
+            <p>Click the large BPM number to open a menu with a tempo slider and quick preset buttons for common musical tempos:</p>
+            <ul>
+                <li>60 - Largo, 72 - Adagio, 80 - Andante, 92 - Moderato</li>
+                <li>108 - Allegretto, 120 - Allegro, 132 - Vivace, 144 - Presto</li>
+            </ul>
+
+            <h3>Sound Options</h3>
+            <ul>
+                <li><strong>Beep:</strong> Classic metronome tone</li>
+                <li><strong>Bass Drum:</strong> Low, punchy drum sound</li>
+                <li><strong>Cymbal:</strong> Bright, shimmering cymbal</li>
+                <li><strong>Tock:</strong> Wooden percussion sound</li>
+                <li><strong>4-Count Riff:</strong> 3 bass hits + cymbal pattern</li>
+                <li><strong>8-Count Riff:</strong> Full drum groove (bum bum chish de-de bum bum chish)</li>
+                <li><strong>Vibrate:</strong> Device vibration instead of sound</li>
+                <li><strong>Silent:</strong> Visual-only practice mode</li>
+            </ul>
+
+            <h3>Additional Features</h3>
+            <ul>
+                <li><strong>12 Themes:</strong> Choose from various color schemes including light/dark modes</li>
+                <li><strong>Screen Wake Lock:</strong> Screen stays on during practice (no interruptions!)</li>
+                <li><strong>Precise Timing:</strong> Uses Web Audio API for accurate, drift-free timing</li>
+            </ul>
 
             <h2>Why Choose Our Metronome?</h2>
             <div class="benefits-list">
