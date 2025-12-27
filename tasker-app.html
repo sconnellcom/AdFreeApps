@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Free offline task manager - Import and manage Todoist tasks with no ads or tracking. All data stored locally on your device.">
+    <meta name="theme-color" content="#667eea">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/icon-152x152.png">
+    <title>Free Offline Task Manager - No Ads | AdFreeApps.com</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg-gradient-start: #667eea; --bg-gradient-end: #764ba2;
+            --primary-color: #667eea; --primary-hover: #764ba2;
+            --container-bg: #ffffff; --text-color: #333333;
+            --text-secondary: #555555; --surface-bg: #f7fafc;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+            min-height: 100vh; padding: 20px;
+        }
+        .container { max-width: 900px; margin: 0 auto; }
+        .home-btn {
+            display: inline-block; font-size: 2em; text-decoration: none;
+            background: rgba(255, 255, 255, 0.2); padding: 10px 15px;
+            border-radius: 12px; transition: all 0.3s ease; margin-bottom: 20px;
+        }
+        .home-btn:hover { background: rgba(255, 255, 255, 0.3); transform: scale(1.05); }
+        header { text-align: center; margin-bottom: 40px; }
+        h1 { color: white; font-size: 2.5em; margin-bottom: 10px; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2); }
+        .subtitle { color: rgba(255, 255, 255, 0.9); font-size: 1.2em; font-weight: 300; }
+        .content-card {
+            background: var(--container-bg); border-radius: 16px; padding: 40px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); margin-bottom: 30px;
+        }
+        h2 { color: var(--primary-color); font-size: 1.8em; margin-bottom: 20px; margin-top: 30px; }
+        h2:first-child { margin-top: 0; }
+        h3 { color: var(--text-color); font-size: 1.3em; margin-top: 25px; margin-bottom: 15px; }
+        p { color: var(--text-secondary); line-height: 1.8; margin-bottom: 15px; font-size: 1.05em; }
+        ul { margin-left: 25px; margin-bottom: 20px; color: var(--text-secondary); line-height: 1.8; }
+        li { margin-bottom: 10px; }
+        .cta-button {
+            display: inline-block; background: var(--primary-color); color: white;
+            padding: 15px 40px; border-radius: 12px; text-decoration: none;
+            font-size: 1.2em; font-weight: 600; transition: all 0.3s ease;
+            margin: 20px 0; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        .cta-button:hover {
+            background: var(--primary-hover); transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+        .feature-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px; margin: 30px 0;
+        }
+        .feature-box {
+            background: var(--surface-bg); padding: 25px; border-radius: 12px;
+            border-left: 4px solid var(--primary-color);
+        }
+        .feature-box h3 { margin-top: 0; font-size: 1.2em; }
+        .benefits-list { background: var(--surface-bg); padding: 30px; border-radius: 12px; margin: 25px 0; }
+        .netguava-footer {
+            background: #f8f9fa; border-top: 3px solid var(--primary-color);
+            padding: 30px; margin-top: 40px; border-radius: 12px; text-align: center;
+        }
+        .netguava-footer h3 { color: var(--text-color); margin-top: 0; }
+        .netguava-footer p { margin-bottom: 20px; }
+        .netguava-links { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; }
+        .netguava-link {
+            display: inline-block; padding: 12px 25px; background: var(--primary-color);
+            color: white; text-decoration: none; border-radius: 8px;
+            transition: all 0.3s ease; font-weight: 600;
+        }
+        .netguava-link:hover { background: var(--primary-hover); transform: translateY(-2px); }
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .content-card { padding: 25px; }
+            h1 { font-size: 2em; }
+            h2 { font-size: 1.5em; }
+            .feature-grid { grid-template-columns: 1fr; }
+            .netguava-links { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="home-btn" title="Back to Home">🏠</a>
+        <header>
+            <h1>📋 Free Offline Task Manager</h1>
+            <p class="subtitle">Manage tasks privately - No ads, no tracking, no cloud required</p>
+        </header>
+        <div class="content-card">
+            <a href="tasker/" class="cta-button">Launch App →</a>
+            <h2>What is this tool?</h2>
+            <p>Our free task manager lets you import and manage your Todoist tasks completely offline. All your tasks, tags, due dates, and notes are stored locally on your device with no internet connection required after the initial import - and most importantly, with no advertisements or tracking.</p>
+            <p>Take full control of your task management data. Your to-do lists stay private on your device, accessible anytime, without being analyzed by cloud services or interrupted by advertisements.</p>
+            <h2>Key Features</h2>
+            <div class="feature-grid">
+                <div class="feature-box">
+                    <h3>📁 Import from Todoist</h3>
+                    <p>Import your existing Todoist backup files to continue managing your tasks.</p>
+                </div>
+                <div class="feature-box">
+                    <h3>🏷️ Tag Organization</h3>
+                    <p>Filter and organize tasks by tags for better project management.</p>
+                </div>
+                <div class="feature-box">
+                    <h3>📅 Due Date Tracking</h3>
+                    <p>See upcoming and overdue tasks at a glance.</p>
+                </div>
+                <div class="feature-box">
+                    <h3>📝 Notes Support</h3>
+                    <p>Full support for task notes and descriptions.</p>
+                </div>
+                <div class="feature-box">
+                    <h3>✅ Task Completion</h3>
+                    <p>Mark tasks complete and track your productivity.</p>
+                </div>
+                <div class="feature-box">
+                    <h3>💾 Offline First</h3>
+                    <p>Works completely offline - no internet needed after initial load.</p>
+                </div>
+            </div>
+            <h2>Why Choose This Tool?</h2>
+            <div class="benefits-list">
+                <h3>✨ Completely Ad-Free</h3>
+                <p>No advertisements to interrupt your work. Just a clean, focused tool.</p>
+                <h3>🔒 Privacy Focused</h3>
+                <p>All data stays on your device. No tracking, no analytics, no data collection.</p>
+                <h3>📱 Works Everywhere</h3>
+                <p>Use on any device with a modern browser. No installation required.</p>
+                <h3>🆓 Always Free</h3>
+                <p>All features completely free with no premium tiers or subscriptions.</p>
+            </div>
+            <h2>Perfect For</h2>
+            <ul>
+                <li><strong>Privacy-Conscious Users:</strong> Keep your tasks local without cloud synchronization</li>
+                <li><strong>Todoist Users:</strong> Manage Todoist exports offline and ad-free</li>
+                <li><strong>Project Managers:</strong> Organize multiple projects with tag-based filtering</li>
+                <li><strong>Students:</strong> Track assignments and due dates without distractions</li>
+                <li><strong>Professionals:</strong> Manage work tasks with complete privacy</li>
+            </ul>
+            <h2>Why We Built This</h2>
+            <p>We wanted task management without being dependent on cloud services or having our productivity data analyzed by third parties. This tool gives you full control of your tasks with the privacy of local storage and the convenience of a modern web app.</p>
+            <a href="tasker/" class="cta-button">Try It Now →</a>
+        </div>
+        <div class="content-card netguava-footer">
+            <h3>Custom App Development by Netguava</h3>
+            <p>
+                This site was created by <strong>Netguava</strong>, a custom app development company.
+                We build web applications, mobile apps, and custom software solutions for businesses and individuals.
+            </p>
+            <p>
+                Have an idea for an app we should add to AdFreeApps.com? Need a custom application for your business?
+                We'd love to hear from you.
+            </p>
+            <div class="netguava-links">
+                <a href="https://netguava.com/" class="netguava-link" target="_blank" rel="noopener">Learn About Netguava</a>
+                <a href="https://netguava.com/contact" class="netguava-link" target="_blank" rel="noopener">Contact Us</a>
+                <a href="https://netguava.com/custom-web-app-development/" class="netguava-link" target="_blank" rel="noopener">Custom Web Development</a>
+            </div>
+        </div>
+    </div>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js');
+            });
+        }
+    </script>
+</body>
+</html>

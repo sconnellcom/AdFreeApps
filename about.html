@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="About AdFreeApps.com - Simple, free web apps with no ads or tracking. All your settings are saved locally on your device.">
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="About - AdFreeApps">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/icon-152x152.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-96x96.png">
+    <title>About - Ad Free Apps</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-gradient-start: #667eea;
+            --bg-gradient-end: #764ba2;
+            --primary-color: #667eea;
+            --primary-hover: #764ba2;
+            --container-bg: #ffffff;
+            --text-color: #333333;
+            --text-secondary: #555555;
+            --text-tertiary: #666666;
+            --border-color: #e2e8f0;
+            --surface-bg: #f7fafc;
+            --card-shadow: rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .home-btn {
+            font-size: 2em;
+            text-decoration: none;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px 15px;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .home-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            color: white;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .content-card {
+            background: var(--container-bg);
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 10px 30px var(--card-shadow);
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            color: var(--primary-color);
+            font-size: 1.8em;
+            margin-bottom: 20px;
+        }
+
+        h3 {
+            color: var(--text-color);
+            font-size: 1.3em;
+            margin-top: 25px;
+            margin-bottom: 15px;
+        }
+
+        p {
+            color: var(--text-secondary);
+            line-height: 1.8;
+            margin-bottom: 15px;
+            font-size: 1.05em;
+        }
+
+        .privacy-box {
+            background: var(--surface-bg);
+            border-left: 4px solid var(--primary-color);
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 8px;
+        }
+
+        .privacy-box h3 {
+            margin-top: 0;
+        }
+
+        .app-list {
+            list-style: none;
+            padding: 0;
+            margin-top: 20px;
+        }
+
+        .app-item {
+            background: var(--surface-bg);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .app-item:hover {
+            background: #e2e8f0;
+            transform: translateX(5px);
+        }
+
+        .app-item-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .app-item-icon {
+            font-size: 2em;
+            margin-right: 15px;
+        }
+
+        .app-item-title {
+            font-size: 1.4em;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .app-item-description {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .app-item-links {
+            display: flex;
+            gap: 15px;
+        }
+
+        .app-link {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .app-link-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .app-link-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+        }
+
+        .app-link-secondary {
+            background: white;
+            color: var(--primary-color);
+            border: 2px solid var(--primary-color);
+        }
+
+        .app-link-secondary:hover {
+            background: var(--surface-bg);
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .content-card {
+                padding: 25px;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            h2 {
+                font-size: 1.5em;
+            }
+
+            .app-item-links {
+                flex-direction: column;
+            }
+
+            .app-link {
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header-row">
+            <a href="/" class="home-btn" title="Back to Home">🏠</a>
+            <span></span>
+        </div>
+
+        <header>
+            <h1>About Ad Free Apps</h1>
+        </header>
+
+        <div class="content-card">
+            <h2>Why AdFreeApps.com?</h2>
+            <p>
+                AdFreeApps.com was created to provide simple, useful web apps for myself, my kids, and my friends.
+                I wanted tools that were easy to use without having to install anything, and most importantly,
+                without being bombarded by advertisements or having my data tracked.
+            </p>
+            <p>
+                These are straightforward tools that solve everyday needs - from practicing music with a metronome,
+                to drawing, to keeping track of game scores. No complexity, no distractions, just what you need.
+            </p>
+
+            <div class="privacy-box">
+                <h3>Your Privacy Matters</h3>
+                <p>
+                    <strong>All settings are saved in your browser's local storage.</strong> This means everything
+                    stays on your device - we don't have access to your data, and we won't try to access it.
+                    Your preferences, settings, and any data you create within these apps lives entirely on your
+                    device.
+                </p>
+                <p>
+                    <strong>What this means for you:</strong>
+                </p>
+                <ul style="margin-left: 25px; color: var(--text-secondary); line-height: 1.8;">
+                    <li>Your data is completely private</li>
+                    <li>No tracking, no analytics, no cookies</li>
+                    <li>Works offline once loaded</li>
+                    <li>If you clear your browser data or use a different device, your settings will be lost</li>
+                </ul>
+            </div>
+
+            <h2>Our Apps</h2>
+            <p>Each app is designed to do one thing well, with no unnecessary features or distractions.</p>
+
+            <ul class="app-list">
+                <li class="app-item">
+                    <div class="app-item-header">
+                        <div class="app-item-icon">🎵</div>
+                        <div class="app-item-title">Metronome</div>
+                    </div>
+                    <div class="app-item-description">
+                        A full-featured metronome for musicians with multiple modes including auto-detection using your device's accelerometer.
+                        Practice with visual and audio feedback, choose from different sounds, and track your timing accuracy.
+                    </div>
+                    <div class="app-item-links">
+                        <a href="metronome/" class="app-link app-link-primary">Open App</a>
+                        <a href="metronome-app.html" class="app-link app-link-secondary">Learn More</a>
+                    </div>
+                </li>
+
+                <li class="app-item">
+                    <div class="app-item-header">
+                        <div class="app-item-icon">🎻</div>
+                        <div class="app-item-title">Tuner</div>
+                    </div>
+                    <div class="app-item-description">
+                        Tune your guitar, violin, cello, and other stringed instruments with precision. Uses your device's
+                        microphone to detect pitch and show you exactly how close you are to the target note.
+                    </div>
+                    <div class="app-item-links">
+                        <a href="tuner/" class="app-link app-link-primary">Open App</a>
+                        <a href="tuner-app.html" class="app-link app-link-secondary">Learn More</a>
+                    </div>
+                </li>
+
+                <li class="app-item">
+                    <div class="app-item-header">
+                        <div class="app-item-icon">⏱️</div>
+                        <div class="app-item-title">Timer</div>
+                    </div>
+                    <div class="app-item-description">
+                        A versatile timer app with countdown timers, stopwatch, and alarm features all in one place.
+                        Perfect for cooking, workouts, studying, or any activity where you need to track time.
+                    </div>
+                    <div class="app-item-links">
+                        <a href="timer/" class="app-link app-link-primary">Open App</a>
+                        <a href="timer-app.html" class="app-link app-link-secondary">Learn More</a>
+                    </div>
+                </li>
+
+                <li class="app-item">
+                    <div class="app-item-header">
+                        <div class="app-item-icon">🥁</div>
+                        <div class="app-item-title">Drum Pad</div>
+                    </div>
+                    <div class="app-item-description">
+                        Create beats and practice drumming with touch-based drum sounds and effects. Multiple drum kits
+                        and sound options let you experiment with different rhythms and styles.
+                    </div>
+                    <div class="app-item-links">
+                        <a href="pad/" class="app-link app-link-primary">Open App</a>
+                        <a href="drum-pad-app.html" class="app-link app-link-secondary">Learn More</a>
+                    </div>
+                </li>
+
+                <li class="app-item">
+                    <div class="app-item-header">
+                        <div class="app-item-icon">🎨</div>
+                        <div class="app-item-title">Draw</div>
+                    </div>
+                    <div class="app-item-description">
+                        A simple drawing canvas with brushes, colors, and basic shapes. Perfect for quick sketches,
+                        diagrams, or just doodling. Save your drawings locally or download them.
+                    </div>
+                    <div class="app-item-links">
+                        <a href="draw/" class="app-link app-link-primary">Open App</a>
+                        <a href="draw-app.html" class="app-link app-link-secondary">Learn More</a>
+                    </div>
+                </li>
+
+                <li class="app-item">
+                    <div class="app-item-header">
+                        <div class="app-item-icon">🔵</div>
+                        <div class="app-item-title">Bubble Level</div>
+                    </div>
+                    <div class="app-item-description">
+                        Use your device's sensors to check if surfaces are level. Great for hanging pictures,
+                        installing shelves, or any project where you need to ensure something is perfectly horizontal or vertical.
+                    </div>
+                    <div class="app-item-links">
+                        <a href="level/" class="app-link app-link-primary">Open App</a>
+                        <a href="bubble-level-app.html" class="app-link app-link-secondary">Learn More</a>
+                    </div>
+                </li>
+
+                <li class="app-item">
+                    <div class="app-item-header">
+                        <div class="app-item-icon">📜</div>
+                        <div class="app-item-title">Scroll Fix</div>
+                    </div>
+                    <div class="app-item-description">
+                        Satisfy your scroll cravings in an ad-free environment. A simple, endless scrolling experience
+                        without the distractions and tracking found on social media feeds.
+                    </div>
+                    <div class="app-item-links">
+                        <a href="scrollfix/" class="app-link app-link-primary">Open App</a>
+                        <a href="scroll-fix-app.html" class="app-link app-link-secondary">Learn More</a>
+                    </div>
+                </li>
+
+                <li class="app-item">
+                    <div class="app-item-header">
+                        <div class="app-item-icon">👁️</div>
+                        <div class="app-item-title">Tachistoscope</div>
+                    </div>
+                    <div class="app-item-description">
+                        Train your memory and visual recognition by memorizing and recalling letters displayed for brief
+                        moments. A fun brain training exercise that gets progressively more challenging.
+                    </div>
+                    <div class="app-item-links">
+                        <a href="tachistoscope/" class="app-link app-link-primary">Open App</a>
+                        <a href="tachistoscope-app.html" class="app-link app-link-secondary">Learn More</a>
+                    </div>
+                </li>
+
+                <li class="app-item">
+                    <div class="app-item-header">
+                        <div class="app-item-icon">⚔️</div>
+                        <div class="app-item-title">MTG Tracker</div>
+                    </div>
+                    <div class="app-item-description">
+                        Track life points, poison counters, and commander damage for Magic: The Gathering games.
+                        Supports multiple players and all the counters you need for any MTG format.
+                    </div>
+                    <div class="app-item-links">
+                        <a href="mtg/" class="app-link app-link-primary">Open App</a>
+                        <a href="mtg-tracker-app.html" class="app-link app-link-secondary">Learn More</a>
+                    </div>
+                </li>
+
+                <li class="app-item">
+                    <div class="app-item-header">
+                        <div class="app-item-icon">📋</div>
+                        <div class="app-item-title">Tasker</div>
+                    </div>
+                    <div class="app-item-description">
+                        Import and manage your Todoist tasks offline. Keep track of your to-dos with tags, due dates,
+                        and notes, all stored locally on your device with no internet connection required.
+                    </div>
+                    <div class="app-item-links">
+                        <a href="tasker/" class="app-link app-link-primary">Open App</a>
+                        <a href="tasker-app.html" class="app-link app-link-secondary">Learn More</a>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then((registration) => {
+                        console.log('ServiceWorker registration successful');
+                    })
+                    .catch((err) => {
+                        console.log('ServiceWorker registration failed: ', err);
+                    });
+            });
+        }
+    </script>
+</body>
+
+</html>
