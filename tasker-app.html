@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Our free task manager lets you import and manage your Todoist tasks completely offline. All your tasks, tags, due dates, and notes are stored locally ...">
+    <meta name="description" content="Free offline task manager - Import and manage Todoist tasks with no ads or tracking. All data stored locally on your device.">
     <meta name="theme-color" content="#667eea">
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icons/icon-152x152.png">
@@ -163,5 +163,12 @@
             </div>
         </div>
     </div>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js');
+            });
+        }
+    </script>
 </body>
 </html>

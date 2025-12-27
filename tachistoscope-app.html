@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Our free tachistoscope is a memory training tool that briefly displays letters or patterns for you to memorize and recall. This cognitive exercise, al...">
+    <meta name="description" content="Free tachistoscope memory training tool - Improve visual memory and recall with no ads. Train your brain with rapid visual exercises.">
     <meta name="theme-color" content="#667eea">
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icons/icon-152x152.png">
@@ -163,5 +163,12 @@
             </div>
         </div>
     </div>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js');
+            });
+        }
+    </script>
 </body>
 </html>
