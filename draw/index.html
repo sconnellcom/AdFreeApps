@@ -627,9 +627,20 @@
                 this.resizeCanvas();
                 window.addEventListener('resize', () => this.resizeCanvas());
 
-                // Fill with white background
-                this.ctx.fillStyle = '#ffffff';
-                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                // Try to restore saved drawing from localStorage
+                const savedDrawing = localStorage.getItem('drawingCanvas');
+                if (savedDrawing) {
+                    const img = new Image();
+                    img.onload = () => {
+                        this.ctx.drawImage(img, 0, 0, this.displayWidth, this.displayHeight);
+                        this.saveState(); // Save to history after restoring
+                    };
+                    img.src = savedDrawing;
+                } else {
+                    // Fill with white background
+                    this.ctx.fillStyle = '#ffffff';
+                    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                }
             }
 
             resizeCanvas() {
@@ -950,6 +961,8 @@
                 if (this.history.length > this.MAX_HISTORY) {
                     this.history.shift();
                 }
+                // Save to localStorage for persistence
+                localStorage.setItem('drawingCanvas', imageData);
             }
 
             undo() {
