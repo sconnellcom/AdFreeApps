@@ -329,6 +329,7 @@ function initializeReader() {
     const DASH_TIME = 600; // ms
     const LETTER_GAP = 300; // ms
     const WORD_GAP = 700; // ms
+    const DOT_DASH_TOLERANCE = 100; // ms tolerance for dot/dash detection
 
     startBtn.addEventListener('click', async () => {
         try {
@@ -381,12 +382,12 @@ function initializeReader() {
         // Calculate average brightness (sample every 4th pixel for performance)
         let totalBrightness = 0;
         let sampleCount = 0;
-        for (let i = 0; i < data.length; i += 16) { // Sample every 4th pixel (4 * 4 bytes)
+        for (let i = 0; i < data.length; i += 16) { // Sample every 4th pixel (4 pixels * 4 bytes)
             const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
             totalBrightness += avg;
             sampleCount++;
         }
-        const avgBrightness = totalBrightness / sampleCount;
+        const avgBrightness = sampleCount > 0 ? totalBrightness / sampleCount : 0;
 
         const now = Date.now();
         const brightnessDiff = avgBrightness - lastBrightness;
@@ -405,7 +406,7 @@ function initializeReader() {
             const flashDuration = now - flashStartTime;
             
             // Determine if dot or dash
-            if (flashDuration < DOT_TIME + 100) {
+            if (flashDuration < DOT_TIME + DOT_DASH_TOLERANCE) {
                 detectedMorse.push('.');
             } else {
                 detectedMorse.push('-');
