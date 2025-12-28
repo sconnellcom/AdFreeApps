@@ -635,11 +635,17 @@
                         this.ctx.drawImage(img, 0, 0, this.displayWidth, this.displayHeight);
                         this.saveState(); // Save to history after restoring
                     };
+                    img.onerror = () => {
+                        // If image fails to load, clear localStorage and initialize with white
+                        localStorage.removeItem('drawingCanvas');
+                        this.ctx.fillStyle = '#ffffff';
+                        this.ctx.fillRect(0, 0, this.displayWidth, this.displayHeight);
+                    };
                     img.src = savedDrawing;
                 } else {
                     // Fill with white background
                     this.ctx.fillStyle = '#ffffff';
-                    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                    this.ctx.fillRect(0, 0, this.displayWidth, this.displayHeight);
                 }
             }
 
