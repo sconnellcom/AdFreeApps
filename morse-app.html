@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Morse Code - Learn, convert, and communicate with Morse code">
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/icon-152x152.png">
+    <title>Morse Code App - Ad Free Apps</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            color: #667eea;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            color: #666;
+        }
+
+        .back-btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            transition: background 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: #764ba2;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.8em;
+        }
+
+        .section h3 {
+            color: #764ba2;
+            margin-bottom: 10px;
+            margin-top: 20px;
+            font-size: 1.3em;
+        }
+
+        .section p,
+        .section ul,
+        .section ol {
+            line-height: 1.8;
+            color: #555;
+            margin-bottom: 15px;
+        }
+
+        .section ul,
+        .section ol {
+            margin-left: 30px;
+        }
+
+        .section li {
+            margin-bottom: 10px;
+        }
+
+        .feature-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .feature-item {
+            background: #f7fafc;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .feature-item strong {
+            color: #667eea;
+        }
+
+        .app-btn {
+            display: inline-block;
+            padding: 15px 40px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 12px;
+            font-size: 1.2em;
+            font-weight: 600;
+            margin: 20px 0;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .app-btn:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .morse-example {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            margin: 15px 0;
+            font-size: 1.1em;
+            text-align: center;
+        }
+
+        code {
+            background: #e2e8f0;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .section h2 {
+                font-size: 1.5em;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <a href="index.html" class="back-btn">← Back to Apps</a>
+
+        <div class="header">
+            <h1>⚡ Morse Code</h1>
+            <p>Learn, convert, and communicate with Morse code</p>
+        </div>
+
+        <div style="text-align: center;">
+            <a href="morse/" class="app-btn">Open Morse Code App</a>
+        </div>
+
+        <div class="section">
+            <h2>About Morse Code</h2>
+            <p>
+                Morse code is a method of encoding text characters as sequences of dots and dashes (or short and long signals).
+                Developed in the 1830s-1840s by Samuel Morse and Alfred Vail, it revolutionized long-distance communication
+                and remains useful today for emergency signaling, amateur radio, and accessibility applications.
+            </p>
+            <div class="morse-example">
+                SOS = <strong>... --- ...</strong>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Features</h2>
+            
+            <h3>🔤 Text Converter</h3>
+            <p>Convert between regular text and Morse code instantly:</p>
+            <ul>
+                <li><strong>Text to Morse:</strong> Type any message and convert it to dots and dashes</li>
+                <li><strong>Morse to Text:</strong> Decode Morse code back into readable text</li>
+                <li><strong>Supports:</strong> Letters A-Z, numbers 0-9, and common punctuation marks</li>
+            </ul>
+
+            <h3>📋 Cheat Sheet</h3>
+            <p>Learn Morse code with our comprehensive reference guide:</p>
+            <ul>
+                <li>Visual reference for all letters and numbers</li>
+                <li>Easy-to-read format showing character and its Morse equivalent</li>
+                <li>Perfect for learning and quick lookups</li>
+            </ul>
+
+            <h3>🔦 Flashlight Player</h3>
+            <p>Transmit messages using your device's flashlight:</p>
+            <ul>
+                <li><strong>Flash messages:</strong> Convert text to Morse code and flash it with your phone's LED</li>
+                <li><strong>Adjustable speed:</strong> Control transmission speed from 5-40 WPM (Words Per Minute)</li>
+                <li><strong>Visual indicator:</strong> On-screen indicator shows the flashing pattern</li>
+                <li><strong>Standard timing:</strong> Uses proper Morse code timing ratios for accurate transmission</li>
+            </ul>
+
+            <h3>📷 Camera Reader</h3>
+            <p>Detect and decode Morse code flashes using your camera:</p>
+            <ul>
+                <li><strong>Real-time detection:</strong> Uses your device's camera to detect light flashes</li>
+                <li><strong>Automatic decoding:</strong> Converts detected flashes into dots and dashes, then to text</li>
+                <li><strong>Smart timing:</strong> Distinguishes between dots, dashes, letters, and word gaps</li>
+                <li><strong>Visual feedback:</strong> Shows both the detected Morse code and decoded text</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>How Morse Code Works</h2>
+            
+            <h3>Basic Symbols</h3>
+            <ul>
+                <li><strong>Dot (.):</strong> A short signal (dit)</li>
+                <li><strong>Dash (-):</strong> A long signal, three times the length of a dot (dah)</li>
+            </ul>
+
+            <h3>Timing Rules</h3>
+            <ol>
+                <li>A dash is three times longer than a dot</li>
+                <li>The space between symbols (dots/dashes) within a letter is one dot length</li>
+                <li>The space between letters is three dot lengths</li>
+                <li>The space between words is seven dot lengths</li>
+            </ol>
+
+            <h3>Common Examples</h3>
+            <div class="morse-example">
+                <strong>HELLO</strong> = .... . .-.. .-.. ---<br>
+                <strong>HELP</strong> = .... . .-.. .--.<br>
+                <strong>OK</strong> = --- -.-
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Use Cases</h2>
+            <div class="feature-list">
+                <div class="feature-item">
+                    <strong>Emergency Signaling</strong><br>
+                    Use flashlight to send SOS or other distress signals
+                </div>
+                <div class="feature-item">
+                    <strong>Learning Tool</strong><br>
+                    Practice and memorize Morse code with the cheat sheet
+                </div>
+                <div class="feature-item">
+                    <strong>Silent Communication</strong><br>
+                    Communicate across distances using light signals
+                </div>
+                <div class="feature-item">
+                    <strong>Amateur Radio</strong><br>
+                    Learn Morse for ham radio operations
+                </div>
+                <div class="feature-item">
+                    <strong>Fun Challenges</strong><br>
+                    Create secret messages with friends
+                </div>
+                <div class="feature-item">
+                    <strong>Accessibility</strong><br>
+                    Alternative communication method for various needs
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Tips for Best Results</h2>
+            
+            <h3>Using the Flashlight Player</h3>
+            <ul>
+                <li>Start with a slow speed (5-10 WPM) when learning</li>
+                <li>Make sure your device's flashlight is working before starting</li>
+                <li>Use in a dark environment for best visibility</li>
+                <li>Practice with simple messages like "SOS" or "HI" first</li>
+            </ul>
+
+            <h3>Using the Camera Reader</h3>
+            <ul>
+                <li>Ensure good lighting contrast (bright flash against dark background)</li>
+                <li>Point the camera directly at the light source</li>
+                <li>Use consistent flash timing for better detection</li>
+                <li>Start with slow, deliberate flashes</li>
+                <li>Grant camera permissions when prompted</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Privacy & Permissions</h2>
+            <p>The Morse Code app requires the following permissions:</p>
+            <ul>
+                <li><strong>Camera:</strong> Required for the Reader feature to detect light flashes. Only used when you explicitly activate the camera reader.</li>
+                <li><strong>Flashlight:</strong> Required for the Player feature to transmit messages. Only activated when you choose to play a message.</li>
+            </ul>
+            <p>
+                <strong>Your privacy is important:</strong> No data is collected, stored, or transmitted. All processing happens
+                locally on your device. The camera feed is analyzed in real-time and not recorded or saved.
+            </p>
+        </div>
+
+        <div class="section">
+            <h2>Browser Compatibility</h2>
+            <p>The Morse Code app works best on modern browsers with support for:</p>
+            <ul>
+                <li>Media Devices API (for camera and flashlight access)</li>
+                <li>Canvas API (for camera image processing)</li>
+                <li>ES6 JavaScript</li>
+            </ul>
+            <p><strong>Tested on:</strong> Chrome 90+, Firefox 88+, Safari 14+, Edge 90+</p>
+            <p><strong>Note:</strong> Flashlight control is primarily available on mobile devices. Desktop users can use the visual indicator.</p>
+        </div>
+
+        <div style="text-align: center; margin-top: 40px;">
+            <a href="morse/" class="app-btn">Try Morse Code Now</a>
+        </div>
+    </div>
+</body>
+
+</html>
