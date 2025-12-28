@@ -153,6 +153,7 @@ function initializeCheatSheet() {
 // Morse Player with Flashlight
 let isPlaying = false;
 let playTimeout = null;
+let activeFlashTrack = null;
 
 async function getFlashlight() {
     try {
@@ -203,7 +204,7 @@ function initializePlayer() {
         }
 
         const morse = textToMorse(text);
-        const wpm = parseInt(wpmSlider.value);
+        const wpm = parseInt(wpmSlider.value, 10);
         
         // Calculate timing (standard is PARIS method: 50 units per word)
         const unitTime = 1200 / wpm; // milliseconds per unit
@@ -218,12 +219,11 @@ function initializePlayer() {
         stopBtn.style.display = 'inline-block';
         playerStatus.textContent = 'Playing...';
 
-        let flashTrack = null;
         let useFlashlight = false;
 
         // Try to get flashlight
         try {
-            flashTrack = await getFlashlight();
+            activeFlashTrack = await getFlashlight();
             useFlashlight = true;
             playerStatus.textContent = 'Playing with flashlight...';
         } catch (error) {
@@ -235,8 +235,8 @@ function initializePlayer() {
             if (!isPlaying) return;
             
             flashIndicator.classList.add('flashing');
-            if (useFlashlight && flashTrack) {
-                await setFlashlight(flashTrack, true);
+            if (useFlashlight && activeFlashTrack) {
+                await setFlashlight(activeFlashTrack, true);
             }
             
             await new Promise(resolve => {
@@ -244,8 +244,8 @@ function initializePlayer() {
             });
             
             flashIndicator.classList.remove('flashing');
-            if (useFlashlight && flashTrack) {
-                await setFlashlight(flashTrack, false);
+            if (useFlashlight && activeFlashTrack) {
+                await setFlashlight(activeFlashTrack, false);
             }
         }
 
@@ -279,9 +279,10 @@ function initializePlayer() {
         } catch (error) {
             playerStatus.textContent = 'Error during playback: ' + error.message;
         } finally {
-            if (flashTrack) {
-                await setFlashlight(flashTrack, false);
-                flashTrack.stop();
+            if (activeFlashTrack) {
+                await setFlashlight(activeFlashTrack, false);
+                activeFlashTrack.stop();
+                activeFlashTrack = null;
             }
             isPlaying = false;
             playBtn.style.display = 'inline-block';
@@ -289,12 +290,18 @@ function initializePlayer() {
         }
     });
 
-    stopBtn.addEventListener('click', () => {
+    stopBtn.addEventListener('click', async () => {
         isPlaying = false;
         if (playTimeout) {
             clearTimeout(playTimeout);
             playTimeout = null;
         }
+        if (activeFlashTrack) {
+            await setFlashlight(activeFlashTrack, false);
+            activeFlashTrack.stop();
+            activeFlashTrack = null;
+        }
+        flashIndicator.classList.remove('flashing');
         playerStatus.textContent = 'Playback stopped.';
     });
 }
@@ -371,13 +378,15 @@ function initializeReader() {
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         const data = imageData.data;
 
-        // Calculate average brightness
+        // Calculate average brightness (sample every 4th pixel for performance)
         let totalBrightness = 0;
-        for (let i = 0; i < data.length; i += 4) {
+        let sampleCount = 0;
+        for (let i = 0; i < data.length; i += 16) { // Sample every 4th pixel (4 * 4 bytes)
             const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
             totalBrightness += avg;
+            sampleCount++;
         }
-        const avgBrightness = totalBrightness / (data.length / 4);
+        const avgBrightness = totalBrightness / sampleCount;
 
         const now = Date.now();
         const brightnessDiff = avgBrightness - lastBrightness;
