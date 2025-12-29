@@ -108,6 +108,24 @@ function renderHeader($title) {
             .output br {
                 margin-bottom: 5px;
             }
+            .app-link {
+                display: block;
+                width: 100%;
+                padding: 15px;
+                background: #667eea;
+                color: white;
+                border-radius: 10px;
+                font-size: 1.1em;
+                font-weight: 600;
+                text-align: center;
+                text-decoration: none;
+                transition: all 0.3s ease;
+            }
+            .app-link:hover {
+                background: #764ba2;
+                transform: translateY(-2px);
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            }
         </style>
     </head>
     <body>
@@ -402,10 +420,7 @@ echo "Update completed: $extracted files extracted.<br />";
 echo "Lock released. Script remains for manual re-runs.<br />";
 ?>
 </div>
-<form method="POST">
-    <input type="hidden" name="run_update" value="1">
-    <button type="submit">Update Again</button>
-</form>
+<a href="/" class="app-link">Go to the App</a>
 <?php
 renderFooter();
 ?>
