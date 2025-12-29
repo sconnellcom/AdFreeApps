@@ -47,34 +47,42 @@
 
         <!-- Converter & Player Tab -->
         <div class="tab-content active" id="converter">
-            <div class="section">
-                <h2>Text to Morse</h2>
-                <textarea id="textInput" placeholder="Type your message here..." rows="4"></textarea>
-                <button class="btn-start" id="convertBtn">Convert to Morse</button>
-                <div class="output" id="morseOutput"></div>
-            </div>
-            
-            <div class="section">
-                <h2>Morse to Text</h2>
-                <textarea id="morseInput" placeholder="Enter Morse code (use dots and dashes)..." rows="4"></textarea>
-                <button class="btn-start" id="decodeBtn">Decode to Text</button>
-                <div class="output" id="textOutput"></div>
+            <div class="converter-grid">
+                <div class="converter-column">
+                    <label class="converter-label">Text</label>
+                    <textarea id="textInput" placeholder="Type your message here..." rows="6"></textarea>
+                    <button class="btn-convert" id="convertBtn">Convert to Morse ➜</button>
+                </div>
+                
+                <div class="converter-column">
+                    <label class="converter-label">Morse Code</label>
+                    <textarea id="morseInput" placeholder="Morse code (dots and dashes)..." rows="6"></textarea>
+                    <button class="btn-convert" id="decodeBtn">➜ Convert to Text</button>
+                </div>
             </div>
 
-            <div class="section">
-                <h2>Flash Morse Code</h2>
-                <div class="controls">
-                    <label>
+            <div class="player-section">
+                <div class="player-controls">
+                    <label class="control-label">
                         Speed (WPM):
                         <input type="range" id="wpmSlider" min="5" max="40" value="15" step="1">
                         <span id="wpmValue">15</span>
                     </label>
+                    <label class="control-label">
+                        Flash Mode:
+                        <select id="flashMode">
+                            <option value="indicator">Dot Indicator</option>
+                            <option value="fullscreen">Full Screen</option>
+                            <option value="flashlight">Flashlight</option>
+                        </select>
+                    </label>
                 </div>
-                <div class="controls">
-                    <button class="btn-start" id="playBtn">Play with Flashlight</button>
-                    <button class="btn-stop" id="stopBtn" style="display: none;">Stop</button>
+                <div class="player-buttons">
+                    <button class="btn-play" id="playBtn">▶ Play</button>
+                    <button class="btn-stop" id="stopBtn" style="display: none;">⏹ Stop</button>
                 </div>
                 <div class="flash-indicator" id="flashIndicator"></div>
+                <div class="fullscreen-flash" id="fullscreenFlash"></div>
                 <div class="status" id="playerStatus"></div>
             </div>
         </div>

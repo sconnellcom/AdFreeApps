@@ -109,16 +109,12 @@ function initializeConverter() {
     const decodeBtn = document.getElementById('decodeBtn');
     const textInput = document.getElementById('textInput');
     const morseInput = document.getElementById('morseInput');
-    const morseOutput = document.getElementById('morseOutput');
-    const textOutput = document.getElementById('textOutput');
 
     convertBtn.addEventListener('click', () => {
         const text = textInput.value;
         if (text.trim()) {
             const morse = textToMorse(text);
-            morseOutput.textContent = morse;
-        } else {
-            morseOutput.textContent = 'Please enter some text to convert.';
+            morseInput.value = morse;
         }
     });
 
@@ -126,9 +122,7 @@ function initializeConverter() {
         const morse = morseInput.value;
         if (morse.trim()) {
             const text = morseToText(morse);
-            textOutput.textContent = text;
-        } else {
-            textOutput.textContent = 'Please enter morse code to decode.';
+            textInput.value = text;
         }
     });
 }
@@ -200,10 +194,12 @@ async function setFlashlight(track, on) {
 function initializePlayer() {
     const playBtn = document.getElementById('playBtn');
     const stopBtn = document.getElementById('stopBtn');
-    const textInput = document.getElementById('textInput');
+    const morseInput = document.getElementById('morseInput');
     const wpmSlider = document.getElementById('wpmSlider');
     const wpmValue = document.getElementById('wpmValue');
     const flashIndicator = document.getElementById('flashIndicator');
+    const fullscreenFlash = document.getElementById('fullscreenFlash');
+    const flashModeSelect = document.getElementById('flashMode');
     const playerStatus = document.getElementById('playerStatus');
 
     wpmSlider.addEventListener('input', () => {
@@ -211,13 +207,13 @@ function initializePlayer() {
     });
 
     playBtn.addEventListener('click', async () => {
-        const text = textInput.value.trim();
-        if (!text) {
-            playerStatus.textContent = 'Please enter text in the text input field to flash.';
+        const morse = morseInput.value.trim();
+        if (!morse) {
+            playerStatus.textContent = 'Please enter morse code to play.';
             return;
         }
 
-        const morse = textToMorse(text);
+        const flashMode = flashModeSelect.value;
         const wpm = parseInt(wpmSlider.value, 10);
         
         // Calculate timing (standard is PARIS method: 50 units per word)
@@ -235,22 +231,33 @@ function initializePlayer() {
 
         let useFlashlight = false;
 
-        // Try to get flashlight
-        try {
-            const result = await getFlashlight();
-            activeFlashTrack = result.track;
-            activeFlashStream = result.stream;
-            useFlashlight = true;
-            playerStatus.textContent = 'Playing with flashlight...';
-        } catch (error) {
-            playerStatus.textContent = 'Playing (flashlight not available, using indicator)...';
-            console.log('Flashlight not available:', error.message);
+        // Setup flash mode
+        if (flashMode === 'indicator') {
+            flashIndicator.classList.add('active');
+        } else if (flashMode === 'flashlight') {
+            // Try to get flashlight
+            try {
+                const result = await getFlashlight();
+                activeFlashTrack = result.track;
+                activeFlashStream = result.stream;
+                useFlashlight = true;
+                playerStatus.textContent = 'Playing with flashlight...';
+            } catch (error) {
+                playerStatus.textContent = 'Flashlight not available, using indicator...';
+                console.log('Flashlight not available:', error.message);
+                flashIndicator.classList.add('active');
+            }
         }
 
         async function flash(duration) {
             if (!isPlaying) return;
             
-            flashIndicator.classList.add('flashing');
+            if (flashMode === 'indicator' || (!useFlashlight && flashMode === 'flashlight')) {
+                flashIndicator.classList.add('flashing');
+            } else if (flashMode === 'fullscreen') {
+                fullscreenFlash.classList.add('flashing');
+            }
+            
             if (useFlashlight && activeFlashTrack) {
                 await setFlashlight(activeFlashTrack, true);
             }
@@ -259,7 +266,12 @@ function initializePlayer() {
                 playTimeout = setTimeout(resolve, duration);
             });
             
-            flashIndicator.classList.remove('flashing');
+            if (flashMode === 'indicator' || (!useFlashlight && flashMode === 'flashlight')) {
+                flashIndicator.classList.remove('flashing');
+            } else if (flashMode === 'fullscreen') {
+                fullscreenFlash.classList.remove('flashing');
+            }
+            
             if (useFlashlight && activeFlashTrack) {
                 await setFlashlight(activeFlashTrack, false);
             }
@@ -295,6 +307,9 @@ function initializePlayer() {
         } catch (error) {
             playerStatus.textContent = 'Error during playback: ' + error.message;
         } finally {
+            flashIndicator.classList.remove('active', 'flashing');
+            fullscreenFlash.classList.remove('flashing');
+            
             if (activeFlashTrack) {
                 await setFlashlight(activeFlashTrack, false);
                 activeFlashTrack.stop();
@@ -316,6 +331,10 @@ function initializePlayer() {
             clearTimeout(playTimeout);
             playTimeout = null;
         }
+        
+        flashIndicator.classList.remove('active', 'flashing');
+        fullscreenFlash.classList.remove('flashing');
+        
         if (activeFlashTrack) {
             await setFlashlight(activeFlashTrack, false);
             activeFlashTrack.stop();
@@ -325,7 +344,7 @@ function initializePlayer() {
             activeFlashStream.getTracks().forEach(track => track.stop());
             activeFlashStream = null;
         }
-        flashIndicator.classList.remove('flashing');
+        
         playerStatus.textContent = 'Playback stopped.';
     });
 }
