@@ -161,7 +161,7 @@ async function getFlashlight() {
         const stream = await navigator.mediaDevices.getUserMedia({
             video: { 
                 facingMode: 'environment',
-                advanced: [{ torch: true }]
+                torch: true
             }
         });
         const track = stream.getVideoTracks()[0];
@@ -542,7 +542,7 @@ function initializeReader() {
     async function startCamera() {
         try {
             const constraints = {
-                video: selectedCameraId ? 
+                video: (selectedCameraId && selectedCameraId !== '') ? 
                     { deviceId: { exact: selectedCameraId } } : 
                     { facingMode: 'user' }
             };
