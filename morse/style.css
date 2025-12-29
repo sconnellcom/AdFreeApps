@@ -439,7 +439,6 @@ h3 {
 
 .fullscreen-flash.active {
     display: block;
-    background: black;
 }
 
 .fullscreen-flash.flashing {
