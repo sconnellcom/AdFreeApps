@@ -160,8 +160,7 @@ async function getFlashlight() {
     try {
         const stream = await navigator.mediaDevices.getUserMedia({
             video: { 
-                facingMode: 'environment',
-                torch: true
+                facingMode: 'environment'
             }
         });
         const track = stream.getVideoTracks()[0];
@@ -171,6 +170,15 @@ async function getFlashlight() {
             // Clean up if torch not supported
             stream.getTracks().forEach(t => t.stop());
             throw new Error('Flashlight not supported on this device');
+        }
+        
+        // Enable torch after getting stream
+        try {
+            await track.applyConstraints({
+                advanced: [{ torch: true }]
+            });
+        } catch (err) {
+            console.warn('Could not enable torch initially:', err);
         }
         
         return { track, stream };
@@ -384,7 +392,13 @@ function initializeReader() {
     enumerateCameras();
 
     cameraSelect.addEventListener('change', (e) => {
-        selectedCameraId = e.target.value;
+        const newCameraId = e.target.value;
+        // Validate camera ID against available cameras
+        if (newCameraId && !availableCameras.some(cam => cam.deviceId === newCameraId)) {
+            console.warn('Invalid camera ID selected');
+            return;
+        }
+        selectedCameraId = newCameraId;
         // Restart camera if it's already running
         if (readerStream) {
             stopCamera();
