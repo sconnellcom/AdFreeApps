@@ -109,16 +109,12 @@ function initializeConverter() {
     const decodeBtn = document.getElementById('decodeBtn');
     const textInput = document.getElementById('textInput');
     const morseInput = document.getElementById('morseInput');
-    const morseOutput = document.getElementById('morseOutput');
-    const textOutput = document.getElementById('textOutput');
 
     convertBtn.addEventListener('click', () => {
         const text = textInput.value;
         if (text.trim()) {
             const morse = textToMorse(text);
-            morseOutput.textContent = morse;
-        } else {
-            morseOutput.textContent = 'Please enter some text to convert.';
+            morseInput.value = morse;
         }
     });
 
@@ -126,9 +122,7 @@ function initializeConverter() {
         const morse = morseInput.value;
         if (morse.trim()) {
             const text = morseToText(morse);
-            textOutput.textContent = text;
-        } else {
-            textOutput.textContent = 'Please enter morse code to decode.';
+            textInput.value = text;
         }
     });
 }
@@ -154,20 +148,34 @@ function initializeCheatSheet() {
 let isPlaying = false;
 let playTimeout = null;
 let activeFlashTrack = null;
+let activeFlashStream = null;
 
 async function getFlashlight() {
     try {
         const stream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: 'environment' }
+            video: { 
+                facingMode: 'environment'
+            }
         });
         const track = stream.getVideoTracks()[0];
         const capabilities = track.getCapabilities();
         
         if (!capabilities.torch) {
-            throw new Error('Flashlight not supported');
+            // Clean up if torch not supported
+            stream.getTracks().forEach(t => t.stop());
+            throw new Error('Flashlight not supported on this device');
         }
         
-        return track;
+        // Enable torch after getting stream
+        try {
+            await track.applyConstraints({
+                advanced: [{ torch: true }]
+            });
+        } catch (err) {
+            console.warn('Could not enable torch initially:', err);
+        }
+        
+        return { track, stream };
     } catch (error) {
         throw new Error('Unable to access flashlight: ' + error.message);
     }
@@ -186,10 +194,12 @@ async function setFlashlight(track, on) {
 function initializePlayer() {
     const playBtn = document.getElementById('playBtn');
     const stopBtn = document.getElementById('stopBtn');
-    const playerInput = document.getElementById('playerInput');
+    const morseInput = document.getElementById('morseInput');
     const wpmSlider = document.getElementById('wpmSlider');
     const wpmValue = document.getElementById('wpmValue');
     const flashIndicator = document.getElementById('flashIndicator');
+    const fullscreenFlash = document.getElementById('fullscreenFlash');
+    const flashModeSelect = document.getElementById('flashMode');
     const playerStatus = document.getElementById('playerStatus');
 
     wpmSlider.addEventListener('input', () => {
@@ -197,13 +207,13 @@ function initializePlayer() {
     });
 
     playBtn.addEventListener('click', async () => {
-        const text = playerInput.value.trim();
-        if (!text) {
-            playerStatus.textContent = 'Please enter text to flash.';
+        const morse = morseInput.value.trim();
+        if (!morse) {
+            playerStatus.textContent = 'Please enter morse code to play. Convert text first or type morse code directly.';
             return;
         }
 
-        const morse = textToMorse(text);
+        const flashMode = flashModeSelect.value;
         const wpm = parseInt(wpmSlider.value, 10);
         
         // Calculate timing (standard is PARIS method: 50 units per word)
@@ -221,20 +231,33 @@ function initializePlayer() {
 
         let useFlashlight = false;
 
-        // Try to get flashlight
-        try {
-            activeFlashTrack = await getFlashlight();
-            useFlashlight = true;
-            playerStatus.textContent = 'Playing with flashlight...';
-        } catch (error) {
-            playerStatus.textContent = 'Playing (flashlight not available, using indicator)...';
-            console.log('Flashlight not available:', error.message);
+        // Setup flash mode
+        if (flashMode === 'indicator') {
+            flashIndicator.classList.add('active');
+        } else if (flashMode === 'flashlight') {
+            // Try to get flashlight
+            try {
+                const result = await getFlashlight();
+                activeFlashTrack = result.track;
+                activeFlashStream = result.stream;
+                useFlashlight = true;
+                playerStatus.textContent = 'Playing with flashlight...';
+            } catch (error) {
+                playerStatus.textContent = 'Flashlight not available, using indicator...';
+                console.log('Flashlight not available:', error.message);
+                flashIndicator.classList.add('active');
+            }
         }
 
         async function flash(duration) {
             if (!isPlaying) return;
             
-            flashIndicator.classList.add('flashing');
+            if (flashMode === 'indicator' || (!useFlashlight && flashMode === 'flashlight')) {
+                flashIndicator.classList.add('flashing');
+            } else if (flashMode === 'fullscreen') {
+                fullscreenFlash.classList.add('flashing');
+            }
+            
             if (useFlashlight && activeFlashTrack) {
                 await setFlashlight(activeFlashTrack, true);
             }
@@ -243,7 +266,12 @@ function initializePlayer() {
                 playTimeout = setTimeout(resolve, duration);
             });
             
-            flashIndicator.classList.remove('flashing');
+            if (flashMode === 'indicator' || (!useFlashlight && flashMode === 'flashlight')) {
+                flashIndicator.classList.remove('flashing');
+            } else if (flashMode === 'fullscreen') {
+                fullscreenFlash.classList.remove('flashing');
+            }
+            
             if (useFlashlight && activeFlashTrack) {
                 await setFlashlight(activeFlashTrack, false);
             }
@@ -279,10 +307,17 @@ function initializePlayer() {
         } catch (error) {
             playerStatus.textContent = 'Error during playback: ' + error.message;
         } finally {
+            flashIndicator.classList.remove('active', 'flashing');
+            fullscreenFlash.classList.remove('flashing');
+            
             if (activeFlashTrack) {
                 await setFlashlight(activeFlashTrack, false);
                 activeFlashTrack.stop();
                 activeFlashTrack = null;
+            }
+            if (activeFlashStream) {
+                activeFlashStream.getTracks().forEach(track => track.stop());
+                activeFlashStream = null;
             }
             isPlaying = false;
             playBtn.style.display = 'inline-block';
@@ -296,12 +331,20 @@ function initializePlayer() {
             clearTimeout(playTimeout);
             playTimeout = null;
         }
+        
+        flashIndicator.classList.remove('active', 'flashing');
+        fullscreenFlash.classList.remove('flashing');
+        
         if (activeFlashTrack) {
             await setFlashlight(activeFlashTrack, false);
             activeFlashTrack.stop();
             activeFlashTrack = null;
         }
-        flashIndicator.classList.remove('flashing');
+        if (activeFlashStream) {
+            activeFlashStream.getTracks().forEach(track => track.stop());
+            activeFlashStream = null;
+        }
+        
         playerStatus.textContent = 'Playback stopped.';
     });
 }
@@ -313,6 +356,9 @@ let detectedMorse = [];
 let lastBrightness = 0;
 let flashDetected = false;
 let lastFlashTime = 0;
+let availableCameras = [];
+let selectedCameraId = null;
+let currentZoom = 1.0;
 
 // Tap input state
 let tapStartTime = 0;
@@ -320,8 +366,8 @@ let isTapping = false;
 let tapMorse = [];
 let lastTapTime = 0;
 const TAP_THRESHOLD = 200; // ms - tap vs hold threshold
-const LETTER_GAP_TAP = 1000; // ms - gap for letter separation
-const WORD_GAP_TAP = 2000; // ms - gap for word separation
+const LETTER_GAP_TAP = 500; // ms - gap for letter separation
+const WORD_GAP_TAP = 1500; // ms - gap for word separation
 
 function initializeReader() {
     const startBtn = document.getElementById('startReaderBtn');
@@ -332,6 +378,57 @@ function initializeReader() {
     const morseDisplay = document.getElementById('morseDisplay');
     const readerStatus = document.getElementById('readerStatus');
     const ctx = canvas.getContext('2d');
+    const cameraSelect = document.getElementById('cameraSelect');
+    const zoomSlider = document.getElementById('zoomSlider');
+    const zoomValue = document.getElementById('zoomValue');
+
+    // Enumerate cameras
+    async function enumerateCameras() {
+        try {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            availableCameras = devices.filter(device => device.kind === 'videoinput');
+            
+            cameraSelect.innerHTML = '<option value="">Select Camera...</option>';
+            availableCameras.forEach((camera, index) => {
+                const option = document.createElement('option');
+                option.value = camera.deviceId;
+                option.textContent = camera.label || `Camera ${index + 1}`;
+                cameraSelect.appendChild(option);
+            });
+
+            // Select first camera by default
+            if (availableCameras.length > 0) {
+                selectedCameraId = availableCameras[0].deviceId;
+                cameraSelect.value = selectedCameraId;
+            }
+        } catch (error) {
+            console.error('Error enumerating cameras:', error);
+            readerStatus.textContent = 'Error listing cameras: ' + error.message;
+        }
+    }
+
+    // Initialize camera list
+    enumerateCameras();
+
+    cameraSelect.addEventListener('change', (e) => {
+        const newCameraId = e.target.value;
+        // Validate camera ID against available cameras
+        if (newCameraId && !availableCameras.some(cam => cam.deviceId === newCameraId)) {
+            console.warn('Invalid camera ID selected');
+            return;
+        }
+        selectedCameraId = newCameraId;
+        // Restart camera if it's already running
+        if (readerStream) {
+            stopCamera();
+            startCamera();
+        }
+    });
+
+    zoomSlider.addEventListener('input', () => {
+        currentZoom = parseFloat(zoomSlider.value);
+        zoomValue.textContent = currentZoom.toFixed(1) + 'x';
+    });
 
     // Mode switching
     const radioButtons = document.querySelectorAll('input[name="readerMode"]');
@@ -475,11 +572,15 @@ function initializeReader() {
         detectedMorse = [];
     }
 
-    startBtn.addEventListener('click', async () => {
+    async function startCamera() {
         try {
-            readerStream = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: 'user' }
-            });
+            const constraints = {
+                video: (selectedCameraId && selectedCameraId !== '') ? 
+                    { deviceId: { exact: selectedCameraId } } : 
+                    { facingMode: 'user' }
+            };
+            
+            readerStream = await navigator.mediaDevices.getUserMedia(constraints);
             video.srcObject = readerStream;
             
             startBtn.style.display = 'none';
@@ -497,7 +598,9 @@ function initializeReader() {
         } catch (error) {
             readerStatus.textContent = 'Error accessing camera: ' + error.message;
         }
-    });
+    }
+
+    startBtn.addEventListener('click', startCamera);
 
     stopBtn.addEventListener('click', () => {
         stopCamera();
@@ -511,7 +614,22 @@ function initializeReader() {
         if (!readerStream) return;
 
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        
+        // Calculate the region to sample based on zoom
+        // Higher zoom = smaller center region
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const sampleWidth = canvas.width / currentZoom;
+        const sampleHeight = canvas.height / currentZoom;
+        const sampleX = centerX - sampleWidth / 2;
+        const sampleY = centerY - sampleHeight / 2;
+        
+        const imageData = ctx.getImageData(
+            Math.max(0, sampleX), 
+            Math.max(0, sampleY), 
+            Math.min(canvas.width, sampleWidth), 
+            Math.min(canvas.height, sampleHeight)
+        );
         const data = imageData.data;
 
         // Calculate average brightness (sample every 4th pixel for performance)

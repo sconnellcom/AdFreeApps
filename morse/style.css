@@ -279,12 +279,180 @@ h3 {
     margin-bottom: 30px;
 }
 
+/* Converter Grid Layout */
+.converter-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.converter-column {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.converter-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 4px;
+}
+
+.btn-convert {
+    background: var(--primary-color);
+    color: white;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.btn-convert:hover {
+    background: var(--primary-hover);
+    transform: translateY(-1px);
+}
+
+/* Player Section */
+.player-section {
+    background: var(--surface-bg);
+    border-radius: 12px;
+    padding: 15px;
+    margin-top: 15px;
+}
+
+.player-controls {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+
+.control-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.control-label input[type="range"] {
+    width: 120px;
+}
+
+.control-label select {
+    padding: 6px 10px;
+    font-size: 14px;
+    border: 2px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--container-bg);
+    color: var(--text-color);
+    cursor: pointer;
+    transition: border-color 0.3s ease;
+}
+
+.control-label select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.player-buttons {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.btn-play {
+    background: var(--primary-color);
+    color: white;
+    padding: 10px 24px;
+    font-size: 15px;
+    font-weight: 600;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.btn-play:hover {
+    background: var(--primary-hover);
+    transform: translateY(-1px);
+}
+
+.btn-stop {
+    background: #ef4444;
+    color: white;
+    padding: 10px 24px;
+    font-size: 15px;
+    font-weight: 600;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.btn-stop:hover {
+    background: #dc2626;
+    transform: translateY(-1px);
+}
+
+.flash-indicator {
+    width: 80px;
+    height: 80px;
+    margin: 15px auto;
+    border-radius: 50%;
+    background: var(--border-color);
+    transition: none;
+    display: none;
+}
+
+.flash-indicator.active {
+    display: block;
+}
+
+.flash-indicator.flashing {
+    background: #fbbf24;
+    box-shadow: 0 0 30px #fbbf24;
+}
+
+.fullscreen-flash {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: white;
+    z-index: 9999;
+    display: none;
+    pointer-events: none;
+}
+
+.fullscreen-flash.flashing {
+    display: block;
+}
+
+.status {
+    text-align: center;
+    font-size: 13px;
+    color: var(--text-secondary);
+    min-height: 18px;
+}
+
 textarea {
     width: 100%;
     padding: 12px;
-    font-size: 16px;
+    font-size: 15px;
     border: 2px solid var(--border-color);
-    border-radius: 8px;
+    border-radius: 6px;
     resize: vertical;
     font-family: 'Courier New', monospace;
     background: var(--surface-bg);
@@ -298,35 +466,24 @@ textarea:focus {
 }
 
 button {
-    padding: 12px 30px;
-    font-size: 16px;
     font-weight: 600;
     border: none;
-    border-radius: 8px;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
 .btn-start {
     background: var(--primary-color);
     color: white;
     margin: 10px 0;
+    padding: 12px 30px;
+    font-size: 16px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
 .btn-start:hover {
     background: var(--primary-hover);
-    transform: translateY(-2px);
-}
-
-.btn-stop {
-    background: #ef4444;
-    color: white;
-    margin: 10px 0;
-}
-
-.btn-stop:hover {
-    background: #dc2626;
     transform: translateY(-2px);
 }
 
@@ -393,6 +550,22 @@ button {
 
 .controls input[type="range"] {
     width: 150px;
+}
+
+.controls select {
+    padding: 8px 12px;
+    font-size: 14px;
+    border: 2px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--surface-bg);
+    color: var(--text-color);
+    cursor: pointer;
+    transition: border-color 0.3s ease;
+}
+
+.controls select:focus {
+    outline: none;
+    border-color: var(--primary-color);
 }
 
 #wpmValue {
@@ -634,6 +807,35 @@ button {
     .tab {
         padding: 10px 8px;
         font-size: 14px;
+    }
+
+    .converter-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .player-controls {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+
+    .control-label {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+
+    .control-label input[type="range"] {
+        width: 100%;
+    }
+
+    .player-buttons {
+        flex-direction: column;
+    }
+
+    .btn-play, .btn-stop {
+        width: 100%;
     }
 
     .cheat-sheet-grid {

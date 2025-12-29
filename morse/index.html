@@ -40,26 +40,50 @@
         </div>
 
         <div class="tabs">
-            <button class="tab active" data-tab="converter">Converter</button>
+            <button class="tab active" data-tab="converter">Converter & Player</button>
             <button class="tab" data-tab="cheatsheet">Cheat Sheet</button>
-            <button class="tab" data-tab="player">Player</button>
             <button class="tab" data-tab="reader">Reader</button>
         </div>
 
-        <!-- Converter Tab -->
+        <!-- Converter & Player Tab -->
         <div class="tab-content active" id="converter">
-            <div class="section">
-                <h2>Text to Morse</h2>
-                <textarea id="textInput" placeholder="Type your message here..." rows="4"></textarea>
-                <button class="btn-start" id="convertBtn">Convert to Morse</button>
-                <div class="output" id="morseOutput"></div>
+            <div class="converter-grid">
+                <div class="converter-column">
+                    <label class="converter-label">Text</label>
+                    <textarea id="textInput" placeholder="Type your message here..." rows="6"></textarea>
+                    <button class="btn-convert" id="convertBtn">Convert to Morse ➜</button>
+                </div>
+                
+                <div class="converter-column">
+                    <label class="converter-label">Morse Code</label>
+                    <textarea id="morseInput" placeholder="Morse code (dots and dashes)..." rows="6"></textarea>
+                    <button class="btn-convert" id="decodeBtn">➜ Convert to Text</button>
+                </div>
             </div>
-            
-            <div class="section">
-                <h2>Morse to Text</h2>
-                <textarea id="morseInput" placeholder="Enter Morse code (use dots and dashes)..." rows="4"></textarea>
-                <button class="btn-start" id="decodeBtn">Decode to Text</button>
-                <div class="output" id="textOutput"></div>
+
+            <div class="player-section">
+                <div class="player-controls">
+                    <label class="control-label">
+                        Speed (WPM):
+                        <input type="range" id="wpmSlider" min="5" max="40" value="15" step="1">
+                        <span id="wpmValue">15</span>
+                    </label>
+                    <label class="control-label">
+                        Flash Mode:
+                        <select id="flashMode">
+                            <option value="indicator">Dot Indicator</option>
+                            <option value="fullscreen">Full Screen</option>
+                            <option value="flashlight">Flashlight</option>
+                        </select>
+                    </label>
+                </div>
+                <div class="player-buttons">
+                    <button class="btn-play" id="playBtn">▶ Play</button>
+                    <button class="btn-stop" id="stopBtn" style="display: none;">⏹ Stop</button>
+                </div>
+                <div class="flash-indicator" id="flashIndicator"></div>
+                <div class="fullscreen-flash" id="fullscreenFlash"></div>
+                <div class="status" id="playerStatus"></div>
             </div>
         </div>
 
@@ -68,27 +92,6 @@
             <div class="section">
                 <h2>Morse Code Reference</h2>
                 <div class="cheat-sheet-grid" id="cheatSheetGrid"></div>
-            </div>
-        </div>
-
-        <!-- Player Tab -->
-        <div class="tab-content" id="player">
-            <div class="section">
-                <h2>Flash Morse Code</h2>
-                <textarea id="playerInput" placeholder="Enter text to flash..." rows="4"></textarea>
-                <div class="controls">
-                    <label>
-                        Speed (WPM):
-                        <input type="range" id="wpmSlider" min="5" max="40" value="15" step="1">
-                        <span id="wpmValue">15</span>
-                    </label>
-                </div>
-                <div class="controls">
-                    <button class="btn-start" id="playBtn">Play with Flashlight</button>
-                    <button class="btn-stop" id="stopBtn" style="display: none;">Stop</button>
-                </div>
-                <div class="flash-indicator" id="flashIndicator"></div>
-                <div class="status" id="playerStatus"></div>
             </div>
         </div>
 
@@ -110,6 +113,21 @@
                 <!-- Camera Mode -->
                 <div id="cameraMode" class="reader-mode">
                     <h3>Camera Detection</h3>
+                    <div class="controls">
+                        <label>
+                            Camera:
+                            <select id="cameraSelect">
+                                <option value="">Select Camera...</option>
+                            </select>
+                        </label>
+                    </div>
+                    <div class="controls">
+                        <label>
+                            Zoom:
+                            <input type="range" id="zoomSlider" min="1" max="5" value="1" step="0.1">
+                            <span id="zoomValue">1.0x</span>
+                        </label>
+                    </div>
                     <div class="video-container">
                         <video id="cameraVideo" autoplay playsinline></video>
                         <canvas id="cameraCanvas" style="display: none;"></canvas>
