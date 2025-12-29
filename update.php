@@ -402,10 +402,11 @@ echo "Update completed: $extracted files extracted.<br />";
 echo "Lock released. Script remains for manual re-runs.<br />";
 ?>
 </div>
-<form method="POST">
-    <input type="hidden" name="run_update" value="1">
-    <button type="submit">Update Again</button>
-</form>
+<a href="/" style="display: block; width: 100%; padding: 15px; background: #667eea; color: white; border: none; border-radius: 10px; font-size: 1.1em; font-weight: 600; text-align: center; text-decoration: none; transition: all 0.3s ease;" 
+   onmouseover="this.style.background='#764ba2'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 5px 15px rgba(0, 0, 0, 0.2)';"
+   onmouseout="this.style.background='#667eea'; this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+   Go to the App
+</a>
 <?php
 renderFooter();
 ?>
