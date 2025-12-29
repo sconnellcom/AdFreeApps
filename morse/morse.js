@@ -206,6 +206,13 @@ function initializePlayer() {
         wpmValue.textContent = wpmSlider.value;
     });
 
+    // Click anywhere on fullscreen flash to stop
+    fullscreenFlash.addEventListener('click', () => {
+        if (isPlaying) {
+            stopBtn.click();
+        }
+    });
+
     playBtn.addEventListener('click', async () => {
         const morse = morseInput.value.trim();
         if (!morse) {
@@ -234,6 +241,8 @@ function initializePlayer() {
         // Setup flash mode
         if (flashMode === 'indicator') {
             flashIndicator.classList.add('active');
+        } else if (flashMode === 'fullscreen') {
+            fullscreenFlash.classList.add('active');
         } else if (flashMode === 'flashlight') {
             // Try to get flashlight
             try {
@@ -308,7 +317,7 @@ function initializePlayer() {
             playerStatus.textContent = 'Error during playback: ' + error.message;
         } finally {
             flashIndicator.classList.remove('active', 'flashing');
-            fullscreenFlash.classList.remove('flashing');
+            fullscreenFlash.classList.remove('active', 'flashing');
             
             if (activeFlashTrack) {
                 await setFlashlight(activeFlashTrack, false);
@@ -333,7 +342,7 @@ function initializePlayer() {
         }
         
         flashIndicator.classList.remove('active', 'flashing');
-        fullscreenFlash.classList.remove('flashing');
+        fullscreenFlash.classList.remove('active', 'flashing');
         
         if (activeFlashTrack) {
             await setFlashlight(activeFlashTrack, false);
@@ -346,6 +355,8 @@ function initializePlayer() {
         }
         
         playerStatus.textContent = 'Playback stopped.';
+        playBtn.style.display = 'inline-block';
+        stopBtn.style.display = 'none';
     });
 }
 

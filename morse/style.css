@@ -430,14 +430,20 @@ h3 {
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: white;
+    background: black;
     z-index: 9999;
     display: none;
-    pointer-events: none;
+    pointer-events: auto;
+    cursor: pointer;
+}
+
+.fullscreen-flash.active {
+    display: block;
+    background: black;
 }
 
 .fullscreen-flash.flashing {
-    display: block;
+    background: white;
 }
 
 .status {
