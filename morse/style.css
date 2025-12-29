@@ -411,7 +411,7 @@ h3 {
     margin: 15px auto;
     border-radius: 50%;
     background: var(--border-color);
-    transition: background 0.1s ease;
+    transition: none;
     display: none;
 }
 
@@ -449,8 +449,8 @@ h3 {
 
 textarea {
     width: 100%;
-    padding: 10px;
-    font-size: 14px;
+    padding: 12px;
+    font-size: 15px;
     border: 2px solid var(--border-color);
     border-radius: 6px;
     resize: vertical;

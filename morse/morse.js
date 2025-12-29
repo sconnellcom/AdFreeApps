@@ -209,7 +209,7 @@ function initializePlayer() {
     playBtn.addEventListener('click', async () => {
         const morse = morseInput.value.trim();
         if (!morse) {
-            playerStatus.textContent = 'Please enter morse code to play.';
+            playerStatus.textContent = 'Please enter morse code to play. Convert text first or type morse code directly.';
             return;
         }
 
