@@ -154,20 +154,26 @@ function initializeCheatSheet() {
 let isPlaying = false;
 let playTimeout = null;
 let activeFlashTrack = null;
+let activeFlashStream = null;
 
 async function getFlashlight() {
     try {
         const stream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: 'environment' }
+            video: { 
+                facingMode: 'environment',
+                advanced: [{ torch: true }]
+            }
         });
         const track = stream.getVideoTracks()[0];
         const capabilities = track.getCapabilities();
         
         if (!capabilities.torch) {
-            throw new Error('Flashlight not supported');
+            // Clean up if torch not supported
+            stream.getTracks().forEach(t => t.stop());
+            throw new Error('Flashlight not supported on this device');
         }
         
-        return track;
+        return { track, stream };
     } catch (error) {
         throw new Error('Unable to access flashlight: ' + error.message);
     }
@@ -223,7 +229,9 @@ function initializePlayer() {
 
         // Try to get flashlight
         try {
-            activeFlashTrack = await getFlashlight();
+            const result = await getFlashlight();
+            activeFlashTrack = result.track;
+            activeFlashStream = result.stream;
             useFlashlight = true;
             playerStatus.textContent = 'Playing with flashlight...';
         } catch (error) {
@@ -284,6 +292,10 @@ function initializePlayer() {
                 activeFlashTrack.stop();
                 activeFlashTrack = null;
             }
+            if (activeFlashStream) {
+                activeFlashStream.getTracks().forEach(track => track.stop());
+                activeFlashStream = null;
+            }
             isPlaying = false;
             playBtn.style.display = 'inline-block';
             stopBtn.style.display = 'none';
@@ -300,6 +312,10 @@ function initializePlayer() {
             await setFlashlight(activeFlashTrack, false);
             activeFlashTrack.stop();
             activeFlashTrack = null;
+        }
+        if (activeFlashStream) {
+            activeFlashStream.getTracks().forEach(track => track.stop());
+            activeFlashStream = null;
         }
         flashIndicator.classList.remove('flashing');
         playerStatus.textContent = 'Playback stopped.';
