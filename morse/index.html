@@ -40,13 +40,12 @@
         </div>
 
         <div class="tabs">
-            <button class="tab active" data-tab="converter">Converter</button>
+            <button class="tab active" data-tab="converter">Converter & Player</button>
             <button class="tab" data-tab="cheatsheet">Cheat Sheet</button>
-            <button class="tab" data-tab="player">Player</button>
             <button class="tab" data-tab="reader">Reader</button>
         </div>
 
-        <!-- Converter Tab -->
+        <!-- Converter & Player Tab -->
         <div class="tab-content active" id="converter">
             <div class="section">
                 <h2>Text to Morse</h2>
@@ -61,21 +60,9 @@
                 <button class="btn-start" id="decodeBtn">Decode to Text</button>
                 <div class="output" id="textOutput"></div>
             </div>
-        </div>
 
-        <!-- Cheat Sheet Tab -->
-        <div class="tab-content" id="cheatsheet">
-            <div class="section">
-                <h2>Morse Code Reference</h2>
-                <div class="cheat-sheet-grid" id="cheatSheetGrid"></div>
-            </div>
-        </div>
-
-        <!-- Player Tab -->
-        <div class="tab-content" id="player">
             <div class="section">
                 <h2>Flash Morse Code</h2>
-                <textarea id="playerInput" placeholder="Enter text to flash..." rows="4"></textarea>
                 <div class="controls">
                     <label>
                         Speed (WPM):
@@ -89,6 +76,14 @@
                 </div>
                 <div class="flash-indicator" id="flashIndicator"></div>
                 <div class="status" id="playerStatus"></div>
+            </div>
+        </div>
+
+        <!-- Cheat Sheet Tab -->
+        <div class="tab-content" id="cheatsheet">
+            <div class="section">
+                <h2>Morse Code Reference</h2>
+                <div class="cheat-sheet-grid" id="cheatSheetGrid"></div>
             </div>
         </div>
 
@@ -110,6 +105,21 @@
                 <!-- Camera Mode -->
                 <div id="cameraMode" class="reader-mode">
                     <h3>Camera Detection</h3>
+                    <div class="controls">
+                        <label>
+                            Camera:
+                            <select id="cameraSelect">
+                                <option value="">Select Camera...</option>
+                            </select>
+                        </label>
+                    </div>
+                    <div class="controls">
+                        <label>
+                            Zoom:
+                            <input type="range" id="zoomSlider" min="1" max="5" value="1" step="0.1">
+                            <span id="zoomValue">1.0x</span>
+                        </label>
+                    </div>
                     <div class="video-container">
                         <video id="cameraVideo" autoplay playsinline></video>
                         <canvas id="cameraCanvas" style="display: none;"></canvas>

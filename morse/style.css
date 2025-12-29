@@ -395,6 +395,22 @@ button {
     width: 150px;
 }
 
+.controls select {
+    padding: 8px 12px;
+    font-size: 14px;
+    border: 2px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--surface-bg);
+    color: var(--text-color);
+    cursor: pointer;
+    transition: border-color 0.3s ease;
+}
+
+.controls select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
 #wpmValue {
     min-width: 30px;
     text-align: center;

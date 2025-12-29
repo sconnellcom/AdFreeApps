@@ -186,7 +186,7 @@ async function setFlashlight(track, on) {
 function initializePlayer() {
     const playBtn = document.getElementById('playBtn');
     const stopBtn = document.getElementById('stopBtn');
-    const playerInput = document.getElementById('playerInput');
+    const textInput = document.getElementById('textInput'); // Use text from converter
     const wpmSlider = document.getElementById('wpmSlider');
     const wpmValue = document.getElementById('wpmValue');
     const flashIndicator = document.getElementById('flashIndicator');
@@ -197,9 +197,9 @@ function initializePlayer() {
     });
 
     playBtn.addEventListener('click', async () => {
-        const text = playerInput.value.trim();
+        const text = textInput.value.trim();
         if (!text) {
-            playerStatus.textContent = 'Please enter text to flash.';
+            playerStatus.textContent = 'Please enter text in the converter above to flash.';
             return;
         }
 
@@ -313,6 +313,9 @@ let detectedMorse = [];
 let lastBrightness = 0;
 let flashDetected = false;
 let lastFlashTime = 0;
+let availableCameras = [];
+let selectedCameraId = null;
+let currentZoom = 1.0;
 
 // Tap input state
 let tapStartTime = 0;
@@ -320,8 +323,8 @@ let isTapping = false;
 let tapMorse = [];
 let lastTapTime = 0;
 const TAP_THRESHOLD = 200; // ms - tap vs hold threshold
-const LETTER_GAP_TAP = 1000; // ms - gap for letter separation
-const WORD_GAP_TAP = 2000; // ms - gap for word separation
+const LETTER_GAP_TAP = 500; // ms - gap for letter separation (reduced from 1000ms)
+const WORD_GAP_TAP = 1500; // ms - gap for word separation (reduced from 2000ms)
 
 function initializeReader() {
     const startBtn = document.getElementById('startReaderBtn');
@@ -332,6 +335,51 @@ function initializeReader() {
     const morseDisplay = document.getElementById('morseDisplay');
     const readerStatus = document.getElementById('readerStatus');
     const ctx = canvas.getContext('2d');
+    const cameraSelect = document.getElementById('cameraSelect');
+    const zoomSlider = document.getElementById('zoomSlider');
+    const zoomValue = document.getElementById('zoomValue');
+
+    // Enumerate cameras
+    async function enumerateCameras() {
+        try {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            availableCameras = devices.filter(device => device.kind === 'videoinput');
+            
+            cameraSelect.innerHTML = '<option value="">Select Camera...</option>';
+            availableCameras.forEach((camera, index) => {
+                const option = document.createElement('option');
+                option.value = camera.deviceId;
+                option.textContent = camera.label || `Camera ${index + 1}`;
+                cameraSelect.appendChild(option);
+            });
+
+            // Select first camera by default
+            if (availableCameras.length > 0) {
+                selectedCameraId = availableCameras[0].deviceId;
+                cameraSelect.value = selectedCameraId;
+            }
+        } catch (error) {
+            console.error('Error enumerating cameras:', error);
+            readerStatus.textContent = 'Error listing cameras: ' + error.message;
+        }
+    }
+
+    // Initialize camera list
+    enumerateCameras();
+
+    cameraSelect.addEventListener('change', (e) => {
+        selectedCameraId = e.target.value;
+        // Restart camera if it's already running
+        if (readerStream) {
+            stopCamera();
+            startBtn.click();
+        }
+    });
+
+    zoomSlider.addEventListener('input', () => {
+        currentZoom = parseFloat(zoomSlider.value);
+        zoomValue.textContent = currentZoom.toFixed(1) + 'x';
+    });
 
     // Mode switching
     const radioButtons = document.querySelectorAll('input[name="readerMode"]');
@@ -477,9 +525,13 @@ function initializeReader() {
 
     startBtn.addEventListener('click', async () => {
         try {
-            readerStream = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: 'user' }
-            });
+            const constraints = {
+                video: selectedCameraId ? 
+                    { deviceId: { exact: selectedCameraId } } : 
+                    { facingMode: 'user' }
+            };
+            
+            readerStream = await navigator.mediaDevices.getUserMedia(constraints);
             video.srcObject = readerStream;
             
             startBtn.style.display = 'none';
@@ -511,7 +563,22 @@ function initializeReader() {
         if (!readerStream) return;
 
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        
+        // Calculate the region to sample based on zoom
+        // Higher zoom = smaller center region
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const sampleWidth = canvas.width / currentZoom;
+        const sampleHeight = canvas.height / currentZoom;
+        const sampleX = centerX - sampleWidth / 2;
+        const sampleY = centerY - sampleHeight / 2;
+        
+        const imageData = ctx.getImageData(
+            Math.max(0, sampleX), 
+            Math.max(0, sampleY), 
+            Math.min(canvas.width, sampleWidth), 
+            Math.min(canvas.height, sampleHeight)
+        );
         const data = imageData.data;
 
         // Calculate average brightness (sample every 4th pixel for performance)
