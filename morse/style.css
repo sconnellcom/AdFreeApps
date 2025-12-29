@@ -442,6 +442,55 @@ button {
     margin-top: 20px;
 }
 
+.reader-mode {
+    margin: 20px 0;
+}
+
+.tap-button-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 30px 0;
+}
+
+.tap-button {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    color: white;
+    font-size: 24px;
+    font-weight: bold;
+    border: 5px solid var(--primary-hover);
+    cursor: pointer;
+    transition: all 0.1s ease;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.tap-button:hover {
+    background: var(--primary-hover);
+    transform: scale(1.02);
+}
+
+.tap-button:active,
+.tap-button.active {
+    background: #fbbf24;
+    transform: scale(0.95);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3), 0 0 30px #fbbf24;
+}
+
+.controls label {
+    cursor: pointer;
+}
+
+.controls input[type="radio"] {
+    margin-right: 5px;
+    cursor: pointer;
+}
+
 .theme-picker {
     position: relative;
 }
