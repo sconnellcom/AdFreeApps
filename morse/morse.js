@@ -314,15 +314,144 @@ let lastBrightness = 0;
 let flashDetected = false;
 let lastFlashTime = 0;
 
+// Tap input state
+let tapStartTime = 0;
+let isTapping = false;
+let tapMorse = [];
+let lastTapTime = 0;
+const TAP_THRESHOLD = 200; // ms - tap vs hold threshold
+const LETTER_GAP_TAP = 1000; // ms - gap for letter separation
+const WORD_GAP_TAP = 2000; // ms - gap for word separation
+
 function initializeReader() {
     const startBtn = document.getElementById('startReaderBtn');
     const stopBtn = document.getElementById('stopReaderBtn');
     const video = document.getElementById('cameraVideo');
     const canvas = document.getElementById('cameraCanvas');
     const readerOutput = document.getElementById('readerOutput');
+    const morseDisplay = document.getElementById('morseDisplay');
     const readerStatus = document.getElementById('readerStatus');
     const ctx = canvas.getContext('2d');
 
+    // Mode switching
+    const radioButtons = document.querySelectorAll('input[name="readerMode"]');
+    const cameraMode = document.getElementById('cameraMode');
+    const tapMode = document.getElementById('tapMode');
+    const tapButton = document.getElementById('tapButton');
+    const clearTapBtn = document.getElementById('clearTapBtn');
+
+    radioButtons.forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            if (e.target.value === 'camera') {
+                cameraMode.style.display = 'block';
+                tapMode.style.display = 'none';
+                // Stop camera if running
+                stopCamera();
+                // Reset tap state
+                resetTapState();
+            } else {
+                cameraMode.style.display = 'none';
+                tapMode.style.display = 'block';
+                // Stop camera if running
+                stopCamera();
+                // Reset tap state
+                resetTapState();
+            }
+        });
+    });
+
+    function resetTapState() {
+        tapMorse = [];
+        lastTapTime = 0;
+        updateDisplay();
+    }
+
+    function updateDisplay() {
+        const morseString = tapMorse.join('');
+        morseDisplay.textContent = morseString || 'Waiting for input...';
+        const text = morseToText(morseString);
+        readerOutput.textContent = text || 'Waiting for input...';
+    }
+
+    // Tap button handlers
+    let tapCheckInterval = null;
+    
+    function startTap() {
+        if (isTapping) return;
+        isTapping = true;
+        tapStartTime = Date.now();
+        tapButton.classList.add('active');
+        
+        // Check for letter and word gaps
+        if (tapCheckInterval) clearInterval(tapCheckInterval);
+    }
+
+    function endTap() {
+        if (!isTapping) return;
+        isTapping = false;
+        const tapDuration = Date.now() - tapStartTime;
+        tapButton.classList.remove('active');
+        
+        // Determine if dot or dash
+        if (tapDuration < TAP_THRESHOLD) {
+            tapMorse.push('.');
+        } else {
+            tapMorse.push('-');
+        }
+        
+        lastTapTime = Date.now();
+        updateDisplay();
+        
+        // Start checking for gaps
+        tapCheckInterval = setInterval(checkForGaps, 100);
+    }
+
+    function checkForGaps() {
+        if (tapMorse.length === 0 || isTapping) return;
+        
+        const now = Date.now();
+        const timeSinceTap = now - lastTapTime;
+        const lastSymbol = tapMorse[tapMorse.length - 1];
+        
+        if (timeSinceTap > WORD_GAP_TAP && lastSymbol !== '/') {
+            tapMorse.push('/');
+            updateDisplay();
+        } else if (timeSinceTap > LETTER_GAP_TAP && lastSymbol !== ' ' && lastSymbol !== '/') {
+            tapMorse.push(' ');
+            updateDisplay();
+        }
+    }
+
+    // Mouse/touch events for tap button
+    tapButton.addEventListener('mousedown', startTap);
+    tapButton.addEventListener('mouseup', endTap);
+    tapButton.addEventListener('mouseleave', () => {
+        if (isTapping) endTap();
+    });
+    
+    tapButton.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        startTap();
+    });
+    tapButton.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        endTap();
+    });
+    tapButton.addEventListener('touchcancel', (e) => {
+        e.preventDefault();
+        if (isTapping) endTap();
+    });
+
+    clearTapBtn.addEventListener('click', () => {
+        resetTapState();
+        readerStatus.textContent = 'Input cleared.';
+        if (tapCheckInterval) {
+            clearInterval(tapCheckInterval);
+            tapCheckInterval = null;
+        }
+    });
+
+    // Camera mode
     const BRIGHTNESS_THRESHOLD = 30; // Adjust based on testing
     const FLASH_COOLDOWN = 100; // ms between flashes
     const DOT_TIME = 200; // ms
@@ -330,6 +459,21 @@ function initializeReader() {
     const LETTER_GAP = 300; // ms
     const WORD_GAP = 700; // ms
     const DOT_DASH_TOLERANCE = 100; // ms tolerance for dot/dash detection
+
+    function stopCamera() {
+        if (readerStream) {
+            readerStream.getTracks().forEach(track => track.stop());
+            readerStream = null;
+        }
+        if (readerAnimationFrame) {
+            cancelAnimationFrame(readerAnimationFrame);
+            readerAnimationFrame = null;
+        }
+        video.srcObject = null;
+        startBtn.style.display = 'inline-block';
+        stopBtn.style.display = 'none';
+        detectedMorse = [];
+    }
 
     startBtn.addEventListener('click', async () => {
         try {
@@ -341,6 +485,7 @@ function initializeReader() {
             startBtn.style.display = 'none';
             stopBtn.style.display = 'inline-block';
             readerStatus.textContent = 'Camera active. Show flashes to the camera!';
+            morseDisplay.textContent = '';
             readerOutput.textContent = '';
             detectedMorse = [];
 
@@ -355,17 +500,7 @@ function initializeReader() {
     });
 
     stopBtn.addEventListener('click', () => {
-        if (readerStream) {
-            readerStream.getTracks().forEach(track => track.stop());
-            readerStream = null;
-        }
-        if (readerAnimationFrame) {
-            cancelAnimationFrame(readerAnimationFrame);
-            readerAnimationFrame = null;
-        }
-        video.srcObject = null;
-        startBtn.style.display = 'inline-block';
-        stopBtn.style.display = 'none';
+        stopCamera();
         readerStatus.textContent = 'Camera stopped.';
     });
 
@@ -413,7 +548,7 @@ function initializeReader() {
             }
             
             lastSymbolTime = now;
-            updateDetectedText();
+            updateCameraDetectedText();
         }
 
         // Detect gaps between letters and words
@@ -423,11 +558,11 @@ function initializeReader() {
             if (timeSinceLastSymbol > WORD_GAP && detectedMorse[detectedMorse.length - 1] !== '/') {
                 detectedMorse.push('/');
                 lastSymbolTime = now;
-                updateDetectedText();
+                updateCameraDetectedText();
             } else if (timeSinceLastSymbol > LETTER_GAP && detectedMorse[detectedMorse.length - 1] !== ' ' && detectedMorse[detectedMorse.length - 1] !== '/') {
                 detectedMorse.push(' ');
                 lastSymbolTime = now;
-                updateDetectedText();
+                updateCameraDetectedText();
             }
         }
 
@@ -435,9 +570,10 @@ function initializeReader() {
         readerAnimationFrame = requestAnimationFrame(detectFlashes);
     }
 
-    function updateDetectedText() {
+    function updateCameraDetectedText() {
         const morseString = detectedMorse.join('');
         const text = morseToText(morseString);
+        morseDisplay.textContent = morseString || 'Waiting for flashes...';
         readerOutput.textContent = text || 'Waiting for flashes...';
         readerStatus.textContent = `Detected morse: ${morseString}`;
     }

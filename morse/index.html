@@ -95,18 +95,48 @@
         <!-- Reader Tab -->
         <div class="tab-content" id="reader">
             <div class="section">
-                <h2>Read Morse from Camera</h2>
-                <div class="video-container">
-                    <video id="cameraVideo" autoplay playsinline></video>
-                    <canvas id="cameraCanvas" style="display: none;"></canvas>
-                </div>
+                <h2>Read Morse Code</h2>
                 <div class="controls">
-                    <button class="btn-start" id="startReaderBtn">Start Camera</button>
-                    <button class="btn-stop" id="stopReaderBtn" style="display: none;">Stop Camera</button>
+                    <label>
+                        <input type="radio" name="readerMode" value="camera" checked>
+                        Camera
+                    </label>
+                    <label>
+                        <input type="radio" name="readerMode" value="tap">
+                        Tap
+                    </label>
                 </div>
+                
+                <!-- Camera Mode -->
+                <div id="cameraMode" class="reader-mode">
+                    <h3>Camera Detection</h3>
+                    <div class="video-container">
+                        <video id="cameraVideo" autoplay playsinline></video>
+                        <canvas id="cameraCanvas" style="display: none;"></canvas>
+                    </div>
+                    <div class="controls">
+                        <button class="btn-start" id="startReaderBtn">Start Camera</button>
+                        <button class="btn-stop" id="stopReaderBtn" style="display: none;">Stop Camera</button>
+                    </div>
+                </div>
+
+                <!-- Tap Mode -->
+                <div id="tapMode" class="reader-mode" style="display: none;">
+                    <h3>Tap Input</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 15px;">Tap for dot (·), hold for dash (−)</p>
+                    <div class="tap-button-container">
+                        <button class="tap-button" id="tapButton">TAP</button>
+                    </div>
+                    <div class="controls">
+                        <button class="btn-stop" id="clearTapBtn">Clear</button>
+                    </div>
+                </div>
+
                 <div class="reader-output">
-                    <h3>Detected Message:</h3>
-                    <div class="output" id="readerOutput">Waiting for flashes...</div>
+                    <h3>Morse Code:</h3>
+                    <div class="output" id="morseDisplay">Waiting for input...</div>
+                    <h3>Decoded Message:</h3>
+                    <div class="output" id="readerOutput">Waiting for input...</div>
                 </div>
                 <div class="status" id="readerStatus"></div>
             </div>
