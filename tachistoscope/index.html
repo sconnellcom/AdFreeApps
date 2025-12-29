@@ -675,18 +675,22 @@
                 }
             });
             
-            // Exposure time control event listeners
+            // Exposure time control event listeners (working in tenths to avoid floating point issues)
             increaseTimeBtn.addEventListener("click", function() {
                 if (timeValue < 10) {
-                    timeValue = Math.round((timeValue + 0.5) * 10) / 10;
-                    timeDisplay.textContent = timeValue;
+                    // Work in tenths, add 5 tenths (0.5), then divide back
+                    var tenths = Math.round(timeValue * 10) + 5;
+                    timeValue = tenths / 10;
+                    timeDisplay.textContent = timeValue.toFixed(1);
                 }
             });
             
             decreaseTimeBtn.addEventListener("click", function() {
                 if (timeValue > 0.5) {
-                    timeValue = Math.round((timeValue - 0.5) * 10) / 10;
-                    timeDisplay.textContent = timeValue;
+                    // Work in tenths, subtract 5 tenths (0.5), then divide back
+                    var tenths = Math.round(timeValue * 10) - 5;
+                    timeValue = tenths / 10;
+                    timeDisplay.textContent = timeValue.toFixed(1);
                 }
             });
 
