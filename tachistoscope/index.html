@@ -681,7 +681,8 @@
                     // Work in tenths, add 5 tenths (0.5), then divide back
                     var tenths = Math.round(timeValue * 10) + 5;
                     timeValue = tenths / 10;
-                    timeDisplay.textContent = timeValue.toFixed(1);
+                    // Display whole numbers without decimal, decimals with one digit
+                    timeDisplay.textContent = timeValue % 1 === 0 ? timeValue : timeValue.toFixed(1);
                 }
             });
             
@@ -690,7 +691,8 @@
                     // Work in tenths, subtract 5 tenths (0.5), then divide back
                     var tenths = Math.round(timeValue * 10) - 5;
                     timeValue = tenths / 10;
-                    timeDisplay.textContent = timeValue.toFixed(1);
+                    // Display whole numbers without decimal, decimals with one digit
+                    timeDisplay.textContent = timeValue % 1 === 0 ? timeValue : timeValue.toFixed(1);
                 }
             });
 
