@@ -192,7 +192,7 @@ async function setFlashlight(track, on) {
 function initializePlayer() {
     const playBtn = document.getElementById('playBtn');
     const stopBtn = document.getElementById('stopBtn');
-    const textInput = document.getElementById('textInput'); // Use text from converter
+    const textInput = document.getElementById('textInput');
     const wpmSlider = document.getElementById('wpmSlider');
     const wpmValue = document.getElementById('wpmValue');
     const flashIndicator = document.getElementById('flashIndicator');
@@ -205,7 +205,7 @@ function initializePlayer() {
     playBtn.addEventListener('click', async () => {
         const text = textInput.value.trim();
         if (!text) {
-            playerStatus.textContent = 'Please enter text in the converter above to flash.';
+            playerStatus.textContent = 'Please enter text in the text input field to flash.';
             return;
         }
 
@@ -339,8 +339,8 @@ let isTapping = false;
 let tapMorse = [];
 let lastTapTime = 0;
 const TAP_THRESHOLD = 200; // ms - tap vs hold threshold
-const LETTER_GAP_TAP = 500; // ms - gap for letter separation (reduced from 1000ms)
-const WORD_GAP_TAP = 1500; // ms - gap for word separation (reduced from 2000ms)
+const LETTER_GAP_TAP = 500; // ms - gap for letter separation
+const WORD_GAP_TAP = 1500; // ms - gap for word separation
 
 function initializeReader() {
     const startBtn = document.getElementById('startReaderBtn');
@@ -388,7 +388,7 @@ function initializeReader() {
         // Restart camera if it's already running
         if (readerStream) {
             stopCamera();
-            startBtn.click();
+            startCamera();
         }
     });
 
@@ -539,7 +539,7 @@ function initializeReader() {
         detectedMorse = [];
     }
 
-    startBtn.addEventListener('click', async () => {
+    async function startCamera() {
         try {
             const constraints = {
                 video: selectedCameraId ? 
@@ -565,7 +565,9 @@ function initializeReader() {
         } catch (error) {
             readerStatus.textContent = 'Error accessing camera: ' + error.message;
         }
-    });
+    }
+
+    startBtn.addEventListener('click', startCamera);
 
     stopBtn.addEventListener('click', () => {
         stopCamera();
