@@ -233,6 +233,7 @@ body {
     padding: 5px;
     transition: transform 0.2s ease, opacity 0.2s ease;
     opacity: 0.8;
+    color: var(--text-color);
 }
 
 .home-btn:hover {
@@ -412,14 +413,18 @@ h1 {
     background: none;
     border: none;
     font-size: 1.5em;
-    color: var(--primary-color);
+    color: var(--text-color);
     cursor: pointer;
     padding: 5px;
-    transition: color 0.3s;
+    text-decoration: none;
+    transition: color 0.3s, transform 0.2s ease, opacity 0.2s ease;
+    opacity: 0.8;
 }
 
 .info-btn:hover {
     color: var(--primary-hover);
+    transform: scale(1.1);
+    opacity: 1;
 }
 
 .log-btn {

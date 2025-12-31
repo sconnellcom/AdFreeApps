@@ -191,10 +191,10 @@ class Metronome {
         this.detectedBpmDisplay = document.getElementById('detectedBpm');
         this.beatAccuracy = document.getElementById('beatAccuracy');
 
-        // Info modal elements
-        this.infoBtn = document.getElementById('infoBtn');
-        this.infoModal = document.getElementById('infoModal');
-        this.closeInfoBtn = document.getElementById('closeInfoBtn');
+        // No info modal - using landing page link instead
+        // Info modal (if added back later, uncomment these)
+        // this.infoModal = document.getElementById('infoModal');
+        // this.closeInfoBtn = document.getElementById('closeInfoBtn');
 
         // Log modal elements
         this.logBtn = document.getElementById('logBtn');
@@ -312,22 +312,19 @@ class Metronome {
             this.bpmToleranceValue.textContent = this.bpmTolerance;
         });
 
-        // Info button
-        this.infoBtn.addEventListener('click', () => {
-            this.infoModal.style.display = 'flex';
-        });
-
-        // Close info modal
-        this.closeInfoBtn.addEventListener('click', () => {
-            this.infoModal.style.display = 'none';
-        });
-
-        // Close modal when clicking outside
-        this.infoModal.addEventListener('click', (e) => {
-            if (e.target === this.infoModal) {
-                this.infoModal.style.display = 'none';
-            }
-        });
+        // No info button - using landing page link instead
+        // Info modal handlers (if added back later, uncomment these)
+        // this.infoBtn.addEventListener('click', () => {
+        //     this.infoModal.style.display = 'flex';
+        // });
+        // this.closeInfoBtn.addEventListener('click', () => {
+        //     this.infoModal.style.display = 'none';
+        // });
+        // this.infoModal.addEventListener('click', (e) => {
+        //     if (e.target === this.infoModal) {
+        //         this.infoModal.style.display = 'none';
+        //     }
+        // });
 
         // Log button
         this.logBtn.addEventListener('click', () => {

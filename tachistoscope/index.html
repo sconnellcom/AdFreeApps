@@ -203,6 +203,57 @@
             color: var(--text-color);
         }
 
+        .number-control {
+            margin: 15px 0;
+        }
+
+        .number-control label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .control-buttons {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .control-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            width: 35px;
+            height: 35px;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .control-btn:hover {
+            background: var(--primary-hover);
+            transform: scale(1.1);
+        }
+
+        .control-btn:active {
+            transform: scale(0.95);
+        }
+
+        .control-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--text-color);
+            min-width: 40px;
+            text-align: center;
+        }
+
         .game-box {
             float: right;
             border: solid var(--primary-color) 3px;
@@ -481,6 +532,18 @@
             .input-row input {
                 width: 150px;
             }
+            
+            .number-control {
+                margin: 20px 0;
+            }
+            
+            .number-control label {
+                margin-bottom: 12px;
+            }
+            
+            .control-buttons {
+                gap: 12px;
+            }
         }
     </style>
 </head>
@@ -515,11 +578,21 @@
         </h1>
         <div class="left">
             <div class="settings-box">
-                <div>
-                    <label>Characters</label><input name="characters" value="5" />
+                <div class="number-control">
+                    <label>Characters:</label>
+                    <div class="control-buttons">
+                        <button type="button" class="control-btn" id="decreaseChars">−</button>
+                        <span class="control-value" id="charsValue">5</span>
+                        <button type="button" class="control-btn" id="increaseChars">+</button>
+                    </div>
                 </div>
-                <div>
-                    <label>Exposure Time</label><input name="seconds" value="2" />
+                <div class="number-control">
+                    <label>Exposure Time:</label>
+                    <div class="control-buttons">
+                        <button type="button" class="control-btn" id="decreaseTime">−</button>
+                        <span class="control-value" id="timeValue">2</span>
+                        <button type="button" class="control-btn" id="increaseTime">+</button>
+                    </div>
                 </div>
                 <div>
                     <label>Type</label><br />
@@ -574,6 +647,54 @@
             var correctSpan = document.getElementById("correct");
             var incorrectSpan = document.getElementById("incorrect");
             var totalSpan = document.getElementById("total");
+            
+            // Number control values
+            var charsValue = 5;
+            var timeValue = 2;
+            
+            // Number control elements
+            var charsDisplay = document.getElementById("charsValue");
+            var timeDisplay = document.getElementById("timeValue");
+            var increaseCharsBtn = document.getElementById("increaseChars");
+            var decreaseCharsBtn = document.getElementById("decreaseChars");
+            var increaseTimeBtn = document.getElementById("increaseTime");
+            var decreaseTimeBtn = document.getElementById("decreaseTime");
+            
+            // Characters control event listeners
+            increaseCharsBtn.addEventListener("click", function() {
+                if (charsValue < 20) {
+                    charsValue++;
+                    charsDisplay.textContent = charsValue;
+                }
+            });
+            
+            decreaseCharsBtn.addEventListener("click", function() {
+                if (charsValue > 1) {
+                    charsValue--;
+                    charsDisplay.textContent = charsValue;
+                }
+            });
+            
+            // Exposure time control event listeners (working in tenths to avoid floating point issues)
+            increaseTimeBtn.addEventListener("click", function() {
+                if (timeValue < 10) {
+                    // Work in tenths, add 5 tenths (0.5), then divide back
+                    var tenths = Math.round(timeValue * 10) + 5;
+                    timeValue = tenths / 10;
+                    // Display whole numbers without decimal, decimals with one digit
+                    timeDisplay.textContent = timeValue % 1 === 0 ? timeValue : timeValue.toFixed(1);
+                }
+            });
+            
+            decreaseTimeBtn.addEventListener("click", function() {
+                if (timeValue > 0.5) {
+                    // Work in tenths, subtract 5 tenths (0.5), then divide back
+                    var tenths = Math.round(timeValue * 10) - 5;
+                    timeValue = tenths / 10;
+                    // Display whole numbers without decimal, decimals with one digit
+                    timeDisplay.textContent = timeValue % 1 === 0 ? timeValue : timeValue.toFixed(1);
+                }
+            });
 
             answerInput.addEventListener("keyup", function (event) {
                 if (event.key === "Enter") {
@@ -682,11 +803,9 @@
                 errorDisplay.style.display = "none";
                 instructions.classList.remove("visible");
                 var contentValue = document.querySelector("[name=content]:checked").value;
-                var charactersValue = document.querySelector("[name=characters]").value;
-                displayText = randomText(contentValue, charactersValue);
+                displayText = randomText(contentValue, charsValue);
                 mainDisplay.textContent = displayText;
-                var secondsValue = parseFloat(document.querySelector("[name=seconds]").value);
-                setTimeout(end, secondsValue * 1000);
+                setTimeout(end, timeValue * 1000);
             }
 
             function end() {

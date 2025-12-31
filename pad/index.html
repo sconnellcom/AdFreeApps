@@ -16,27 +16,28 @@
     <div class="container">
         <div class="header-row">
             <a href="../" class="home-btn" title="Back to Home">🏠</a>
-            <a href="../drum-pad-app.html" class="home-btn" title="About Drum Pad">ⓘ</a>
-            <div class="theme-picker">
-                <button class="theme-btn-active theme-default" data-theme="default" title="Change Theme"></button>
-                <div class="theme-dropdown">
-                    <button class="theme-btn theme-default" data-theme="default" title="Purple Theme"></button>
-                    <button class="theme-btn theme-black" data-theme="black" title="Black Theme"></button>
-                    <button class="theme-btn theme-blue" data-theme="blue" title="Blue Theme"></button>
-                    <button class="theme-btn theme-blue-dark" data-theme="blue-dark" title="Dark Blue Theme"></button>
-                    <button class="theme-btn theme-light" data-theme="light" title="Olive Theme"></button>
-                    <button class="theme-btn theme-dark" data-theme="dark" title="Dark Olive Theme"></button>
-                    <button class="theme-btn theme-warm-light" data-theme="warm-light"
-                        title="Warm Light Theme"></button>
-                    <button class="theme-btn theme-warm-dark" data-theme="warm-dark" title="Warm Dark Theme"></button>
-                    <button class="theme-btn theme-red" data-theme="red" title="Red Theme"></button>
-                    <button class="theme-btn theme-red-dark" data-theme="red-dark" title="Dark Red Theme"></button>
-                    <button class="theme-btn theme-pink" data-theme="pink" title="Pink Theme"></button>
-                    <button class="theme-btn theme-pink-dark" data-theme="pink-dark" title="Dark Pink Theme"></button>
-                </div>
-            </div>
             <h1>🥁 Drum Pad</h1>
-            <button id="infoBtn" class="info-btn" title="How to Use">ⓘ</button>
+            <div class="header-buttons">
+                <div class="theme-picker">
+                    <button class="theme-btn-active theme-default" data-theme="default" title="Change Theme"></button>
+                    <div class="theme-dropdown">
+                        <button class="theme-btn theme-default" data-theme="default" title="Purple Theme"></button>
+                        <button class="theme-btn theme-black" data-theme="black" title="Black Theme"></button>
+                        <button class="theme-btn theme-blue" data-theme="blue" title="Blue Theme"></button>
+                        <button class="theme-btn theme-blue-dark" data-theme="blue-dark" title="Dark Blue Theme"></button>
+                        <button class="theme-btn theme-light" data-theme="light" title="Olive Theme"></button>
+                        <button class="theme-btn theme-dark" data-theme="dark" title="Dark Olive Theme"></button>
+                        <button class="theme-btn theme-warm-light" data-theme="warm-light"
+                            title="Warm Light Theme"></button>
+                        <button class="theme-btn theme-warm-dark" data-theme="warm-dark" title="Warm Dark Theme"></button>
+                        <button class="theme-btn theme-red" data-theme="red" title="Red Theme"></button>
+                        <button class="theme-btn theme-red-dark" data-theme="red-dark" title="Dark Red Theme"></button>
+                        <button class="theme-btn theme-pink" data-theme="pink" title="Pink Theme"></button>
+                        <button class="theme-btn theme-pink-dark" data-theme="pink-dark" title="Dark Pink Theme"></button>
+                    </div>
+                </div>
+                <a href="../drum-pad-app.html" class="info-btn" title="About Drum Pad">ⓘ</a>
+            </div>
         </div>
 
         <!-- Drum Pads Grid -->
@@ -204,80 +205,6 @@
         </div>
 
         <!-- Info Modal -->
-        <div id="infoModal" class="info-modal" style="display: none;">
-            <div class="info-modal-content">
-                <div class="info-modal-header">
-                    <h3>How to Use</h3>
-                    <button id="closeInfoBtn" class="close-btn">&times;</button>
-                </div>
-                <div style="padding: 0 20px 20px;">
-                    <h4>Drum Pads</h4>
-                    <ul>
-                        <li><strong>Tap any pad:</strong> Play that instrument's sound</li>
-                        <li><strong>Multi-touch:</strong> Play multiple instruments simultaneously</li>
-                        <li><strong>Motion sensing:</strong> Shake or move device for stronger hits</li>
-                    </ul>
-
-                    <h4>Instruments</h4>
-                    <ul>
-                        <li><strong>Kick:</strong> Deep bass drum sound</li>
-                        <li><strong>Snare:</strong> Snappy snare drum</li>
-                        <li><strong>Hi-Hat:</strong> Metallic hi-hat cymbal</li>
-                        <li><strong>Tom:</strong> Mid-range tom drum</li>
-                        <li><strong>Cymbal:</strong> Crash cymbal</li>
-                        <li><strong>Clap:</strong> Hand clap sound</li>
-                        <li><strong>Cowbell:</strong> Classic cowbell</li>
-                        <li><strong>Rim:</strong> Rim shot</li>
-                        <li><strong>Shaker:</strong> Rhythmic shaker sound</li>
-                    </ul>
-
-                    <h4>Effects Modifiers</h4>
-                    <ul>
-                        <li><strong>Reverb (0-10):</strong> Adds echo/room effect to sounds</li>
-                        <li><strong>Distortion (0-10):</strong> Adds gritty distortion</li>
-                        <li><strong>Pitch (-10 to +10):</strong> Adjust pitch level (each step is one semitone)
-                        </li>
-                    </ul>
-
-                    <h4>Tips</h4>
-                    <ul>
-                        <li>Each pad plays its own sound - play multiple at once!</li>
-                        <li>Combine multiple modifiers for unique sounds</li>
-                        <li>Shake the device while tapping for louder, more intense hits</li>
-                        <li>Change themes using the colored circle in the corner</li>
-                    </ul>
-
-                    <h4>Recording Loops</h4>
-                    <ul>
-                        <li><strong>Record:</strong> Tap to start recording your beat</li>
-                        <li><strong>Save:</strong> Save your recorded beat to the list</li>
-                        <li><strong>Save & Play:</strong> Save and immediately play your beat</li>
-                        <li><strong>Repeat:</strong> Toggle looping for each saved beat</li>
-                        <li><strong>🔄 Indicator:</strong> Shows when a beat uses current pad mapping instead of
-                            recorded sounds</li>
-                        <li><strong>⚙️ Settings:</strong> Access cleanup tempo, add effects (reverb, distortion,
-                            pitch), and toggle between playing as recorded or using current pad mapping</li>
-                        <li><strong>Use Current Pad Mapping:</strong> When enabled, beat plays with whatever sounds are
-                            currently on the pads. When disabled (default), beat plays with the exact sounds that were
-                            recorded</li>
-                    </ul>
-
-                    <h4>Custom Samples</h4>
-                    <ul>
-                        <li><strong>Sample:</strong> Tap to start recording audio from your microphone</li>
-                        <li><strong>Save:</strong> While recording, tap Save to save the sample to the library</li>
-                        <li><strong>Tap a pad:</strong> While recording, tap a pad to save and apply the sample directly
-                        </li>
-                        <li><strong>Cancel:</strong> Tap the Sample button again to cancel recording</li>
-                        <li><strong>Sample Library:</strong> View all saved samples with play, apply, and delete options
-                        </li>
-                        <li><strong>⚙️ Sample Effects:</strong> Add effects to samples - effects are pinned with the
-                            sample to pads</li>
-                        <li><strong>Reset:</strong> Tap Reset, then tap a pad to reset it to the default sound</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
     </div>
 
     <script src="pad.js?v=2"></script>

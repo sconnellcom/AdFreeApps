@@ -181,10 +181,7 @@ class Tuner {
         this.themeBtnActive = document.querySelector('.theme-btn-active');
         this.themeDropdown = document.querySelector('.theme-dropdown');
 
-        // Info modal elements
-        this.infoBtn = document.getElementById('infoBtn');
-        this.infoModal = document.getElementById('infoModal');
-        this.closeInfoBtn = document.getElementById('closeInfoBtn');
+        // No info modal - using landing page link instead
     }
 
     setupEventListeners() {
@@ -246,20 +243,7 @@ class Tuner {
             }
         });
 
-        // Info modal
-        this.infoBtn.addEventListener('click', () => {
-            this.infoModal.style.display = 'flex';
-        });
-
-        this.closeInfoBtn.addEventListener('click', () => {
-            this.infoModal.style.display = 'none';
-        });
-
-        this.infoModal.addEventListener('click', (e) => {
-            if (e.target === this.infoModal) {
-                this.infoModal.style.display = 'none';
-            }
-        });
+        // No info modal - using landing page link instead
     }
 
     updateStringButtons() {

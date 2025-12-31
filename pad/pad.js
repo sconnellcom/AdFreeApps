@@ -115,10 +115,7 @@ class DrumPad {
         this.themeBtnActive = document.querySelector('.theme-btn-active');
         this.themeDropdown = document.querySelector('.theme-dropdown');
 
-        // Info modal
-        this.infoBtn = document.getElementById('infoBtn');
-        this.infoModal = document.getElementById('infoModal');
-        this.closeInfoBtn = document.getElementById('closeInfoBtn');
+        // No info modal - using landing page link instead
 
         // Recording controls
         this.recordBtn = document.getElementById('recordBtn');
@@ -275,20 +272,7 @@ class DrumPad {
             }
         }, { passive: false });
 
-        // Info modal
-        this.infoBtn.addEventListener('click', () => {
-            this.infoModal.style.display = 'flex';
-        });
-
-        this.closeInfoBtn.addEventListener('click', () => {
-            this.infoModal.style.display = 'none';
-        });
-
-        this.infoModal.addEventListener('click', (e) => {
-            if (e.target === this.infoModal) {
-                this.infoModal.style.display = 'none';
-            }
-        });
+        // No info modal - using landing page link instead
 
         // Recording controls
         this.recordBtn.addEventListener('click', () => {
