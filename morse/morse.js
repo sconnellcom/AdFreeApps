@@ -94,11 +94,20 @@ function textToMorse(text) {
 
 // Morse to Text Converter
 function morseToText(morse) {
-    // Clean up input - replace multiple spaces with single space
-    const cleaned = morse.trim().replace(/\s+/g, ' ');
+    // First, handle / as word separator by replacing with special marker
+    // We'll use a placeholder that won't conflict with morse codes
+    const withWordMarkers = morse.replace(/\//g, ' | ');
     
+    // Clean up input - replace multiple spaces with single space
+    const cleaned = withWordMarkers.trim().replace(/\s+/g, ' ');
+    
+    // Split by space and process each code
     return cleaned.split(' ').map(code => {
-        if (code === '/') return ' ';
+        // Handle word separator marker
+        if (code === '|') return ' ';
+        // Handle empty codes (e.g., from double spaces)
+        if (!code) return '';
+        // Look up the morse code, return ? if not found
         return reverseMorseCode[code] || '?';
     }).join('');
 }
@@ -476,7 +485,9 @@ function initializeReader() {
 
     function updateDisplay() {
         const morseString = tapMorse.join('');
-        morseDisplay.textContent = morseString || 'Waiting for input...';
+        // Add blinking cursor to morse display to show we're ready for next input
+        const displayText = morseString || 'Waiting for input...';
+        morseDisplay.innerHTML = displayText + '<span class="morse-cursor"></span>';
         const text = morseToText(morseString);
         readerOutput.textContent = text || 'Waiting for input...';
     }
@@ -556,6 +567,31 @@ function initializeReader() {
         if (tapCheckInterval) {
             clearInterval(tapCheckInterval);
             tapCheckInterval = null;
+        }
+    });
+
+    // Keyboard support for tap button
+    document.addEventListener('keydown', (e) => {
+        // Only handle space bar when in tap mode
+        const selectedMode = document.querySelector('input[name="readerMode"]:checked')?.value;
+        if (selectedMode !== 'tap') return;
+        
+        // Handle space bar
+        if (e.code === 'Space' || e.key === ' ') {
+            e.preventDefault(); // Prevent page scroll
+            startTap();
+        }
+    });
+    
+    document.addEventListener('keyup', (e) => {
+        // Only handle space bar when in tap mode
+        const selectedMode = document.querySelector('input[name="readerMode"]:checked')?.value;
+        if (selectedMode !== 'tap') return;
+        
+        // Handle space bar
+        if (e.code === 'Space' || e.key === ' ') {
+            e.preventDefault(); // Prevent page scroll
+            endTap();
         }
     });
 
@@ -702,7 +738,9 @@ function initializeReader() {
     function updateCameraDetectedText() {
         const morseString = detectedMorse.join('');
         const text = morseToText(morseString);
-        morseDisplay.textContent = morseString || 'Waiting for flashes...';
+        // Add blinking cursor for camera mode as well
+        const displayText = morseString || 'Waiting for flashes...';
+        morseDisplay.innerHTML = displayText + '<span class="morse-cursor"></span>';
         readerOutput.textContent = text || 'Waiting for flashes...';
         readerStatus.textContent = `Detected morse: ${morseString}`;
     }
