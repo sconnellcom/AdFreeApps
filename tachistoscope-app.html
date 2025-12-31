@@ -500,7 +500,7 @@
         // Initialize theme when DOM is ready
         document.addEventListener('DOMContentLoaded', initializeTheme);
 
-        if (\'serviceWorker\' in navigator) {
+        if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/sw.js');
             });
