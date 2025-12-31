@@ -196,7 +196,7 @@ body {
     padding: 5px;
     transition: transform 0.2s ease, opacity 0.2s ease;
     opacity: 0.8;
-    color: var(--text-color);
+    color: var(--primary-color);
 }
 
 .home-btn:hover {

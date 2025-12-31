@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Free online bubble level using your device sensors - Perfect for hanging pictures, installing shelves, and checking surfaces. No ads or tracking.">
+    <meta name="description" content="Free offline task manager - Import and manage Todoist tasks with no ads or tracking. All data stored locally on your device.">
     <meta name="theme-color" content="#667eea">
-    <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="icons/icon-152x152.png">
-    <title>Free Online Bubble Level - No Ads | AdFreeApps.com</title>
+    <link rel="manifest" href="../../manifest.json">
+    <link rel="apple-touch-icon" href="../../icons/icon-152x152.png">
+    <title>Free Offline Task Manager - No Ads | AdFreeApps.com</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
@@ -18,7 +18,6 @@
             --text-tertiary: #666666;
             --border-color: #e2e8f0;
             --surface-bg: #f7fafc;
-            --card-shadow: rgba(0, 0, 0, 0.1);
         }
         /* Theme variations */
         body.theme-light {
@@ -182,12 +181,13 @@
         .subtitle { color: rgba(255, 255, 255, 0.9); font-size: 1.2em; font-weight: 300; }
         .content-card {
             background: var(--container-bg); border-radius: 16px; padding: 40px;
-            box-shadow: 0 10px 30px var(--card-shadow); margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); margin-bottom: 30px;
         }
         h2 { color: var(--primary-color); font-size: 1.8em; margin-bottom: 20px; margin-top: 30px; }
         h2:first-child { margin-top: 0; }
+        h3 { color: var(--text-color); font-size: 1.3em; margin-top: 25px; margin-bottom: 15px; }
         p { color: var(--text-secondary); line-height: 1.8; margin-bottom: 15px; font-size: 1.05em; }
-        ul, ol { margin-left: 25px; margin-bottom: 20px; color: var(--text-secondary); line-height: 1.8; }
+        ul { margin-left: 25px; margin-bottom: 20px; color: var(--text-secondary); line-height: 1.8; }
         li { margin-bottom: 10px; }
         .cta-button {
             display: inline-block; background: var(--primary-color); color: white;
@@ -207,9 +207,8 @@
             background: var(--surface-bg); padding: 25px; border-radius: 12px;
             border-left: 4px solid var(--primary-color);
         }
-        .feature-box h3 { margin-top: 0; font-size: 1.2em; color: var(--text-color); }
+        .feature-box h3 { margin-top: 0; font-size: 1.2em; }
         .benefits-list { background: var(--surface-bg); padding: 30px; border-radius: 12px; margin: 25px 0; }
-        .benefits-list h3 { color: var(--text-color); }
         .netguava-footer {
             background: var(--surface-bg); border-top: 3px solid var(--primary-color);
             padding: 30px; margin-top: 40px; border-radius: 12px; text-align: center;
@@ -373,93 +372,65 @@
     </div>
 
     <div class="container">
-        <a href="/" class="home-btn" title="Back to Home">🏠</a>
+        <a href="../../" class="home-btn" title="Back to Home">🏠</a>
         <header>
-            <h1>🔵 Free Online Bubble Level</h1>
-            <p class="subtitle">Level surfaces perfectly - No ads, no tracking, no installation</p>
+            <h1>📋 Free Offline Task Manager</h1>
+            <p class="subtitle">Manage tasks privately - No ads, no tracking, no cloud required</p>
         </header>
         <div class="content-card">
-            <a href="level/" class="cta-button">Launch Bubble Level →</a>
-            <h2>What is the AdFreeApps Bubble Level?</h2>
-            <p>
-                Our free online bubble level uses your device's built-in accelerometer and gyroscope sensors to help you check
-                if surfaces are perfectly horizontal or vertical. It's perfect for hanging pictures, installing shelves,
-                leveling furniture, or any home improvement project where precision matters - all without the distraction
-                of advertisements.
-            </p>
-            <p>
-                Turn your smartphone or tablet into a professional-quality level tool. No need to buy separate equipment or
-                download bulky apps filled with ads and tracking. Just open this page and you're ready to level.
-            </p>
+            <a href="../" class="cta-button">Launch App →</a>
+            <h2>What is this tool?</h2>
+            <p>Our free task manager lets you import and manage your Todoist tasks completely offline. All your tasks, tags, due dates, and notes are stored locally on your device with no internet connection required after the initial import - and most importantly, with no advertisements or tracking.</p>
+            <p>Take full control of your task management data. Your to-do lists stay private on your device, accessible anytime, without being analyzed by cloud services or interrupted by advertisements.</p>
             <h2>Key Features</h2>
             <div class="feature-grid">
                 <div class="feature-box">
-                    <h3>📐 Precision Sensors</h3>
-                    <p>Uses your device's accelerometer for accurate angle measurements down to fractions of a degree.</p>
+                    <h3>📁 Import from Todoist</h3>
+                    <p>Import your existing Todoist backup files to continue managing your tasks.</p>
                 </div>
                 <div class="feature-box">
-                    <h3>🔄 Multiple Orientations</h3>
-                    <p>Check both horizontal and vertical levels by rotating your device.</p>
+                    <h3>🏷️ Tag Organization</h3>
+                    <p>Filter and organize tasks by tags for better project management.</p>
                 </div>
                 <div class="feature-box">
-                    <h3>👁️ Visual Indicators</h3>
-                    <p>Clear bubble graphic and numerical readout show exact tilt angle in real-time.</p>
+                    <h3>📅 Due Date Tracking</h3>
+                    <p>See upcoming and overdue tasks at a glance.</p>
                 </div>
                 <div class="feature-box">
-                    <h3>🎯 Calibration</h3>
-                    <p>Easy calibration feature ensures accuracy on any surface or device.</p>
+                    <h3>📝 Notes Support</h3>
+                    <p>Full support for task notes and descriptions.</p>
                 </div>
                 <div class="feature-box">
-                    <h3>📱 Always Available</h3>
-                    <p>Your phone is always with you - no need to find a physical level tool.</p>
+                    <h3>✅ Task Completion</h3>
+                    <p>Mark tasks complete and track your productivity.</p>
                 </div>
                 <div class="feature-box">
-                    <h3>🔦 Works Anywhere</h3>
-                    <p>Use it in bright sunlight or dim lighting - the display adapts to your environment.</p>
+                    <h3>💾 Offline First</h3>
+                    <p>Works completely offline - no internet needed after initial load.</p>
                 </div>
             </div>
-            <h2>How to Use</h2>
-            <ol>
-                <li><strong>Open the App:</strong> Launch the bubble level in your browser.</li>
-                <li><strong>Grant Sensor Access:</strong> Allow access to device motion sensors when prompted.</li>
-                <li><strong>Place Your Device:</strong> Set your phone or tablet on the surface you want to level.</li>
-                <li><strong>Read the Display:</strong> The bubble shows if the surface tilts left, right, forward, or backward.</li>
-                <li><strong>Adjust Surface:</strong> Make adjustments until the bubble is centered and the angle reads 0°.</li>
-            </ol>
-            <h2>Why Choose Our Bubble Level?</h2>
+            <h2>Why Choose This Tool?</h2>
             <div class="benefits-list">
                 <h3>✨ Completely Ad-Free</h3>
-                <p>
-                    No advertisements to obstruct your view or interrupt your work. Just a clean, functional level tool.
-                </p>
+                <p>No advertisements to interrupt your work. Just a clean, focused tool.</p>
                 <h3>🔒 Privacy Focused</h3>
-                <p>
-                    Sensor data is only used for level calculations - nothing is recorded or transmitted. No tracking, no analytics.
-                </p>
-                <h3>📱 No Installation Required</h3>
-                <p>
-                    Works directly in your web browser on any device with motion sensors. Instant access whenever you need it.
-                </p>
+                <p>All data stays on your device. No tracking, no analytics, no data collection.</p>
+                <h3>📱 Works Everywhere</h3>
+                <p>Use on any device with a modern browser. No installation required.</p>
                 <h3>🆓 Always Free</h3>
-                <p>
-                    Professional-quality leveling tool at no cost. No premium features, no subscriptions.
-                </p>
+                <p>All features completely free with no premium tiers or subscriptions.</p>
             </div>
             <h2>Perfect For</h2>
             <ul>
-                <li><strong>Hanging Pictures:</strong> Ensure artwork is perfectly level on your walls</li>
-                <li><strong>Installing Shelves:</strong> Get shelves straight before drilling holes</li>
-                <li><strong>Furniture Placement:</strong> Level furniture on uneven floors</li>
-                <li><strong>DIY Projects:</strong> Any home improvement task requiring precision</li>
-                <li><strong>Professional Work:</strong> Quick reference for contractors and handypeople</li>
+                <li><strong>Privacy-Conscious Users:</strong> Keep your tasks local without cloud synchronization</li>
+                <li><strong>Todoist Users:</strong> Manage Todoist exports offline and ad-free</li>
+                <li><strong>Project Managers:</strong> Organize multiple projects with tag-based filtering</li>
+                <li><strong>Students:</strong> Track assignments and due dates without distractions</li>
+                <li><strong>Professionals:</strong> Manage work tasks with complete privacy</li>
             </ul>
             <h2>Why We Built This</h2>
-            <p>
-                We often found ourselves needing a level for small home projects but not having one handy. Existing level
-                apps were cluttered with ads and asked for unnecessary permissions. We built this simple, straightforward
-                tool that turns your phone into a reliable level without the bloat.
-            </p>
-            <a href="level/" class="cta-button">Try It Now →</a>
+            <p>We wanted task management without being dependent on cloud services or having our productivity data analyzed by third parties. This tool gives you full control of your tasks with the privacy of local storage and the convenience of a modern web app.</p>
+            <a href="../" class="cta-button">Try It Now →</a>
         </div>
         <div class="content-card netguava-footer">
             <h3>Custom App Development by Netguava</h3>

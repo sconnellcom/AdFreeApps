@@ -212,7 +212,7 @@ body {
     padding: 5px;
     transition: transform 0.2s ease, opacity 0.2s ease;
     opacity: 0.8;
-    color: var(--text-color);
+    color: var(--primary-color);
 }
 
 .home-btn:hover {
@@ -222,7 +222,7 @@ body {
 
 h1 {
     text-align: center;
-    color: var(--text-color);
+    color: var(--primary-color);
     font-size: 1.8em;
     flex: 1;
     transition: color 0.3s ease;
@@ -393,7 +393,7 @@ h1 {
     background: none;
     border: none;
     font-size: 1.5em;
-    color: var(--text-color);
+    color: var(--primary-color);
     cursor: pointer;
     padding: 5px;
     text-decoration: none;
@@ -419,7 +419,7 @@ h1 {
     border: 2px solid var(--primary-color);
     border-radius: 10px;
     background: var(--container-bg);
-    color: var(--text-color);
+    color: var(--primary-color);
     cursor: pointer;
     outline: none;
     transition: all 0.3s ease;
@@ -451,7 +451,7 @@ h1 {
     border: 2px solid var(--border-color);
     border-radius: 8px;
     background: var(--surface-bg);
-    color: var(--text-color);
+    color: var(--primary-color);
     cursor: pointer;
     transition: all 0.2s ease;
 }
@@ -484,7 +484,7 @@ h1 {
 .detected-note {
     font-size: 4em;
     font-weight: bold;
-    color: var(--text-color);
+    color: var(--primary-color);
     line-height: 1;
     transition: color 0.2s ease;
 }
@@ -621,7 +621,7 @@ h1 {
 .cents-value {
     font-size: 2em;
     font-weight: bold;
-    color: var(--text-color);
+    color: var(--primary-color);
     transition: color 0.2s ease;
 }
 
@@ -941,7 +941,7 @@ h1 {
 
 .info-modal-header h3 {
     margin: 0;
-    color: var(--text-color);
+    color: var(--primary-color);
 }
 
 .info-modal-content>div:not(.info-modal-header) {
@@ -978,7 +978,7 @@ h1 {
 }
 
 .close-btn:hover {
-    color: var(--text-color);
+    color: var(--primary-color);
 }
 
 .info-modal-content ul {
@@ -1038,7 +1038,7 @@ h1 {
 }
 
 .permission-dialog h2 {
-    color: var(--text-color);
+    color: var(--primary-color);
     margin-bottom: 15px;
 }
 
