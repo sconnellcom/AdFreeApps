@@ -792,6 +792,24 @@ button {
     background: linear-gradient(135deg, #831843 0%, #f472b6 100%);
 }
 
+/* Blinking cursor for morse display */
+.morse-cursor {
+    display: inline;
+    color: var(--text-color);
+    animation: blink-cursor 1s step-end infinite;
+    font-weight: bold;
+    margin-left: 2px;
+}
+
+@keyframes blink-cursor {
+    0%, 50% {
+        opacity: 1;
+    }
+    50.01%, 100% {
+        opacity: 0;
+    }
+}
+
 /* Mobile Responsive */
 @media (max-width: 768px) {
     body {
