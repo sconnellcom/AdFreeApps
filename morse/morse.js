@@ -487,7 +487,8 @@ function initializeReader() {
         const morseString = tapMorse.join('');
         // Add blinking cursor to morse display to show we're ready for next input
         const displayText = morseString || 'Waiting for input...';
-        morseDisplay.innerHTML = displayText + '<span class="morse-cursor"></span>';
+        // Use a pipe character as cursor for better visibility
+        morseDisplay.innerHTML = displayText + '<span class="morse-cursor">|</span>';
         const text = morseToText(morseString);
         readerOutput.textContent = text || 'Waiting for input...';
     }
@@ -740,7 +741,8 @@ function initializeReader() {
         const text = morseToText(morseString);
         // Add blinking cursor for camera mode as well
         const displayText = morseString || 'Waiting for flashes...';
-        morseDisplay.innerHTML = displayText + '<span class="morse-cursor"></span>';
+        // Use a pipe character as cursor for better visibility
+        morseDisplay.innerHTML = displayText + '<span class="morse-cursor">|</span>';
         readerOutput.textContent = text || 'Waiting for flashes...';
         readerStatus.textContent = `Detected morse: ${morseString}`;
     }

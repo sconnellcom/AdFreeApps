@@ -794,12 +794,11 @@ button {
 
 /* Blinking cursor for morse display */
 .morse-cursor {
-    display: inline-block;
-    width: 2px;
-    height: 1.2em;
-    background-color: var(--text-color);
-    margin-left: 2px;
+    display: inline;
+    color: var(--text-color);
     animation: blink-cursor 1s step-end infinite;
+    font-weight: bold;
+    margin-left: 2px;
 }
 
 @keyframes blink-cursor {
