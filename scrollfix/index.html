@@ -352,6 +352,52 @@
             background: linear-gradient(135deg, #831843 0%, #f472b6 100%);
         }
 
+        .category-section {
+            text-align: center;
+            margin-bottom: 25px;
+            padding: 20px;
+            background: var(--surface-bg);
+            border-radius: 12px;
+        }
+
+        .category-question {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: var(--text-color);
+            margin-bottom: 15px;
+        }
+
+        .category-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .category-btn {
+            padding: 10px 20px;
+            border: 2px solid var(--primary-color);
+            background: transparent;
+            color: var(--text-color);
+            border-radius: 8px;
+            font-size: 0.95em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .category-btn:hover {
+            background: var(--primary-color);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .category-btn.active {
+            background: var(--primary-color);
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
         .stats-header {
             text-align: center;
             margin-bottom: 25px;
@@ -628,6 +674,18 @@
             </div>
             <h1>📜 Scroll Fix</h1>
             <div style="width: 40px;"></div>
+        </div>
+
+        <div class="category-section">
+            <div class="category-question">What are you avoiding?</div>
+            <div class="category-buttons" id="category-buttons">
+                <button class="category-btn" data-category="all">All</button>
+                <button class="category-btn" data-category="life">Life</button>
+                <button class="category-btn" data-category="people">People</button>
+                <button class="category-btn" data-category="work">Work</button>
+                <button class="category-btn" data-category="school">School</button>
+                <button class="category-btn" data-category="kids">Kids</button>
+            </div>
         </div>
 
         <div class="stats-header">
