@@ -352,6 +352,95 @@
             background: linear-gradient(135deg, #831843 0%, #f472b6 100%);
         }
 
+        .category-section {
+            text-align: center;
+            margin-bottom: 25px;
+            padding: 15px 20px;
+            background: var(--surface-bg);
+            border-radius: 12px;
+        }
+
+        .category-question {
+            font-size: 1em;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+
+        .category-selector {
+            position: relative;
+            max-width: 250px;
+            margin: 0 auto;
+        }
+
+        .category-display {
+            padding: 12px 20px;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: none;
+            width: 100%;
+        }
+
+        .category-display:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+        }
+
+        .category-display::after {
+            content: '▼';
+            font-size: 0.8em;
+            margin-left: 10px;
+        }
+
+        .category-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            margin-top: 5px;
+            background: var(--container-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            display: none;
+            overflow: hidden;
+        }
+
+        .category-dropdown.visible {
+            display: block;
+        }
+
+        .category-option {
+            padding: 12px 20px;
+            background: transparent;
+            border: none;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+            font-size: 1em;
+            color: var(--text-color);
+            transition: background 0.2s ease;
+        }
+
+        .category-option:hover {
+            background: var(--surface-bg);
+        }
+
+        .category-option.selected {
+            background: var(--primary-color);
+            color: white;
+            font-weight: 600;
+        }
+
         .stats-header {
             text-align: center;
             margin-bottom: 25px;
@@ -634,6 +723,20 @@
             <div class="days-fixed" id="days-fixed">Days fixed: 0</div>
             <div class="days-counter" id="days-counter">Day 0</div>
             <div class="scroll-count" id="scroll-count"></div>
+        </div>
+
+        <div class="category-section">
+            <div class="category-question">What are you avoiding?</div>
+            <div class="category-selector">
+                <button class="category-display" id="category-display">Life</button>
+                <div class="category-dropdown" id="category-dropdown">
+                    <button class="category-option" data-category="life">Life</button>
+                    <button class="category-option" data-category="people">People</button>
+                    <button class="category-option" data-category="work">Work</button>
+                    <button class="category-option" data-category="school">School</button>
+                    <button class="category-option" data-category="kids">Kids</button>
+                </div>
+            </div>
         </div>
 
         <div class="card-container">
