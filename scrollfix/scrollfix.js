@@ -296,13 +296,13 @@ class ScrollFixApp {
         this.currentAfterMessage = null;
         this.daysFixed = 0; // Track number of unique days the app has been used
         this.usageDates = new Set(); // Track unique dates when the app was used
-        this.selectedCategory = 'all'; // Default category
+        this.selectedCategory = 'life'; // Default category
         
         this.initializeElements();
         this.loadFromLocalStorage();
         this.initializeTheme();
         this.initializeEventListeners();
-        this.initializeCategoryButtons();
+        this.initializeCategorySelector();
         this.checkCooldown();
         this.updateDisplay();
     }
@@ -316,40 +316,58 @@ class ScrollFixApp {
         this.scrollCount = document.getElementById('scroll-count');
         this.historyToggle = document.getElementById('history-toggle');
         this.historyList = document.getElementById('history-list');
-        this.categoryButtons = document.getElementById('category-buttons');
+        this.categoryDisplay = document.getElementById('category-display');
+        this.categoryDropdown = document.getElementById('category-dropdown');
     }
 
-    initializeCategoryButtons() {
-        // Set initial active category
-        this.updateCategoryButtonsUI();
+    initializeCategorySelector() {
+        // Set initial display text
+        this.updateCategoryDisplay();
 
-        // Add click handlers to all category buttons
-        const buttons = this.categoryButtons.querySelectorAll('.category-btn');
-        buttons.forEach(btn => {
-            btn.addEventListener('click', () => {
-                this.selectedCategory = btn.dataset.category;
-                this.updateCategoryButtonsUI();
+        // Toggle dropdown on display click
+        this.categoryDisplay.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.categoryDropdown.classList.toggle('visible');
+        });
+
+        // Add click handlers to all category options
+        const options = this.categoryDropdown.querySelectorAll('.category-option');
+        options.forEach(option => {
+            option.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.selectedCategory = option.dataset.category;
+                this.updateCategoryDisplay();
+                this.categoryDropdown.classList.remove('visible');
                 this.saveToLocalStorage();
                 this.updateDisplay();
             });
         });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!this.categoryDisplay.contains(e.target) && !this.categoryDropdown.contains(e.target)) {
+                this.categoryDropdown.classList.remove('visible');
+            }
+        });
     }
 
-    updateCategoryButtonsUI() {
-        const buttons = this.categoryButtons.querySelectorAll('.category-btn');
-        buttons.forEach(btn => {
-            if (btn.dataset.category === this.selectedCategory) {
-                btn.classList.add('active');
+    updateCategoryDisplay() {
+        // Capitalize first letter of category
+        const displayText = this.selectedCategory.charAt(0).toUpperCase() + this.selectedCategory.slice(1);
+        this.categoryDisplay.textContent = displayText;
+
+        // Update selected state in dropdown
+        const options = this.categoryDropdown.querySelectorAll('.category-option');
+        options.forEach(option => {
+            if (option.dataset.category === this.selectedCategory) {
+                option.classList.add('selected');
             } else {
-                btn.classList.remove('active');
+                option.classList.remove('selected');
             }
         });
     }
 
     getFilteredMessages(messages) {
-        if (this.selectedCategory === 'all') {
-            return messages;
-        }
         return messages.filter(msg => msg.categories.includes(this.selectedCategory));
     }
 
@@ -722,7 +740,7 @@ class ScrollFixApp {
                 this.lastScrollTime = parsed.lastScrollTime || null;
                 this.nextScrollAllowedTime = parsed.nextScrollAllowedTime || null;
                 this.currentAfterMessage = parsed.currentAfterMessage || null;
-                this.selectedCategory = parsed.selectedCategory || 'all';
+                this.selectedCategory = parsed.selectedCategory || 'life';
                 
                 // Load usage dates
                 if (parsed.usageDates) {
