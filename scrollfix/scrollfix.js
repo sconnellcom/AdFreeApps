@@ -740,7 +740,9 @@ class ScrollFixApp {
                 this.lastScrollTime = parsed.lastScrollTime || null;
                 this.nextScrollAllowedTime = parsed.nextScrollAllowedTime || null;
                 this.currentAfterMessage = parsed.currentAfterMessage || null;
-                this.selectedCategory = parsed.selectedCategory || 'life';
+                // Handle legacy 'all' category and default to 'life'
+                const savedCategory = parsed.selectedCategory || 'life';
+                this.selectedCategory = (savedCategory === 'all') ? 'life' : savedCategory;
                 
                 // Load usage dates
                 if (parsed.usageDates) {
