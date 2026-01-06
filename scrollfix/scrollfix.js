@@ -324,31 +324,61 @@ class ScrollFixApp {
         // Set initial display text
         this.updateCategoryDisplay();
 
+        // Track if a touch event was handled to prevent double-firing
+        let touchHandled = false;
+        const TOUCH_HANDLED_TIMEOUT = 500; // ms to wait before allowing click events again
+
+        // Helper function to handle category selection
+        const selectCategory = (option) => {
+            const category = option.dataset.category;
+            if (category) {
+                this.selectedCategory = category;
+                this.updateCategoryDisplay();
+                this.categoryDropdown.classList.remove('visible');
+                this.saveToLocalStorage();
+                this.updateDisplay();
+            }
+        };
+
         // Toggle dropdown on display click
         this.categoryDisplay.addEventListener('click', (e) => {
             e.stopPropagation();
             this.categoryDropdown.classList.toggle('visible');
         });
 
-        // Add click handlers to all category options
+        // Add click and touch handlers to all category options
         const options = this.categoryDropdown.querySelectorAll('.category-option');
         options.forEach(option => {
-            option.addEventListener('click', (e) => {
+            // Touch handler for mobile devices
+            option.addEventListener('touchend', (e) => {
                 e.stopPropagation();
-                this.selectedCategory = option.dataset.category;
-                this.updateCategoryDisplay();
-                this.categoryDropdown.classList.remove('visible');
-                this.saveToLocalStorage();
-                this.updateDisplay();
+                e.preventDefault();
+                touchHandled = true;
+                selectCategory(option);
+                // Reset the flag after a short delay
+                setTimeout(() => { touchHandled = false; }, TOUCH_HANDLED_TIMEOUT);
+            }, { passive: false });
+            
+            // Click handler for desktop (only fires if touch wasn't handled)
+            option.addEventListener('click', (e) => {
+                if (touchHandled) {
+                    return;
+                }
+                e.stopPropagation();
+                e.preventDefault();
+                selectCategory(option);
             });
         });
 
         // Close dropdown when clicking outside
-        document.addEventListener('click', (e) => {
+        const closeDropdown = (e) => {
             if (!this.categoryDisplay.contains(e.target) && !this.categoryDropdown.contains(e.target)) {
                 this.categoryDropdown.classList.remove('visible');
             }
-        });
+        };
+        
+        document.addEventListener('click', closeDropdown);
+        document.addEventListener('touchend', closeDropdown, { passive: true });
     }
 
     updateCategoryDisplay() {
