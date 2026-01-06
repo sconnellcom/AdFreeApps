@@ -326,6 +326,7 @@ class ScrollFixApp {
 
         // Track if a touch event was handled to prevent double-firing
         let touchHandled = false;
+        const TOUCH_HANDLED_TIMEOUT = 500; // ms to wait before allowing click events again
 
         // Helper function to handle category selection
         const selectCategory = (option) => {
@@ -342,7 +343,6 @@ class ScrollFixApp {
         // Toggle dropdown on display click
         this.categoryDisplay.addEventListener('click', (e) => {
             e.stopPropagation();
-            e.preventDefault();
             this.categoryDropdown.classList.toggle('visible');
         });
 
@@ -356,7 +356,7 @@ class ScrollFixApp {
                 touchHandled = true;
                 selectCategory(option);
                 // Reset the flag after a short delay
-                setTimeout(() => { touchHandled = false; }, 500);
+                setTimeout(() => { touchHandled = false; }, TOUCH_HANDLED_TIMEOUT);
             }, { passive: false });
             
             // Click handler for desktop (only fires if touch wasn't handled)
