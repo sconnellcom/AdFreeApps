@@ -530,7 +530,8 @@ class ScrollFixApp {
         const scrollEntry = {
             timestamp: now.toISOString(),
             date: now.toLocaleDateString(),
-            time: now.toLocaleTimeString()
+            time: now.toLocaleTimeString(),
+            category: this.selectedCategory
         };
 
         this.scrollHistory.push(scrollEntry);
@@ -737,9 +738,10 @@ class ScrollFixApp {
             return `
                 <div class="history-item">
                     <strong>${date}</strong> - ${entries.length} scroll${entries.length === 1 ? '' : 's'}
-                    ${entries.map(entry => `
-                        <div class="history-item-time">• ${entry.time}</div>
-                    `).join('')}
+                    ${entries.map(entry => {
+                        const categoryText = entry.category ? ` (${entry.category})` : '';
+                        return `<div class="history-item-time">• ${entry.time}${categoryText}</div>`;
+                    }).join('')}
                 </div>
             `;
         }).join('');
