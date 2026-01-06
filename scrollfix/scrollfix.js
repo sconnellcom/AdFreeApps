@@ -324,6 +324,9 @@ class ScrollFixApp {
         // Set initial display text
         this.updateCategoryDisplay();
 
+        // Track if a touch event was handled to prevent double-firing
+        let touchHandled = false;
+
         // Helper function to handle category selection
         const selectCategory = (option) => {
             const category = option.dataset.category;
@@ -346,15 +349,21 @@ class ScrollFixApp {
         // Add click and touch handlers to all category options
         const options = this.categoryDropdown.querySelectorAll('.category-option');
         options.forEach(option => {
-            // Click handler for desktop
-            option.addEventListener('click', (e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                selectCategory(option);
-            });
-            
             // Touch handler for mobile devices
             option.addEventListener('touchend', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                touchHandled = true;
+                selectCategory(option);
+                // Reset the flag after a short delay
+                setTimeout(() => { touchHandled = false; }, 500);
+            }, { passive: false });
+            
+            // Click handler for desktop (only fires if touch wasn't handled)
+            option.addEventListener('click', (e) => {
+                if (touchHandled) {
+                    return;
+                }
                 e.stopPropagation();
                 e.preventDefault();
                 selectCategory(option);
@@ -369,7 +378,7 @@ class ScrollFixApp {
         };
         
         document.addEventListener('click', closeDropdown);
-        document.addEventListener('touchend', closeDropdown);
+        document.addEventListener('touchend', closeDropdown, { passive: true });
     }
 
     updateCategoryDisplay() {
