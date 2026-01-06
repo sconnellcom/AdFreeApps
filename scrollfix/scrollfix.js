@@ -324,31 +324,52 @@ class ScrollFixApp {
         // Set initial display text
         this.updateCategoryDisplay();
 
-        // Toggle dropdown on display click
-        this.categoryDisplay.addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.categoryDropdown.classList.toggle('visible');
-        });
-
-        // Add click handlers to all category options
-        const options = this.categoryDropdown.querySelectorAll('.category-option');
-        options.forEach(option => {
-            option.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.selectedCategory = option.dataset.category;
+        // Helper function to handle category selection
+        const selectCategory = (option) => {
+            const category = option.dataset.category;
+            if (category) {
+                this.selectedCategory = category;
                 this.updateCategoryDisplay();
                 this.categoryDropdown.classList.remove('visible');
                 this.saveToLocalStorage();
                 this.updateDisplay();
+            }
+        };
+
+        // Toggle dropdown on display click
+        this.categoryDisplay.addEventListener('click', (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            this.categoryDropdown.classList.toggle('visible');
+        });
+
+        // Add click and touch handlers to all category options
+        const options = this.categoryDropdown.querySelectorAll('.category-option');
+        options.forEach(option => {
+            // Click handler for desktop
+            option.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                selectCategory(option);
+            });
+            
+            // Touch handler for mobile devices
+            option.addEventListener('touchend', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                selectCategory(option);
             });
         });
 
         // Close dropdown when clicking outside
-        document.addEventListener('click', (e) => {
+        const closeDropdown = (e) => {
             if (!this.categoryDisplay.contains(e.target) && !this.categoryDropdown.contains(e.target)) {
                 this.categoryDropdown.classList.remove('visible');
             }
-        });
+        };
+        
+        document.addEventListener('click', closeDropdown);
+        document.addEventListener('touchend', closeDropdown);
     }
 
     updateCategoryDisplay() {
