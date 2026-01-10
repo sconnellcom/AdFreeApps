@@ -946,7 +946,7 @@
         <!-- Setup Screen -->
         <div id="setupScreen">
             <div class="setup-card">
-                <h1>🎮 Game Tracker</h1>
+                <h1>⚔️ Game Tracker</h1>
                 <p>Select game</p>
                 <div class="format-selection">
                     <button class="format-btn selected" data-format="mtg-commander" data-life="40" data-game="mtg">
@@ -995,7 +995,7 @@
     <div class="modal" id="logModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Score History</h2>
+                <h2 id="logModalTitle">History</h2>
                 <button class="close-btn" id="closeLogBtn">&times;</button>
             </div>
             <ul class="log-entries" id="logEntries"></ul>
@@ -1018,7 +1018,7 @@
             <div class="menu-section">
                 <h3>Game Controls</h3>
                 <button class="menu-button" id="menuResetBtn">🔄 Reset Scores</button>
-                <button class="menu-button danger" id="menuNewGameBtn">🎮 New Game</button>
+                <button class="menu-button danger" id="menuNewGameBtn">⚔️ New Game</button>
             </div>
             
             <div class="menu-section">
@@ -1412,6 +1412,9 @@
             // Check if this is within 2 seconds of the last change (grouped scoring/turn)
             const isGrouped = timeDiff < GROUPING_THRESHOLD_MS;
             
+            // Use "score" or "life" based on game type
+            const labelText = gameType === 'mtg' ? 'Life' : 'Score';
+            
             if (isGrouped) {
                 // Add to accumulated change
                 accumulatedChange[playerIndex] = (accumulatedChange[playerIndex] || 0) + amount;
@@ -1421,7 +1424,7 @@
                     const lastEntry = player.log[player.log.length - 1];
                     const totalChange = accumulatedChange[playerIndex];
                     const changeText = totalChange > 0 ? `+${totalChange}` : totalChange;
-                    lastEntry.text = `Life ${changeText} (${player.life})`;
+                    lastEntry.text = `${labelText} ${changeText} (${player.life})`;
                     lastEntry.time = new Date().toLocaleTimeString(); // Update timestamp
                 }
             } else {
@@ -1431,7 +1434,7 @@
                 const changeText = amount > 0 ? `+${amount}` : amount;
                 player.log.push({
                     time: timestamp,
-                    text: `Life ${changeText} (${player.life})`
+                    text: `${labelText} ${changeText} (${player.life})`
                 });
             }
             
@@ -1482,6 +1485,14 @@
             const logModal = document.getElementById('logModal');
             const modalContent = logModal.querySelector('.modal-content');
             const logEntries = document.getElementById('logEntries');
+            const logModalTitle = document.getElementById('logModalTitle');
+
+            // Set modal title based on game type
+            if (gameType === 'mtg') {
+                logModalTitle.textContent = 'Life History';
+            } else {
+                logModalTitle.textContent = 'Score History';
+            }
 
             // Find the player zone to get rotation
             const playerZone = document.querySelector(`[data-player-index="${playerIndex}"]`);
