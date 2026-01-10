@@ -230,10 +230,11 @@
         #setupScreen {
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: flex-start;
             align-items: center;
             height: 100vh;
             padding: 20px;
+            overflow-y: auto;
         }
 
         .setup-card {
@@ -243,6 +244,7 @@
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             max-width: 500px;
             width: 100%;
+            margin: auto;
         }
 
         .setup-card h1 {
@@ -342,21 +344,27 @@
         }
 
         .home-btn {
-            width: 100%;
             padding: 12px;
-            font-size: 1em;
-            font-weight: bold;
+            font-size: 1.5em;
             background: var(--button-bg);
             color: white;
             border: none;
             border-radius: 10px;
             cursor: pointer;
             transition: all 0.2s;
-            margin-top: 15px;
+            flex: 1;
+            min-width: 60px;
         }
 
         .home-btn:hover {
             background: var(--button-hover);
+        }
+        
+        .nav-buttons-row {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+            margin-top: 15px;
         }
 
         /* Game Screen */
@@ -956,8 +964,10 @@
                     <button class="player-count-btn" data-players="6">6</button>
                 </div>
                 <button class="start-btn" id="startGameBtn" disabled>Start Game</button>
-                <button class="home-btn" id="homeBtn">🏠 Home</button>
-                <a href="about/" class="home-btn" style="display: inline-block; text-decoration: none; margin-left: 10px; color: var(--primary-color);" title="About MTG Tracker">ⓘ About</a>
+                <div class="nav-buttons-row">
+                    <button class="home-btn" id="homeBtn" title="Home">🏠</button>
+                    <a href="about/" class="home-btn" style="display: flex; align-items: center; justify-content: center; text-decoration: none;" title="About">ⓘ</a>
+                </div>
                 
                 <!-- Background Image Upload -->
                 <div class="bg-upload-section">
@@ -1050,7 +1060,7 @@
         const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
         const VALID_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
         const GROUPING_THRESHOLD_MS = 2000; // Group changes within 2 seconds
-        const BUBBLE_DISPLAY_DURATION_MS = 5000; // Show bubble for 5 seconds
+        const BUBBLE_DISPLAY_DURATION_MS = 2000; // Show bubble for 2 seconds
         
         // Game State
         let playerCount = 0;
