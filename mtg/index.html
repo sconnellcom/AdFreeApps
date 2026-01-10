@@ -9,7 +9,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="manifest" href="../manifest.json">
     <link rel="apple-touch-icon" href="../icons/icon-152x152.png">
-    <title>MTG Score Tracker</title>
+    <title>Game Tracker</title>
 
     <style>
         :root {
@@ -263,11 +263,12 @@
             gap: 15px;
             justify-content: center;
             margin-bottom: 30px;
+            flex-wrap: wrap;
         }
 
         .format-btn {
-            padding: 15px 30px;
-            font-size: 1.1em;
+            padding: 15px 20px;
+            font-size: 1em;
             font-weight: bold;
             background: var(--surface-bg);
             color: var(--text-color);
@@ -275,6 +276,8 @@
             border-radius: 10px;
             cursor: pointer;
             transition: all 0.2s;
+            flex: 1;
+            min-width: 120px;
         }
 
         .format-btn.selected {
@@ -470,15 +473,15 @@
 
         .score-controls {
             display: flex;
-            gap: 10px;
+            gap: 20px;
             align-items: center;
             margin: 10px 0;
         }
 
         .score-btn {
-            width: 60px;
-            height: 60px;
-            font-size: 2em;
+            width: 70px;
+            height: 70px;
+            font-size: 2.5em;
             font-weight: bold;
             background: var(--button-bg);
             color: white;
@@ -896,6 +899,33 @@
         #bgImageInput {
             display: none;
         }
+
+        /* Change Bubble */
+        .change-bubble {
+            position: absolute;
+            top: 20%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--button-bg);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 20px;
+            font-size: 2em;
+            font-weight: bold;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .change-bubble.show {
+            opacity: 1;
+        }
+
+        .change-bubble.fade-out {
+            opacity: 0;
+        }
     </style>
 </head>
 
@@ -904,14 +934,17 @@
         <!-- Setup Screen -->
         <div id="setupScreen">
             <div class="setup-card">
-                <h1>⚔️ MTG Score Tracker</h1>
-                <p>Select game format</p>
+                <h1>🎮 Game Tracker</h1>
+                <p>Select game</p>
                 <div class="format-selection">
-                    <button class="format-btn selected" data-format="commander" data-life="40">
-                        Commander (40 life)
+                    <button class="format-btn selected" data-format="mtg-commander" data-life="40" data-game="mtg">
+                        MTG Commander
                     </button>
-                    <button class="format-btn" data-format="standard" data-life="20">
-                        Standard (20 life)
+                    <button class="format-btn" data-format="mtg-standard" data-life="20" data-game="mtg">
+                        MTG Standard
+                    </button>
+                    <button class="format-btn" data-format="score-tracker" data-life="0" data-game="score">
+                        Score Tracker
                     </button>
                 </div>
                 <p>Select number of players</p>
@@ -1021,9 +1054,12 @@
         let playerCount = 0;
         let players = [];
         let currentLogPlayer = null;
-        let gameFormat = 'commander';
+        let gameFormat = 'mtg-commander';
+        let gameType = 'mtg'; // 'mtg' or 'score'
         let startingLife = 40;
         let boardFlipEnabled = true;
+        let lastChangeTime = {}; // Track last change time per player
+        let accumulatedChange = {}; // Track accumulated changes per player
 
         // LocalStorage functions
         function saveGameState() {
@@ -1031,6 +1067,7 @@
                 playerCount,
                 players,
                 gameFormat,
+                gameType,
                 startingLife,
                 boardFlipEnabled
             };
@@ -1051,6 +1088,7 @@
                         playerCount = gameState.playerCount;
                         players = gameState.players;
                         gameFormat = gameState.gameFormat;
+                        gameType = gameState.gameType || 'mtg';
                         startingLife = gameState.startingLife;
                         // Load boardFlipEnabled, default to true if not present
                         boardFlipEnabled = gameState.boardFlipEnabled !== undefined ? gameState.boardFlipEnabled : true;
@@ -1163,6 +1201,7 @@
                     formatBtns.forEach(b => b.classList.remove('selected'));
                     btn.classList.add('selected');
                     gameFormat = btn.dataset.format;
+                    gameType = btn.dataset.game;
                     startingLife = parseInt(btn.dataset.life);
                 });
             });
@@ -1192,13 +1231,19 @@
             
             players = [];
             for (let i = 0; i < playerCount; i++) {
-                players.push({
+                const playerData = {
                     name: savedNames[i] || `Player ${i + 1}`,
                     life: startingLife,
-                    poison: 0,
-                    commander: 0,
                     log: []
-                });
+                };
+                
+                // Only add poison and commander for MTG games
+                if (gameType === 'mtg') {
+                    playerData.poison = 0;
+                    playerData.commander = 0;
+                }
+                
+                players.push(playerData);
             }
 
             document.getElementById('setupScreen').style.display = 'none';
@@ -1232,6 +1277,8 @@
                         <button class="score-btn" onclick="adjustLife(${playerIndex}, -1)">−</button>
                         <button class="score-btn" onclick="adjustLife(${playerIndex}, 1)">+</button>
                     </div>
+                    <div class="change-bubble" id="change-bubble-${playerIndex}"></div>
+                    ${gameType === 'mtg' ? `
                     <div class="secondary-counters">
                         <div class="counter-item">
                             <div class="counter-label">☠️ Poison</div>
@@ -1241,7 +1288,7 @@
                                 <button class="counter-btn" onclick="adjustCounter(${playerIndex}, 'poison', 1)">+</button>
                             </div>
                         </div>
-                        ${gameFormat === 'commander' ? `
+                        ${gameFormat === 'mtg-commander' ? `
                         <div class="counter-item">
                             <div class="counter-label">⚔️ Commander</div>
                             <div class="counter-value" id="commander-${playerIndex}">${player.commander}</div>
@@ -1252,6 +1299,7 @@
                         </div>
                         ` : ''}
                     </div>
+                    ` : ''}
                 `;
                 gameGrid.appendChild(playerZone);
             });
@@ -1314,17 +1362,67 @@
             return [];
         }
 
+        // Show change bubble
+        function showChangeBubble(playerIndex, totalChange) {
+            const bubble = document.getElementById(`change-bubble-${playerIndex}`);
+            if (!bubble) return;
+            
+            const changeText = totalChange > 0 ? `+${totalChange}` : `${totalChange}`;
+            bubble.textContent = changeText;
+            bubble.classList.remove('fade-out');
+            bubble.classList.add('show');
+            
+            // Clear any existing timeout for this player
+            if (bubble.fadeTimeout) {
+                clearTimeout(bubble.fadeTimeout);
+            }
+            
+            // Fade out after 5 seconds
+            bubble.fadeTimeout = setTimeout(() => {
+                bubble.classList.add('fade-out');
+                bubble.classList.remove('show');
+            }, 5000);
+        }
+
         // Adjust Life
         function adjustLife(playerIndex, amount) {
             const player = players[playerIndex];
+            const now = Date.now();
+            const lastTime = lastChangeTime[playerIndex] || 0;
+            const timeDiff = now - lastTime;
+            
             player.life += amount;
             
-            const timestamp = new Date().toLocaleTimeString();
-            const changeText = amount > 0 ? `+${amount}` : amount;
-            player.log.push({
-                time: timestamp,
-                text: `Life ${changeText} (${player.life})`
-            });
+            // Check if this is within 2 seconds of the last change (grouped scoring/turn)
+            const isGrouped = timeDiff < 2000;
+            
+            if (isGrouped) {
+                // Add to accumulated change
+                accumulatedChange[playerIndex] = (accumulatedChange[playerIndex] || 0) + amount;
+                
+                // Update the last log entry instead of creating a new one
+                if (player.log.length > 0) {
+                    const lastEntry = player.log[player.log.length - 1];
+                    const totalChange = accumulatedChange[playerIndex];
+                    const changeText = totalChange > 0 ? `+${totalChange}` : totalChange;
+                    lastEntry.text = `Life ${changeText} (${player.life})`;
+                    lastEntry.time = new Date().toLocaleTimeString(); // Update timestamp
+                }
+            } else {
+                // Start a new group
+                accumulatedChange[playerIndex] = amount;
+                const timestamp = new Date().toLocaleTimeString();
+                const changeText = amount > 0 ? `+${amount}` : amount;
+                player.log.push({
+                    time: timestamp,
+                    text: `Life ${changeText} (${player.life})`
+                });
+            }
+            
+            lastChangeTime[playerIndex] = now;
+            
+            // Show the change bubble with accumulated change
+            showChangeBubble(playerIndex, accumulatedChange[playerIndex]);
 
             document.getElementById(`life-${playerIndex}`).textContent = player.life;
             saveGameState();
@@ -1447,8 +1545,10 @@
                 if (confirm('Reset all scores to starting values?')) {
                     players.forEach((player, index) => {
                         player.life = startingLife;
-                        player.poison = 0;
-                        player.commander = 0;
+                        if (gameType === 'mtg') {
+                            player.poison = 0;
+                            player.commander = 0;
+                        }
                         player.log.push({
                             time: new Date().toLocaleTimeString(),
                             text: 'Game reset'
