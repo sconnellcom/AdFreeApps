@@ -1049,6 +1049,8 @@
         // Constants
         const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
         const VALID_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        const GROUPING_THRESHOLD_MS = 2000; // Group changes within 2 seconds
+        const BUBBLE_DISPLAY_DURATION_MS = 5000; // Show bubble for 5 seconds
         
         // Game State
         let playerCount = 0;
@@ -1381,7 +1383,7 @@
             bubble.fadeTimeout = setTimeout(() => {
                 bubble.classList.add('fade-out');
                 bubble.classList.remove('show');
-            }, 5000);
+            }, BUBBLE_DISPLAY_DURATION_MS);
         }
 
         // Adjust Life
@@ -1394,7 +1396,7 @@
             player.life += amount;
             
             // Check if this is within 2 seconds of the last change (grouped scoring/turn)
-            const isGrouped = timeDiff < 2000;
+            const isGrouped = timeDiff < GROUPING_THRESHOLD_MS;
             
             if (isGrouped) {
                 // Add to accumulated change
