@@ -1444,15 +1444,27 @@
         const HOLD_MULTIPLIER = 5; // Amount to add/subtract per hold increment
         const INTERACTION_TYPE_RESET_MS = 100; // Delay before resetting interaction type tracking
         
+        // Store references to event listeners so they can be removed
+        let eventListenersAttached = false;
+        let clickHandler = null;
+        let mouseDownHandlers = [];
+        let mouseUpHandlers = [];
+        
         // Attach Event Listeners with Multi-touch Support
         function attachGameBoardEventListeners() {
             const gameGrid = document.getElementById('gameGrid');
+            
+            // Only attach event listeners once to prevent accumulation
+            if (eventListenersAttached) {
+                return;
+            }
+            eventListenersAttached = true;
             
             // Use touchstart for multi-touch support, with click as fallback for non-touch devices
             const eventType = 'ontouchstart' in window ? 'touchstart' : 'click';
             
             // Event delegation for all interactive elements
-            gameGrid.addEventListener(eventType, (e) => {
+            clickHandler = (e) => {
                 const target = e.target.closest('[data-action]');
                 if (!target) return;
                 
@@ -1485,7 +1497,9 @@
                         renamePlayer(playerIndex);
                         break;
                 }
-            }, { passive: false });
+            };
+            
+            gameGrid.addEventListener(eventType, clickHandler, { passive: false });
             
             // Add hold functionality for score buttons
             setupHoldListeners(gameGrid);
@@ -1510,78 +1524,85 @@
             const startEvents = ['mousedown', 'touchstart'];
             const endEvents = ['mouseup', 'mouseleave', 'touchend', 'touchcancel'];
             
-            startEvents.forEach(eventName => {
-                gameGrid.addEventListener(eventName, (e) => {
-                    const target = e.target.closest('[data-action="adjust-life"]');
-                    if (!target) return;
-                    
-                    const playerIndex = parseInt(target.dataset.player);
-                    const amount = parseInt(target.dataset.amount);
-                    const buttonKey = `${playerIndex}-${amount}`;
-                    
-                    // If this is a mouse event and the last interaction was touch, ignore it
-                    // This prevents compatibility mouse events from double-firing after touch events
-                    if (e.type === 'mousedown' && lastInteractionWasTouch[buttonKey]) {
-                        return;
-                    }
-                    
-                    // Track whether this interaction is touch or mouse
-                    lastInteractionWasTouch[buttonKey] = (e.type === 'touchstart');
-                    
-                    // Clear any existing timers for this button
-                    clearHoldTimers(buttonKey);
-                    
-                    // Mark that hold has not been triggered yet
-                    holdTriggered[buttonKey] = false;
-                    
-                    // Start a timer that triggers continuous adjustment after HOLD_DELAY_MS
-                    holdTimers[buttonKey] = setTimeout(() => {
-                        // Mark that hold was triggered
-                        holdTriggered[buttonKey] = true;
-                        // On first hold, add 4 since we'll add 1 on release if not held
+            // Create start event handler
+            const startHandler = (e) => {
+                const target = e.target.closest('[data-action="adjust-life"]');
+                if (!target) return;
+                
+                const playerIndex = parseInt(target.dataset.player);
+                const amount = parseInt(target.dataset.amount);
+                const buttonKey = `${playerIndex}-${amount}`;
+                
+                // If this is a mouse event and the last interaction was touch, ignore it
+                // This prevents compatibility mouse events from double-firing after touch events
+                if (e.type === 'mousedown' && lastInteractionWasTouch[buttonKey]) {
+                    return;
+                }
+                
+                // Track whether this interaction is touch or mouse
+                lastInteractionWasTouch[buttonKey] = (e.type === 'touchstart');
+                
+                // Clear any existing timers for this button
+                clearHoldTimers(buttonKey);
+                
+                // Mark that hold has not been triggered yet
+                holdTriggered[buttonKey] = false;
+                
+                // Start a timer that triggers continuous adjustment after HOLD_DELAY_MS
+                holdTimers[buttonKey] = setTimeout(() => {
+                    // Mark that hold was triggered
+                    holdTriggered[buttonKey] = true;
+                    // On first hold, add 5
+                    adjustLife(playerIndex, amount * HOLD_MULTIPLIER);
+                    // Then start continuous adjustment every HOLD_INTERVAL_MS with full multiplier
+                    holdIntervals[buttonKey] = setInterval(() => {
                         adjustLife(playerIndex, amount * HOLD_MULTIPLIER);
-                        // Then start continuous adjustment every HOLD_INTERVAL_MS with full multiplier
-                        holdIntervals[buttonKey] = setInterval(() => {
-                            adjustLife(playerIndex, amount * HOLD_MULTIPLIER);
-                        }, HOLD_INTERVAL_MS);
-                    }, HOLD_DELAY_MS);
-                }, { passive: true });
+                    }, HOLD_INTERVAL_MS);
+                }, HOLD_DELAY_MS);
+            };
+            
+            // Create end event handler
+            const endHandler = (e) => {
+                const target = e.target.closest('[data-action="adjust-life"]');
+                if (!target) return;
+                
+                const playerIndex = parseInt(target.dataset.player);
+                const amount = parseInt(target.dataset.amount);
+                const buttonKey = `${playerIndex}-${amount}`;
+                
+                // If this is a mouse event and the last interaction was touch, ignore it
+                // This prevents compatibility mouse events from double-firing after touch events
+                if ((e.type === 'mouseup' || e.type === 'mouseleave') && lastInteractionWasTouch[buttonKey]) {
+                    // Reset the flag after a short delay to allow future mouse interactions
+                    setTimeout(() => {
+                        lastInteractionWasTouch[buttonKey] = false;
+                    }, INTERACTION_TYPE_RESET_MS);
+                    return;
+                }
+                
+                // Reset the flag for touch end events so future interactions work correctly
+                if (e.type === 'touchend' || e.type === 'touchcancel') {
+                    setTimeout(() => {
+                        lastInteractionWasTouch[buttonKey] = false;
+                    }, INTERACTION_TYPE_RESET_MS);
+                }
+                
+                // If hold was not triggered, it was a quick tap - add/subtract 1
+                if (!holdTriggered[buttonKey]) {
+                    adjustLife(playerIndex, amount);
+                }
+                
+                // Clear timers when button is released
+                clearHoldTimers(buttonKey);
+            };
+            
+            // Attach event listeners
+            startEvents.forEach(eventName => {
+                gameGrid.addEventListener(eventName, startHandler, { passive: true });
             });
             
             endEvents.forEach(eventName => {
-                gameGrid.addEventListener(eventName, (e) => {
-                    const target = e.target.closest('[data-action="adjust-life"]');
-                    if (!target) return;
-                    
-                    const playerIndex = parseInt(target.dataset.player);
-                    const amount = parseInt(target.dataset.amount);
-                    const buttonKey = `${playerIndex}-${amount}`;
-                    
-                    // If this is a mouse event and the last interaction was touch, ignore it
-                    // This prevents compatibility mouse events from double-firing after touch events
-                    if ((e.type === 'mouseup' || e.type === 'mouseleave') && lastInteractionWasTouch[buttonKey]) {
-                        // Reset the flag after a short delay to allow future mouse interactions
-                        setTimeout(() => {
-                            lastInteractionWasTouch[buttonKey] = false;
-                        }, INTERACTION_TYPE_RESET_MS);
-                        return;
-                    }
-                    
-                    // Reset the flag for touch end events so future interactions work correctly
-                    if (e.type === 'touchend' || e.type === 'touchcancel') {
-                        setTimeout(() => {
-                            lastInteractionWasTouch[buttonKey] = false;
-                        }, INTERACTION_TYPE_RESET_MS);
-                    }
-                    
-                    // If hold was not triggered, it was a quick tap - add/subtract 1
-                    if (!holdTriggered[buttonKey]) {
-                        adjustLife(playerIndex, amount);
-                    }
-                    
-                    // Clear timers when button is released
-                    clearHoldTimers(buttonKey);
-                }, { passive: true });
+                gameGrid.addEventListener(eventName, endHandler, { passive: true });
             });
         }
 
