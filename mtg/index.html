@@ -197,7 +197,7 @@
             justify-content: center;
             align-items: center;
             overflow: hidden;
-            touch-action: none;
+            touch-action: pan-x pan-y;
         }
 
         body.custom-bg {
@@ -504,6 +504,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            touch-action: manipulation;
         }
 
         .score-btn:hover {
@@ -556,6 +557,7 @@
             border-radius: 5px;
             cursor: pointer;
             transition: all 0.2s;
+            touch-action: manipulation;
         }
 
         .counter-btn:hover {
@@ -1292,13 +1294,13 @@
                 playerZone.dataset.rotation = rotation;
                 playerZone.dataset.playerIndex = playerIndex;
                 playerZone.innerHTML = `
-                    <button class="log-btn" onclick="showLog(${playerIndex})">📋 Log</button>
-                    ${playerIndex === 0 ? '<button class="menu-btn" onclick="showMenu()" aria-label="Open menu">☰</button>' : ''}
-                    <div class="player-name" onclick="renamePlayer(${playerIndex})" style="cursor: pointer;">${player.name}</div>
+                    <button class="log-btn" data-action="log" data-player="${playerIndex}">📋 Log</button>
+                    ${playerIndex === 0 ? '<button class="menu-btn" data-action="menu" aria-label="Open menu">☰</button>' : ''}
+                    <div class="player-name" data-action="rename" data-player="${playerIndex}" style="cursor: pointer;">${player.name}</div>
                     <div class="life-total" id="life-${playerIndex}">${player.life}</div>
                     <div class="score-controls">
-                        <button class="score-btn" onclick="adjustLife(${playerIndex}, -1)">−</button>
-                        <button class="score-btn" onclick="adjustLife(${playerIndex}, 1)">+</button>
+                        <button class="score-btn" data-action="adjust-life" data-player="${playerIndex}" data-amount="-1">−</button>
+                        <button class="score-btn" data-action="adjust-life" data-player="${playerIndex}" data-amount="1">+</button>
                     </div>
                     <div class="change-bubble" id="change-bubble-${playerIndex}"></div>
                     ${gameType === 'mtg' ? `
@@ -1307,8 +1309,8 @@
                             <div class="counter-label">☠️ Poison</div>
                             <div class="counter-value" id="poison-${playerIndex}">${player.poison}</div>
                             <div class="counter-controls">
-                                <button class="counter-btn" onclick="adjustCounter(${playerIndex}, 'poison', -1)">−</button>
-                                <button class="counter-btn" onclick="adjustCounter(${playerIndex}, 'poison', 1)">+</button>
+                                <button class="counter-btn" data-action="adjust-counter" data-player="${playerIndex}" data-counter="poison" data-amount="-1">−</button>
+                                <button class="counter-btn" data-action="adjust-counter" data-player="${playerIndex}" data-counter="poison" data-amount="1">+</button>
                             </div>
                         </div>
                         ${gameFormat === 'mtg-commander' ? `
@@ -1316,8 +1318,8 @@
                             <div class="counter-label">⚔️ Commander</div>
                             <div class="counter-value" id="commander-${playerIndex}">${player.commander}</div>
                             <div class="counter-controls">
-                                <button class="counter-btn" onclick="adjustCounter(${playerIndex}, 'commander', -1)">−</button>
-                                <button class="counter-btn" onclick="adjustCounter(${playerIndex}, 'commander', 1)">+</button>
+                                <button class="counter-btn" data-action="adjust-counter" data-player="${playerIndex}" data-counter="commander" data-amount="-1">−</button>
+                                <button class="counter-btn" data-action="adjust-counter" data-player="${playerIndex}" data-counter="commander" data-amount="1">+</button>
                             </div>
                         </div>
                         ` : ''}
@@ -1326,6 +1328,52 @@
                 `;
                 gameGrid.appendChild(playerZone);
             });
+            
+            // Add event listeners with multi-touch support
+            attachGameBoardEventListeners();
+        }
+
+        // Attach Event Listeners with Multi-touch Support
+        function attachGameBoardEventListeners() {
+            const gameGrid = document.getElementById('gameGrid');
+            
+            // Use touchstart for multi-touch support, with click as fallback for non-touch devices
+            const eventType = 'ontouchstart' in window ? 'touchstart' : 'click';
+            
+            // Event delegation for all interactive elements
+            gameGrid.addEventListener(eventType, (e) => {
+                const target = e.target.closest('[data-action]');
+                if (!target) return;
+                
+                // Prevent default to avoid double-firing on touch devices
+                if (eventType === 'touchstart') {
+                    e.preventDefault();
+                }
+                
+                const action = target.dataset.action;
+                const playerIndex = parseInt(target.dataset.player);
+                
+                switch(action) {
+                    case 'adjust-life':
+                        const amount = parseInt(target.dataset.amount);
+                        adjustLife(playerIndex, amount);
+                        break;
+                    case 'adjust-counter':
+                        const counterType = target.dataset.counter;
+                        const counterAmount = parseInt(target.dataset.amount);
+                        adjustCounter(playerIndex, counterType, counterAmount);
+                        break;
+                    case 'log':
+                        showLog(playerIndex);
+                        break;
+                    case 'menu':
+                        showMenu();
+                        break;
+                    case 'rename':
+                        renamePlayer(playerIndex);
+                        break;
+                }
+            }, { passive: false });
         }
 
         // Get Display Order for Players (clockwise from each player's perspective)
