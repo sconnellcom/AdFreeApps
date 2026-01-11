@@ -1345,13 +1345,15 @@
                 const target = e.target.closest('[data-action]');
                 if (!target) return;
                 
+                const action = target.dataset.action;
+                
                 // Prevent default to avoid double-firing on touch devices
                 if (eventType === 'touchstart') {
                     e.preventDefault();
                 }
                 
-                const action = target.dataset.action;
-                const playerIndex = parseInt(target.dataset.player);
+                // Parse player index only for actions that have it
+                const playerIndex = target.dataset.player ? parseInt(target.dataset.player) : null;
                 
                 switch(action) {
                     case 'adjust-life':
