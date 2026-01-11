@@ -1424,6 +1424,15 @@
             attachGameBoardEventListeners();
         }
 
+        // Hold tracking variables
+        let holdTimers = {};
+        let holdIntervals = {};
+        
+        // Hold functionality constants
+        const HOLD_DELAY_MS = 500; // Delay before hold starts (in milliseconds)
+        const HOLD_INTERVAL_MS = 500; // Interval between hold increments (in milliseconds)
+        const HOLD_MULTIPLIER = 5; // Amount to add/subtract per hold increment
+        
         // Attach Event Listeners with Multi-touch Support
         function attachGameBoardEventListeners() {
             const gameGrid = document.getElementById('gameGrid');
@@ -1467,6 +1476,66 @@
                         break;
                 }
             }, { passive: false });
+            
+            // Add hold functionality for score buttons
+            setupHoldListeners(gameGrid);
+        }
+        
+        // Clear hold timers for a button
+        function clearHoldTimers(buttonKey) {
+            if (holdTimers[buttonKey]) {
+                clearTimeout(holdTimers[buttonKey]);
+                holdTimers[buttonKey] = null;
+            }
+            if (holdIntervals[buttonKey]) {
+                clearInterval(holdIntervals[buttonKey]);
+                holdIntervals[buttonKey] = null;
+            }
+        }
+        
+        // Setup hold listeners for press-and-hold functionality
+        function setupHoldListeners(gameGrid) {
+            // Handle both mouse and touch events
+            const startEvents = ['mousedown', 'touchstart'];
+            const endEvents = ['mouseup', 'mouseleave', 'touchend', 'touchcancel'];
+            
+            startEvents.forEach(eventName => {
+                gameGrid.addEventListener(eventName, (e) => {
+                    const target = e.target.closest('[data-action="adjust-life"]');
+                    if (!target) return;
+                    
+                    const playerIndex = parseInt(target.dataset.player);
+                    const amount = parseInt(target.dataset.amount);
+                    const buttonKey = `${playerIndex}-${amount}`;
+                    
+                    // Clear any existing timers for this button
+                    clearHoldTimers(buttonKey);
+                    
+                    // Start a timer that triggers continuous adjustment after HOLD_DELAY_MS
+                    holdTimers[buttonKey] = setTimeout(() => {
+                        // Immediately fire the first increment
+                        adjustLife(playerIndex, amount * HOLD_MULTIPLIER);
+                        // Then start continuous adjustment every HOLD_INTERVAL_MS
+                        holdIntervals[buttonKey] = setInterval(() => {
+                            adjustLife(playerIndex, amount * HOLD_MULTIPLIER);
+                        }, HOLD_INTERVAL_MS);
+                    }, HOLD_DELAY_MS);
+                }, { passive: true });
+            });
+            
+            endEvents.forEach(eventName => {
+                gameGrid.addEventListener(eventName, (e) => {
+                    const target = e.target.closest('[data-action="adjust-life"]');
+                    if (!target) return;
+                    
+                    const playerIndex = parseInt(target.dataset.player);
+                    const amount = parseInt(target.dataset.amount);
+                    const buttonKey = `${playerIndex}-${amount}`;
+                    
+                    // Clear timers when button is released
+                    clearHoldTimers(buttonKey);
+                }, { passive: true });
+            });
         }
 
         // Get Display Order for Players (clockwise from each player's perspective)
