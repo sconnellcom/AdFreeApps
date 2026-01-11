@@ -1428,6 +1428,11 @@
         let holdTimers = {};
         let holdIntervals = {};
         
+        // Hold functionality constants
+        const HOLD_DELAY_MS = 500; // Delay before hold starts (in milliseconds)
+        const HOLD_INTERVAL_MS = 500; // Interval between hold increments (in milliseconds)
+        const HOLD_MULTIPLIER = 5; // Amount to add/subtract per hold increment
+        
         // Attach Event Listeners with Multi-touch Support
         function attachGameBoardEventListeners() {
             const gameGrid = document.getElementById('gameGrid');
@@ -1476,6 +1481,18 @@
             setupHoldListeners(gameGrid);
         }
         
+        // Clear hold timers for a button
+        function clearHoldTimers(buttonKey) {
+            if (holdTimers[buttonKey]) {
+                clearTimeout(holdTimers[buttonKey]);
+                holdTimers[buttonKey] = null;
+            }
+            if (holdIntervals[buttonKey]) {
+                clearInterval(holdIntervals[buttonKey]);
+                holdIntervals[buttonKey] = null;
+            }
+        }
+        
         // Setup hold listeners for press-and-hold functionality
         function setupHoldListeners(gameGrid) {
             // Handle both mouse and touch events
@@ -1492,22 +1509,17 @@
                     const buttonKey = `${playerIndex}-${amount}`;
                     
                     // Clear any existing timers for this button
-                    if (holdTimers[buttonKey]) {
-                        clearTimeout(holdTimers[buttonKey]);
-                    }
-                    if (holdIntervals[buttonKey]) {
-                        clearInterval(holdIntervals[buttonKey]);
-                    }
+                    clearHoldTimers(buttonKey);
                     
-                    // Start a timer that triggers continuous adjustment after 500ms
+                    // Start a timer that triggers continuous adjustment after HOLD_DELAY_MS
                     holdTimers[buttonKey] = setTimeout(() => {
                         // Immediately fire the first increment
-                        adjustLife(playerIndex, amount * 5);
-                        // Then start continuous adjustment of 5 every 500ms
+                        adjustLife(playerIndex, amount * HOLD_MULTIPLIER);
+                        // Then start continuous adjustment every HOLD_INTERVAL_MS
                         holdIntervals[buttonKey] = setInterval(() => {
-                            adjustLife(playerIndex, amount * 5);
-                        }, 500);
-                    }, 500);
+                            adjustLife(playerIndex, amount * HOLD_MULTIPLIER);
+                        }, HOLD_INTERVAL_MS);
+                    }, HOLD_DELAY_MS);
                 }, { passive: true });
             });
             
@@ -1521,14 +1533,7 @@
                     const buttonKey = `${playerIndex}-${amount}`;
                     
                     // Clear timers when button is released
-                    if (holdTimers[buttonKey]) {
-                        clearTimeout(holdTimers[buttonKey]);
-                        holdTimers[buttonKey] = null;
-                    }
-                    if (holdIntervals[buttonKey]) {
-                        clearInterval(holdIntervals[buttonKey]);
-                        holdIntervals[buttonKey] = null;
-                    }
+                    clearHoldTimers(buttonKey);
                 }, { passive: true });
             });
         }
