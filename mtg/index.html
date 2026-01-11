@@ -1046,12 +1046,12 @@
             </div>
             <div id="nameSelectionContent">
                 <div id="previousNamesList" style="margin-bottom: 20px;"></div>
-                <div style="display: flex; gap: 10px; align-items: center;">
+                <div style="display: flex; gap: 8px; align-items: center;">
                     <input type="text" id="nameInput" placeholder="Enter new name" 
                            style="flex: 1; padding: 12px; border: 2px solid var(--border-color); 
                                   border-radius: 8px; font-size: 1em; background: var(--surface-bg); 
-                                  color: var(--text-color);">
-                    <button class="menu-button" id="saveNameBtn" style="margin: 0; flex: 0 0 auto; padding: 12px 20px;">Save</button>
+                                  color: var(--text-color); min-width: 0;">
+                    <button class="menu-button" id="saveNameBtn" style="margin: 0; flex-shrink: 0; padding: 12px 14px; white-space: nowrap;">Save</button>
                 </div>
             </div>
         </div>
@@ -1513,9 +1513,9 @@
                     
                     // Start a timer that triggers continuous adjustment after HOLD_DELAY_MS
                     holdTimers[buttonKey] = setTimeout(() => {
-                        // Immediately fire the first increment
-                        adjustLife(playerIndex, amount * HOLD_MULTIPLIER);
-                        // Then start continuous adjustment every HOLD_INTERVAL_MS
+                        // On first hold, add 4 since the down event already added 1
+                        adjustLife(playerIndex, amount * (HOLD_MULTIPLIER - 1));
+                        // Then start continuous adjustment every HOLD_INTERVAL_MS with full multiplier
                         holdIntervals[buttonKey] = setInterval(() => {
                             adjustLife(playerIndex, amount * HOLD_MULTIPLIER);
                         }, HOLD_INTERVAL_MS);
