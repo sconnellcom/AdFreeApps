@@ -973,6 +973,14 @@
             color: var(--text-color);
             border-color: var(--border-color);
         }
+
+        /* Mobile adjustments */
+        @media (max-width: 480px) {
+            .modal-content {
+                padding: 20px;
+                width: 95%;
+            }
+        }
     </style>
 </head>
 
@@ -1046,12 +1054,12 @@
             </div>
             <div id="nameSelectionContent">
                 <div id="previousNamesList" style="margin-bottom: 20px;"></div>
-                <div style="display: flex; gap: 10px; align-items: center;">
+                <div style="display: flex; gap: 6px; align-items: center;">
                     <input type="text" id="nameInput" placeholder="Enter new name" 
                            style="flex: 1; padding: 12px; border: 2px solid var(--border-color); 
                                   border-radius: 8px; font-size: 1em; background: var(--surface-bg); 
                                   color: var(--text-color);">
-                    <button class="menu-button" id="saveNameBtn" style="margin: 0; flex: 0 0 auto; padding: 12px 20px;">Save</button>
+                    <button class="menu-button" id="saveNameBtn" style="margin: 0; flex-shrink: 0; padding: 10px 10px; white-space: nowrap; font-size: 0.85em; width: auto;">Save</button>
                 </div>
             </div>
         </div>
@@ -1427,6 +1435,7 @@
         // Hold tracking variables
         let holdTimers = {};
         let holdIntervals = {};
+        let holdTriggered = {}; // Track if hold was triggered for each button
         
         // Hold functionality constants
         const HOLD_DELAY_MS = 500; // Delay before hold starts (in milliseconds)
@@ -1457,8 +1466,7 @@
                 
                 switch(action) {
                     case 'adjust-life':
-                        const amount = parseInt(target.dataset.amount);
-                        adjustLife(playerIndex, amount);
+                        // Don't handle here - let the hold listeners handle it
                         break;
                     case 'adjust-counter':
                         const counterType = target.dataset.counter;
@@ -1491,6 +1499,7 @@
                 clearInterval(holdIntervals[buttonKey]);
                 holdIntervals[buttonKey] = null;
             }
+            holdTriggered[buttonKey] = false;
         }
         
         // Setup hold listeners for press-and-hold functionality
@@ -1511,11 +1520,16 @@
                     // Clear any existing timers for this button
                     clearHoldTimers(buttonKey);
                     
+                    // Mark that hold has not been triggered yet
+                    holdTriggered[buttonKey] = false;
+                    
                     // Start a timer that triggers continuous adjustment after HOLD_DELAY_MS
                     holdTimers[buttonKey] = setTimeout(() => {
-                        // Immediately fire the first increment
+                        // Mark that hold was triggered
+                        holdTriggered[buttonKey] = true;
+                        // On first hold, add 4 since we'll add 1 on release if not held
                         adjustLife(playerIndex, amount * HOLD_MULTIPLIER);
-                        // Then start continuous adjustment every HOLD_INTERVAL_MS
+                        // Then start continuous adjustment every HOLD_INTERVAL_MS with full multiplier
                         holdIntervals[buttonKey] = setInterval(() => {
                             adjustLife(playerIndex, amount * HOLD_MULTIPLIER);
                         }, HOLD_INTERVAL_MS);
@@ -1531,6 +1545,11 @@
                     const playerIndex = parseInt(target.dataset.player);
                     const amount = parseInt(target.dataset.amount);
                     const buttonKey = `${playerIndex}-${amount}`;
+                    
+                    // If hold was not triggered, it was a quick tap - add/subtract 1
+                    if (!holdTriggered[buttonKey]) {
+                        adjustLife(playerIndex, amount);
+                    }
                     
                     // Clear timers when button is released
                     clearHoldTimers(buttonKey);
