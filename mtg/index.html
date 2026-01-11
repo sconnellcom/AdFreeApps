@@ -1442,6 +1442,7 @@
         const HOLD_DELAY_MS = 500; // Delay before hold starts (in milliseconds)
         const HOLD_INTERVAL_MS = 500; // Interval between hold increments (in milliseconds)
         const HOLD_MULTIPLIER = 5; // Amount to add/subtract per hold increment
+        const INTERACTION_TYPE_RESET_MS = 100; // Delay before resetting interaction type tracking
         
         // Attach Event Listeners with Multi-touch Support
         function attachGameBoardEventListeners() {
@@ -1562,8 +1563,15 @@
                         // Reset the flag after a short delay to allow future mouse interactions
                         setTimeout(() => {
                             lastInteractionWasTouch[buttonKey] = false;
-                        }, 100);
+                        }, INTERACTION_TYPE_RESET_MS);
                         return;
+                    }
+                    
+                    // Reset the flag for touch end events so future interactions work correctly
+                    if (e.type === 'touchend' || e.type === 'touchcancel') {
+                        setTimeout(() => {
+                            lastInteractionWasTouch[buttonKey] = false;
+                        }, INTERACTION_TYPE_RESET_MS);
                     }
                     
                     // If hold was not triggered, it was a quick tap - add/subtract 1
