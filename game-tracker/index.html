@@ -1278,10 +1278,10 @@
         function getAvailableNames(currentPlayerIndex) {
             const history = loadNameHistory();
             const currentPlayer = players[currentPlayerIndex];
-            const currentNames = players.map((p, idx) => idx !== currentPlayerIndex ? p.name : null).filter(n => n !== null);
             
-            // Filter out names currently in use by OTHER players AND the current player's own name
-            return history.filter(name => !currentNames.includes(name) && name !== currentPlayer.name);
+            // Show all saved names except the current player's own name
+            // This allows selecting other players' names to swap positions
+            return history.filter(name => name !== currentPlayer.name);
         }
         
         function deleteNameFromHistory(name) {
