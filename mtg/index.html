@@ -1026,6 +1026,9 @@
                 <button class="menu-button" id="menuBoardFlipBtn">
                     <span id="boardFlipStatus">🔄 Board Flip: ON</span>
                 </button>
+                <button class="menu-button" id="menuScoreBubbleBtn">
+                    <span id="scoreBubbleStatus">💬 Score Bubble: ON</span>
+                </button>
             </div>
             
             <div class="menu-section">
@@ -1074,6 +1077,7 @@
         let gameType = 'mtg'; // 'mtg' or 'score'
         let startingLife = 40;
         let boardFlipEnabled = true;
+        let scoreBubbleEnabled = true;
         let lastChangeTime = {}; // Track last change time per player
         let accumulatedChange = {}; // Track accumulated changes per player
 
@@ -1085,7 +1089,8 @@
                 gameFormat,
                 gameType,
                 startingLife,
-                boardFlipEnabled
+                boardFlipEnabled,
+                scoreBubbleEnabled
             };
             localStorage.setItem('mtgGameState', JSON.stringify(gameState));
         }
@@ -1108,6 +1113,8 @@
                         startingLife = gameState.startingLife;
                         // Load boardFlipEnabled, default to true if not present
                         boardFlipEnabled = gameState.boardFlipEnabled !== undefined ? gameState.boardFlipEnabled : true;
+                        // Load scoreBubbleEnabled, default to true if not present
+                        scoreBubbleEnabled = gameState.scoreBubbleEnabled !== undefined ? gameState.scoreBubbleEnabled : true;
                         return true;
                     }
                     return false;
@@ -1380,6 +1387,11 @@
 
         // Show change bubble
         function showChangeBubble(playerIndex, totalChange) {
+            // Check if score bubble is enabled
+            if (!scoreBubbleEnabled) {
+                return;
+            }
+            
             const bubble = document.getElementById(`change-bubble-${playerIndex}`);
             if (!bubble) return;
             
@@ -1552,11 +1564,29 @@
             // Initialize board flip button
             updateBoardFlipButton();
             
+            // Update score bubble button text
+            function updateScoreBubbleButton() {
+                const scoreBubbleBtn = document.getElementById('scoreBubbleStatus');
+                if (scoreBubbleBtn) {
+                    scoreBubbleBtn.textContent = scoreBubbleEnabled ? '💬 Score Bubble: ON' : '💬 Score Bubble: OFF';
+                }
+            }
+            
+            // Initialize score bubble button
+            updateScoreBubbleButton();
+            
             // Board flip toggle
             document.getElementById('menuBoardFlipBtn').addEventListener('click', () => {
                 boardFlipEnabled = !boardFlipEnabled;
                 updateBoardFlipButton();
                 renderGameBoard();
+                saveGameState();
+            });
+            
+            // Score bubble toggle
+            document.getElementById('menuScoreBubbleBtn').addEventListener('click', () => {
+                scoreBubbleEnabled = !scoreBubbleEnabled;
+                updateScoreBubbleButton();
                 saveGameState();
             });
             
