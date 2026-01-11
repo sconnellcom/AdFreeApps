@@ -1444,11 +1444,8 @@
         const HOLD_MULTIPLIER = 5; // Amount to add/subtract per hold increment
         const INTERACTION_TYPE_RESET_MS = 100; // Delay before resetting interaction type tracking
         
-        // Store references to event listeners so they can be removed
+        // Track if event listeners have been attached to prevent accumulation
         let eventListenersAttached = false;
-        let clickHandler = null;
-        let mouseDownHandlers = [];
-        let mouseUpHandlers = [];
         
         // Attach Event Listeners with Multi-touch Support
         function attachGameBoardEventListeners() {
@@ -1464,7 +1461,7 @@
             const eventType = 'ontouchstart' in window ? 'touchstart' : 'click';
             
             // Event delegation for all interactive elements
-            clickHandler = (e) => {
+            const clickHandler = (e) => {
                 const target = e.target.closest('[data-action]');
                 if (!target) return;
                 
