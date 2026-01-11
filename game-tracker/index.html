@@ -992,14 +992,14 @@
                 <h1>⚔️ Game Tracker</h1>
                 <p>Select game</p>
                 <div class="format-selection">
+                    <button class="format-btn" data-format="score-tracker" data-life="0" data-game="score">
+                        Score Tracker
+                    </button>
                     <button class="format-btn selected" data-format="mtg-commander" data-life="40" data-game="mtg">
                         MTG Commander
                     </button>
                     <button class="format-btn" data-format="mtg-standard" data-life="20" data-game="mtg">
                         MTG Standard
-                    </button>
-                    <button class="format-btn" data-format="score-tracker" data-life="0" data-game="score">
-                        Score Tracker
                     </button>
                 </div>
                 <p>Select number of players</p>
@@ -1053,14 +1053,14 @@
                 <button class="close-btn" id="closeNameSelectionBtn">&times;</button>
             </div>
             <div id="nameSelectionContent">
-                <div id="previousNamesList" style="margin-bottom: 20px;"></div>
-                <div style="display: flex; gap: 6px; align-items: center;">
+                <div style="display: flex; gap: 6px; align-items: center; margin-bottom: 20px;">
                     <input type="text" id="nameInput" placeholder="Enter new name" 
                            style="flex: 1; padding: 12px; border: 2px solid var(--border-color); 
                                   border-radius: 8px; font-size: 1em; background: var(--surface-bg); 
                                   color: var(--text-color);">
                     <button class="menu-button" id="saveNameBtn" style="margin: 0; flex-shrink: 0; padding: 10px 10px; white-space: nowrap; font-size: 0.85em; width: auto;">Save</button>
                 </div>
+                <div id="previousNamesList"></div>
             </div>
         </div>
     </div>
@@ -1076,6 +1076,7 @@
             <div class="menu-section">
                 <h3>Navigation</h3>
                 <button class="menu-button" id="menuHomeBtn">🏠 Home</button>
+                <a href="about/" class="menu-button" style="text-decoration: none; display: block; text-align: center;">ⓘ About</a>
             </div>
 
             <div class="menu-section">
@@ -1136,9 +1137,9 @@
         let playerCount = 0;
         let players = [];
         let currentLogPlayer = null;
-        let gameFormat = 'mtg-commander';
-        let gameType = 'mtg'; // 'mtg' or 'score'
-        let startingLife = 40;
+        let gameFormat = 'score-tracker';
+        let gameType = 'score'; // 'mtg' or 'score'
+        let startingLife = 0;
         let boardFlipEnabled = true;
         let scoreBubbleEnabled = true;
         let lastChangeTime = {}; // Track last change time per player
@@ -1236,9 +1237,9 @@
 
         function getAvailableNames(currentPlayerIndex) {
             const history = loadNameHistory();
-            const currentNames = players.map((p, idx) => p.name);
+            const currentNames = players.map((p, idx) => idx !== currentPlayerIndex ? p.name : null).filter(n => n !== null);
             
-            // Filter out all names currently in use (including current player's name)
+            // Filter out names currently in use by OTHER players (not including current player)
             return history.filter(name => !currentNames.includes(name));
         }
 
@@ -1797,6 +1798,16 @@
             const handleSave = () => {
                 const newName = nameInput.value.trim();
                 if (newName) {
+                    // Check if another player already has this name
+                    const existingPlayerIndex = players.findIndex((p, idx) => idx !== playerIndex && p.name === newName);
+                    
+                    if (existingPlayerIndex !== -1) {
+                        // Swap names: give the existing player the current player's name
+                        const oldName = player.name;
+                        players[existingPlayerIndex].name = oldName;
+                    }
+                    
+                    // Set the new name for current player
                     player.name = newName;
                     saveNameToHistory(newName);
                     renderGameBoard();
