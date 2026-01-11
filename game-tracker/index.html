@@ -942,8 +942,15 @@
         }
 
         /* Name Selection Modal */
+        .name-button-container {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
         .name-button {
-            width: 100%;
+            flex: 1;
             padding: 12px 20px;
             font-size: 1em;
             font-weight: bold;
@@ -953,7 +960,6 @@
             border-radius: 8px;
             cursor: pointer;
             transition: all 0.2s;
-            margin-bottom: 10px;
             text-align: left;
         }
 
@@ -972,6 +978,32 @@
             background: var(--surface-bg);
             color: var(--text-color);
             border-color: var(--border-color);
+        }
+        
+        .delete-name-btn {
+            width: 44px;
+            height: 44px;
+            padding: 8px;
+            font-size: 1.2em;
+            background: var(--danger-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .delete-name-btn:hover {
+            opacity: 0.8;
+            transform: scale(1.05);
+        }
+        
+        .delete-name-btn:active {
+            transform: scale(0.95);
         }
 
         /* Mobile adjustments */
@@ -1214,8 +1246,14 @@
         function saveNameToHistory(name) {
             if (!name || !name.trim()) return;
             
-            const history = loadNameHistory();
             const trimmedName = name.trim();
+            
+            // Don't save default names like "Player 1", "Player 2", etc.
+            if (/^Player \d+$/.test(trimmedName)) {
+                return;
+            }
+            
+            const history = loadNameHistory();
             
             // Add to history if not already present
             if (!history.includes(trimmedName)) {
@@ -1239,10 +1277,17 @@
 
         function getAvailableNames(currentPlayerIndex) {
             const history = loadNameHistory();
+            const currentPlayer = players[currentPlayerIndex];
             const currentNames = players.map((p, idx) => idx !== currentPlayerIndex ? p.name : null).filter(n => n !== null);
             
-            // Filter out names currently in use by OTHER players (not including current player)
-            return history.filter(name => !currentNames.includes(name));
+            // Filter out names currently in use by OTHER players AND the current player's own name
+            return history.filter(name => !currentNames.includes(name) && name !== currentPlayer.name);
+        }
+        
+        function deleteNameFromHistory(name) {
+            const history = loadNameHistory();
+            const updatedHistory = history.filter(n => n !== name);
+            localStorage.setItem('mtgNameHistory', JSON.stringify(updatedHistory));
         }
 
         // Theme Management
@@ -1803,6 +1848,11 @@
                 previousNamesList.appendChild(heading);
                 
                 availableNames.forEach(name => {
+                    // Create container for name button and delete button
+                    const container = document.createElement('div');
+                    container.className = 'name-button-container';
+                    
+                    // Create name button
                     const btn = document.createElement('button');
                     btn.className = 'name-button';
                     btn.textContent = name;
@@ -1810,7 +1860,24 @@
                         // Directly save the name when clicking a button
                         updatePlayerName(name);
                     };
-                    previousNamesList.appendChild(btn);
+                    
+                    // Create delete button
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'delete-name-btn';
+                    deleteBtn.innerHTML = '🗑️';
+                    deleteBtn.title = 'Delete this name';
+                    deleteBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        if (confirm(`Delete "${name}" from saved names?`)) {
+                            deleteNameFromHistory(name);
+                            // Refresh the modal with updated list
+                            renamePlayer(playerIndex);
+                        }
+                    };
+                    
+                    container.appendChild(btn);
+                    container.appendChild(deleteBtn);
+                    previousNamesList.appendChild(container);
                 });
             }
             
