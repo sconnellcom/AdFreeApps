@@ -1436,6 +1436,7 @@
         let holdTimers = {};
         let holdIntervals = {};
         let holdTriggered = {}; // Track if hold was triggered for each button
+        let lastInteractionWasTouch = {}; // Track if last interaction was touch for each button
         
         // Hold functionality constants
         const HOLD_DELAY_MS = 500; // Delay before hold starts (in milliseconds)
@@ -1513,15 +1514,18 @@
                     const target = e.target.closest('[data-action="adjust-life"]');
                     if (!target) return;
                     
-                    // Prevent mouse events if touch events are supported and this is a mouse event
-                    // This prevents double-firing when touch generates compatibility mouse events
-                    if ('ontouchstart' in window && e.type === 'mousedown') {
-                        return;
-                    }
-                    
                     const playerIndex = parseInt(target.dataset.player);
                     const amount = parseInt(target.dataset.amount);
                     const buttonKey = `${playerIndex}-${amount}`;
+                    
+                    // If this is a mouse event and the last interaction was touch, ignore it
+                    // This prevents compatibility mouse events from double-firing after touch events
+                    if (e.type === 'mousedown' && lastInteractionWasTouch[buttonKey]) {
+                        return;
+                    }
+                    
+                    // Track whether this interaction is touch or mouse
+                    lastInteractionWasTouch[buttonKey] = (e.type === 'touchstart');
                     
                     // Clear any existing timers for this button
                     clearHoldTimers(buttonKey);
@@ -1548,15 +1552,19 @@
                     const target = e.target.closest('[data-action="adjust-life"]');
                     if (!target) return;
                     
-                    // Prevent mouse events if touch events are supported and this is a mouse event
-                    // This prevents double-firing when touch generates compatibility mouse events
-                    if ('ontouchstart' in window && (e.type === 'mouseup' || e.type === 'mouseleave')) {
-                        return;
-                    }
-                    
                     const playerIndex = parseInt(target.dataset.player);
                     const amount = parseInt(target.dataset.amount);
                     const buttonKey = `${playerIndex}-${amount}`;
+                    
+                    // If this is a mouse event and the last interaction was touch, ignore it
+                    // This prevents compatibility mouse events from double-firing after touch events
+                    if ((e.type === 'mouseup' || e.type === 'mouseleave') && lastInteractionWasTouch[buttonKey]) {
+                        // Reset the flag after a short delay to allow future mouse interactions
+                        setTimeout(() => {
+                            lastInteractionWasTouch[buttonKey] = false;
+                        }, 100);
+                        return;
+                    }
                     
                     // If hold was not triggered, it was a quick tap - add/subtract 1
                     if (!holdTriggered[buttonKey]) {
