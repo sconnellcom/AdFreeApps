@@ -1427,6 +1427,7 @@
         // Hold tracking variables
         let holdTimers = {};
         let holdIntervals = {};
+        let holdTriggered = {}; // Track if hold was triggered for each button
         
         // Hold functionality constants
         const HOLD_DELAY_MS = 500; // Delay before hold starts (in milliseconds)
@@ -1457,8 +1458,7 @@
                 
                 switch(action) {
                     case 'adjust-life':
-                        const amount = parseInt(target.dataset.amount);
-                        adjustLife(playerIndex, amount);
+                        // Don't handle here - let the hold listeners handle it
                         break;
                     case 'adjust-counter':
                         const counterType = target.dataset.counter;
@@ -1491,6 +1491,7 @@
                 clearInterval(holdIntervals[buttonKey]);
                 holdIntervals[buttonKey] = null;
             }
+            holdTriggered[buttonKey] = false;
         }
         
         // Setup hold listeners for press-and-hold functionality
@@ -1511,10 +1512,15 @@
                     // Clear any existing timers for this button
                     clearHoldTimers(buttonKey);
                     
+                    // Mark that hold has not been triggered yet
+                    holdTriggered[buttonKey] = false;
+                    
                     // Start a timer that triggers continuous adjustment after HOLD_DELAY_MS
                     holdTimers[buttonKey] = setTimeout(() => {
-                        // On first hold, add 4 since the down event already added 1
-                        adjustLife(playerIndex, amount * (HOLD_MULTIPLIER - 1));
+                        // Mark that hold was triggered
+                        holdTriggered[buttonKey] = true;
+                        // On first hold, add 4 since we'll add 1 on release if not held
+                        adjustLife(playerIndex, amount * HOLD_MULTIPLIER);
                         // Then start continuous adjustment every HOLD_INTERVAL_MS with full multiplier
                         holdIntervals[buttonKey] = setInterval(() => {
                             adjustLife(playerIndex, amount * HOLD_MULTIPLIER);
@@ -1531,6 +1537,11 @@
                     const playerIndex = parseInt(target.dataset.player);
                     const amount = parseInt(target.dataset.amount);
                     const buttonKey = `${playerIndex}-${amount}`;
+                    
+                    // If hold was not triggered, it was a quick tap - add/subtract 1
+                    if (!holdTriggered[buttonKey]) {
+                        adjustLife(playerIndex, amount);
+                    }
                     
                     // Clear timers when button is released
                     clearHoldTimers(buttonKey);
