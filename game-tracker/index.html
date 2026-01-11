@@ -1762,6 +1762,30 @@
             const nameInput = document.getElementById('nameInput');
             const previousNamesList = document.getElementById('previousNamesList');
             
+            // Helper function to update player name
+            const updatePlayerName = (newName) => {
+                if (!newName) return;
+                
+                // Check if another player already has this name
+                const existingPlayerIndex = players.findIndex((p, idx) => idx !== playerIndex && p.name === newName);
+                
+                if (existingPlayerIndex !== -1) {
+                    // Swap names: give the existing player the current player's name
+                    const oldName = player.name;
+                    players[existingPlayerIndex].name = oldName;
+                }
+                
+                // Set the new name for current player
+                player.name = newName;
+                saveNameToHistory(newName);
+                renderGameBoard();
+                savePlayerNames();
+                saveGameState();
+                
+                // Close the modal
+                nameModal.classList.remove('active');
+            };
+            
             // Set current name in input
             nameInput.value = player.name;
             
@@ -1784,26 +1808,7 @@
                     btn.textContent = name;
                     btn.onclick = () => {
                         // Directly save the name when clicking a button
-                        const newName = name;
-                        
-                        // Check if another player already has this name
-                        const existingPlayerIndex = players.findIndex((p, idx) => idx !== playerIndex && p.name === newName);
-                        
-                        if (existingPlayerIndex !== -1) {
-                            // Swap names: give the existing player the current player's name
-                            const oldName = player.name;
-                            players[existingPlayerIndex].name = oldName;
-                        }
-                        
-                        // Set the new name for current player
-                        player.name = newName;
-                        saveNameToHistory(newName);
-                        renderGameBoard();
-                        savePlayerNames();
-                        saveGameState();
-                        
-                        // Close the modal
-                        nameModal.classList.remove('active');
+                        updatePlayerName(name);
                     };
                     previousNamesList.appendChild(btn);
                 });
@@ -1819,24 +1824,7 @@
             const saveBtn = document.getElementById('saveNameBtn');
             const handleSave = () => {
                 const newName = nameInput.value.trim();
-                if (newName) {
-                    // Check if another player already has this name
-                    const existingPlayerIndex = players.findIndex((p, idx) => idx !== playerIndex && p.name === newName);
-                    
-                    if (existingPlayerIndex !== -1) {
-                        // Swap names: give the existing player the current player's name
-                        const oldName = player.name;
-                        players[existingPlayerIndex].name = oldName;
-                    }
-                    
-                    // Set the new name for current player
-                    player.name = newName;
-                    saveNameToHistory(newName);
-                    renderGameBoard();
-                    savePlayerNames();
-                    saveGameState();
-                }
-                nameModal.classList.remove('active');
+                updatePlayerName(newName);
                 saveBtn.removeEventListener('click', handleSave);
             };
             
