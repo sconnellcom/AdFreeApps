@@ -1569,11 +1569,18 @@
         }
 
         // Rename Player
+        let currentRenameHandlers = null; // Store handlers for cleanup
+        
         function renamePlayer(playerIndex) {
             const player = players[playerIndex];
             const nameModal = document.getElementById('nameSelectionModal');
             const nameInput = document.getElementById('nameInput');
             const previousNamesList = document.getElementById('previousNamesList');
+            
+            // Clean up any existing handlers
+            if (currentRenameHandlers) {
+                currentRenameHandlers.cleanup();
+            }
             
             // Set current name in input
             nameInput.value = player.name;
@@ -1618,20 +1625,30 @@
                     renderGameBoard();
                     savePlayerNames();
                     saveGameState();
-                }
-                nameModal.classList.remove('active');
-                saveBtn.removeEventListener('click', handleSave);
+                    nameModal.classList.remove('active');
+                    currentRenameHandlers.cleanup();
+                } // If empty, don't close modal - keep it open for user to enter a name
             };
-            
-            saveBtn.addEventListener('click', handleSave);
             
             // Handle Enter key in input
             const handleEnter = (e) => {
                 if (e.key === 'Enter') {
                     handleSave();
-                    nameInput.removeEventListener('keypress', handleEnter);
                 }
             };
+            
+            // Store handlers for cleanup
+            currentRenameHandlers = {
+                handleSave,
+                handleEnter,
+                cleanup: () => {
+                    saveBtn.removeEventListener('click', handleSave);
+                    nameInput.removeEventListener('keypress', handleEnter);
+                    currentRenameHandlers = null;
+                }
+            };
+            
+            saveBtn.addEventListener('click', handleSave);
             nameInput.addEventListener('keypress', handleEnter);
         }
 
@@ -1698,6 +1715,10 @@
 
         // Close Name Selection
         function closeNameSelection() {
+            // Clean up event handlers
+            if (currentRenameHandlers) {
+                currentRenameHandlers.cleanup();
+            }
             document.getElementById('nameSelectionModal').classList.remove('active');
         }
 
