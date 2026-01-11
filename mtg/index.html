@@ -938,6 +938,39 @@
         .change-bubble.fade-out {
             opacity: 0;
         }
+
+        /* Name Selection Modal */
+        .name-button {
+            width: 100%;
+            padding: 12px 20px;
+            font-size: 1em;
+            font-weight: bold;
+            background: var(--surface-bg);
+            color: var(--text-color);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 10px;
+            text-align: left;
+        }
+
+        .name-button:hover {
+            background: var(--button-bg);
+            color: white;
+            border-color: var(--button-bg);
+        }
+
+        .name-button.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .name-button.disabled:hover {
+            background: var(--surface-bg);
+            color: var(--text-color);
+            border-color: var(--border-color);
+        }
     </style>
 </head>
 
@@ -999,6 +1032,26 @@
                 <button class="close-btn" id="closeLogBtn">&times;</button>
             </div>
             <ul class="log-entries" id="logEntries"></ul>
+        </div>
+    </div>
+
+    <!-- Name Selection Modal -->
+    <div class="modal" id="nameSelectionModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="nameSelectionTitle">Select or Edit Name</h2>
+                <button class="close-btn" id="closeNameSelectionBtn">&times;</button>
+            </div>
+            <div id="nameSelectionContent">
+                <div id="previousNamesList" style="margin-bottom: 20px;"></div>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <input type="text" id="nameInput" placeholder="Enter new name" 
+                           style="flex: 1; padding: 12px; border: 2px solid var(--border-color); 
+                                  border-radius: 8px; font-size: 1em; background: var(--surface-bg); 
+                                  color: var(--text-color);">
+                    <button class="menu-button" id="saveNameBtn" style="margin: 0; flex: 0 0 auto; padding: 12px 20px;">Save</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -1144,6 +1197,41 @@
             return [];
         }
 
+        // Name History Management
+        function saveNameToHistory(name) {
+            if (!name || !name.trim()) return;
+            
+            const history = loadNameHistory();
+            const trimmedName = name.trim();
+            
+            // Add to history if not already present
+            if (!history.includes(trimmedName)) {
+                history.push(trimmedName);
+                localStorage.setItem('mtgNameHistory', JSON.stringify(history));
+            }
+        }
+
+        function loadNameHistory() {
+            const saved = localStorage.getItem('mtgNameHistory');
+            if (saved) {
+                try {
+                    return JSON.parse(saved);
+                } catch (e) {
+                    console.error('Error loading name history:', e);
+                    return [];
+                }
+            }
+            return [];
+        }
+
+        function getAvailableNames(currentPlayerIndex) {
+            const history = loadNameHistory();
+            const currentNames = players.map((p, idx) => p.name);
+            
+            // Filter out all names currently in use (including current player's name)
+            return history.filter(name => !currentNames.includes(name));
+        }
+
         // Theme Management
         function initializeTheme() {
             const themeBtnActive = document.getElementById('currentThemeBtn');
@@ -1259,6 +1347,9 @@
                     life: startingLife,
                     log: []
                 };
+                
+                // Save name to history
+                saveNameToHistory(playerData.name);
                 
                 // Only add poison and commander for MTG games
                 if (gameType === 'mtg') {
@@ -1480,14 +1571,68 @@
         // Rename Player
         function renamePlayer(playerIndex) {
             const player = players[playerIndex];
-            const newName = prompt('Enter new player name:', player.name);
+            const nameModal = document.getElementById('nameSelectionModal');
+            const nameInput = document.getElementById('nameInput');
+            const previousNamesList = document.getElementById('previousNamesList');
             
-            if (newName && newName.trim()) {
-                player.name = newName.trim();
-                renderGameBoard();
-                savePlayerNames();
-                saveGameState();
+            // Set current name in input
+            nameInput.value = player.name;
+            
+            // Get available names
+            const availableNames = getAvailableNames(playerIndex);
+            
+            // Populate previous names list
+            previousNamesList.innerHTML = '';
+            if (availableNames.length > 0) {
+                const heading = document.createElement('h3');
+                heading.textContent = 'Previously Used Names:';
+                heading.style.color = 'var(--text-color)';
+                heading.style.fontSize = '1em';
+                heading.style.marginBottom = '10px';
+                previousNamesList.appendChild(heading);
+                
+                availableNames.forEach(name => {
+                    const btn = document.createElement('button');
+                    btn.className = 'name-button';
+                    btn.textContent = name;
+                    btn.onclick = () => {
+                        nameInput.value = name;
+                    };
+                    previousNamesList.appendChild(btn);
+                });
             }
+            
+            // Show modal
+            nameModal.classList.add('active');
+            
+            // Focus input
+            setTimeout(() => nameInput.focus(), 100);
+            
+            // Handle save button
+            const saveBtn = document.getElementById('saveNameBtn');
+            const handleSave = () => {
+                const newName = nameInput.value.trim();
+                if (newName) {
+                    player.name = newName;
+                    saveNameToHistory(newName);
+                    renderGameBoard();
+                    savePlayerNames();
+                    saveGameState();
+                }
+                nameModal.classList.remove('active');
+                saveBtn.removeEventListener('click', handleSave);
+            };
+            
+            saveBtn.addEventListener('click', handleSave);
+            
+            // Handle Enter key in input
+            const handleEnter = (e) => {
+                if (e.key === 'Enter') {
+                    handleSave();
+                    nameInput.removeEventListener('keypress', handleEnter);
+                }
+            };
+            nameInput.addEventListener('keypress', handleEnter);
         }
 
         // Show Log
@@ -1549,6 +1694,11 @@
         // Close Log
         function closeLog() {
             document.getElementById('logModal').classList.remove('active');
+        }
+
+        // Close Name Selection
+        function closeNameSelection() {
+            document.getElementById('nameSelectionModal').classList.remove('active');
         }
 
         // Control Buttons
@@ -1693,6 +1843,15 @@
             document.getElementById('logModal').addEventListener('click', (e) => {
                 if (e.target.id === 'logModal') {
                     closeLog();
+                }
+            });
+
+            // Name selection modal controls
+            document.getElementById('closeNameSelectionBtn').addEventListener('click', closeNameSelection);
+
+            document.getElementById('nameSelectionModal').addEventListener('click', (e) => {
+                if (e.target.id === 'nameSelectionModal') {
+                    closeNameSelection();
                 }
             });
         }
