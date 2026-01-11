@@ -1513,6 +1513,12 @@
                     const target = e.target.closest('[data-action="adjust-life"]');
                     if (!target) return;
                     
+                    // Prevent mouse events if touch events are supported and this is a mouse event
+                    // This prevents double-firing when touch generates compatibility mouse events
+                    if ('ontouchstart' in window && e.type === 'mousedown') {
+                        return;
+                    }
+                    
                     const playerIndex = parseInt(target.dataset.player);
                     const amount = parseInt(target.dataset.amount);
                     const buttonKey = `${playerIndex}-${amount}`;
@@ -1541,6 +1547,12 @@
                 gameGrid.addEventListener(eventName, (e) => {
                     const target = e.target.closest('[data-action="adjust-life"]');
                     if (!target) return;
+                    
+                    // Prevent mouse events if touch events are supported and this is a mouse event
+                    // This prevents double-firing when touch generates compatibility mouse events
+                    if ('ontouchstart' in window && (e.type === 'mouseup' || e.type === 'mouseleave')) {
+                        return;
+                    }
                     
                     const playerIndex = parseInt(target.dataset.player);
                     const amount = parseInt(target.dataset.amount);
