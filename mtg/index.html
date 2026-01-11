@@ -1549,9 +1549,9 @@
                 holdTimers[buttonKey] = setTimeout(() => {
                     // Mark that hold was triggered
                     holdTriggered[buttonKey] = true;
-                    // On first hold, add 5
+                    // On first hold, adjust by HOLD_MULTIPLIER amount
                     adjustLife(playerIndex, amount * HOLD_MULTIPLIER);
-                    // Then start continuous adjustment every HOLD_INTERVAL_MS with full multiplier
+                    // Then start continuous adjustment every HOLD_INTERVAL_MS
                     holdIntervals[buttonKey] = setInterval(() => {
                         adjustLife(playerIndex, amount * HOLD_MULTIPLIER);
                     }, HOLD_INTERVAL_MS);
