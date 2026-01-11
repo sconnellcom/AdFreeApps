@@ -1436,11 +1436,13 @@
         let holdTimers = {};
         let holdIntervals = {};
         let holdTriggered = {}; // Track if hold was triggered for each button
+        let lastInteractionWasTouch = {}; // Track if last interaction was touch for each button
         
         // Hold functionality constants
         const HOLD_DELAY_MS = 500; // Delay before hold starts (in milliseconds)
         const HOLD_INTERVAL_MS = 500; // Interval between hold increments (in milliseconds)
         const HOLD_MULTIPLIER = 5; // Amount to add/subtract per hold increment
+        const INTERACTION_TYPE_RESET_MS = 100; // Delay before resetting interaction type tracking
         
         // Attach Event Listeners with Multi-touch Support
         function attachGameBoardEventListeners() {
@@ -1517,6 +1519,15 @@
                     const amount = parseInt(target.dataset.amount);
                     const buttonKey = `${playerIndex}-${amount}`;
                     
+                    // If this is a mouse event and the last interaction was touch, ignore it
+                    // This prevents compatibility mouse events from double-firing after touch events
+                    if (e.type === 'mousedown' && lastInteractionWasTouch[buttonKey]) {
+                        return;
+                    }
+                    
+                    // Track whether this interaction is touch or mouse
+                    lastInteractionWasTouch[buttonKey] = (e.type === 'touchstart');
+                    
                     // Clear any existing timers for this button
                     clearHoldTimers(buttonKey);
                     
@@ -1545,6 +1556,23 @@
                     const playerIndex = parseInt(target.dataset.player);
                     const amount = parseInt(target.dataset.amount);
                     const buttonKey = `${playerIndex}-${amount}`;
+                    
+                    // If this is a mouse event and the last interaction was touch, ignore it
+                    // This prevents compatibility mouse events from double-firing after touch events
+                    if ((e.type === 'mouseup' || e.type === 'mouseleave') && lastInteractionWasTouch[buttonKey]) {
+                        // Reset the flag after a short delay to allow future mouse interactions
+                        setTimeout(() => {
+                            lastInteractionWasTouch[buttonKey] = false;
+                        }, INTERACTION_TYPE_RESET_MS);
+                        return;
+                    }
+                    
+                    // Reset the flag for touch end events so future interactions work correctly
+                    if (e.type === 'touchend' || e.type === 'touchcancel') {
+                        setTimeout(() => {
+                            lastInteractionWasTouch[buttonKey] = false;
+                        }, INTERACTION_TYPE_RESET_MS);
+                    }
                     
                     // If hold was not triggered, it was a quick tap - add/subtract 1
                     if (!holdTriggered[buttonKey]) {
