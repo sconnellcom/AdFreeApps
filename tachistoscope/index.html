@@ -187,6 +187,8 @@
             margin: 0 auto;
             width: 900px;
             max-width: 95%;
+            position: relative;
+            padding-top: 20px;
         }
 
         .left {
@@ -376,14 +378,11 @@
 
         /* Header */
         .header-row {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            right: 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            z-index: 1000;
+            margin-bottom: 20px;
+            position: relative;
         }
 
         .header-left {
@@ -440,9 +439,9 @@
 
         /* Menu Dropdown */
         .menu-dropdown {
-            position: fixed;
-            top: 70px;
-            right: 20px;
+            position: absolute;
+            top: 60px;
+            right: 0;
             background: var(--container-bg);
             border: 2px solid var(--border-color);
             border-radius: 12px;
@@ -605,59 +604,54 @@
     </style>
 </head>
 
-<body>
-    <!-- Standardized Header -->
-    <div class="header-row">
-        <div class="header-left">
-            <span class="app-icon">👁️</span>
-            <h1>Tachistoscope</h1>
-        </div>
-        <div class="header-right">
-            <button id="menuBtn" class="menu-btn" title="Menu">
-                <span class="hamburger-icon">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </span>
-            </button>
-        </div>
-    </div>
-
-    <!-- Menu Dropdown -->
-    <div id="menuDropdown" class="menu-dropdown" style="display: none;">
-        <a href="../" class="menu-item">
-            <span class="menu-icon">💎</span>
-            <span class="menu-label">Apps</span>
-        </a>
-        <button id="themeMenuItem" class="menu-item menu-item-button">
-            <span class="menu-icon" id="themeMenuIcon">💜</span>
-            <span class="menu-label">Change Theme</span>
-        </button>
-        <div id="themeSubmenu" class="theme-submenu" style="display: none;">
-            <button class="theme-btn theme-default" data-theme="default" title="Purple Theme"></button>
-            <button class="theme-btn theme-black" data-theme="black" title="Black Theme"></button>
-            <button class="theme-btn theme-blue" data-theme="blue" title="Blue Theme"></button>
-            <button class="theme-btn theme-blue-dark" data-theme="blue-dark" title="Dark Blue Theme"></button>
-            <button class="theme-btn theme-light" data-theme="light" title="Olive Theme"></button>
-            <button class="theme-btn theme-dark" data-theme="dark" title="Dark Olive Theme"></button>
-            <button class="theme-btn theme-warm-light" data-theme="warm-light" title="Warm Light Theme"></button>
-            <button class="theme-btn theme-warm-dark" data-theme="warm-dark" title="Warm Dark Theme"></button>
-            <button class="theme-btn theme-red" data-theme="red" title="Red Theme"></button>
-            <button class="theme-btn theme-red-dark" data-theme="red-dark" title="Dark Red Theme"></button>
-            <button class="theme-btn theme-pink" data-theme="pink" title="Pink Theme"></button>
-            <button class="theme-btn theme-pink-dark" data-theme="pink-dark" title="Dark Pink Theme"></button>
-        </div>
-        <a href="about/" class="menu-item">
-            <span class="menu-icon">ⓘ</span>
-            <span class="menu-label">About This App</span>
-        </a>
-    </div>
-
     <div class="wrapper">
+        <!-- Standardized Header -->
+        <div class="header-row">
+            <div class="header-left">
+                <span class="app-icon">👁️</span>
+                <h1>Tachistoscope</h1>
+            </div>
+            <div class="header-right">
+                <button id="menuBtn" class="menu-btn" title="Menu">
+                    <span class="hamburger-icon">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </span>
+                </button>
+            </div>
+        </div>
 
-        <h1>
-            Tachistoscope
-        </h1>
+        <!-- Menu Dropdown -->
+        <div id="menuDropdown" class="menu-dropdown" style="display: none;">
+            <a href="../" class="menu-item">
+                <span class="menu-icon">💎</span>
+                <span class="menu-label">Apps</span>
+            </a>
+            <button id="themeMenuItem" class="menu-item menu-item-button">
+                <span class="menu-icon" id="themeMenuIcon">💜</span>
+                <span class="menu-label">Change Theme</span>
+            </button>
+            <div id="themeSubmenu" class="theme-submenu" style="display: none;">
+                <button class="theme-btn theme-default" data-theme="default" title="Purple Theme"></button>
+                <button class="theme-btn theme-black" data-theme="black" title="Black Theme"></button>
+                <button class="theme-btn theme-blue" data-theme="blue" title="Blue Theme"></button>
+                <button class="theme-btn theme-blue-dark" data-theme="blue-dark" title="Dark Blue Theme"></button>
+                <button class="theme-btn theme-light" data-theme="light" title="Olive Theme"></button>
+                <button class="theme-btn theme-dark" data-theme="dark" title="Dark Olive Theme"></button>
+                <button class="theme-btn theme-warm-light" data-theme="warm-light" title="Warm Light Theme"></button>
+                <button class="theme-btn theme-warm-dark" data-theme="warm-dark" title="Warm Dark Theme"></button>
+                <button class="theme-btn theme-red" data-theme="red" title="Red Theme"></button>
+                <button class="theme-btn theme-red-dark" data-theme="red-dark" title="Dark Red Theme"></button>
+                <button class="theme-btn theme-pink" data-theme="pink" title="Pink Theme"></button>
+                <button class="theme-btn theme-pink-dark" data-theme="pink-dark" title="Dark Pink Theme"></button>
+            </div>
+            <a href="about/" class="menu-item">
+                <span class="menu-icon">ⓘ</span>
+                <span class="menu-label">About This App</span>
+            </a>
+        </div>
+
         <div class="left">
             <div class="settings-box">
                 <div class="number-control">

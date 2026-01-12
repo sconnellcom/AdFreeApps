@@ -37,7 +37,7 @@ class TimerApp {
             document.title = tabText;
             const h1 = document.querySelector('h1');
             if (h1) {
-                h1.textContent = `⏱️ ${tabText}`;
+                h1.textContent = tabText;
             }
         }
         if (this.alarms.length > 0) {
@@ -533,7 +533,7 @@ class TimerApp {
                 document.title = tabText;
                 const h1 = document.querySelector('h1');
                 if (h1) {
-                    h1.textContent = `⏱️ ${tabText}`;
+                    h1.textContent = tabText;
                 }
 
                 if (tabName === 'clock') {
