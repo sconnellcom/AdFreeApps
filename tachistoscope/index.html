@@ -374,63 +374,130 @@
             display: block;
         }
 
-        .home-btn {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            text-decoration: none;
-            font-size: 1.5em;
-            padding: 5px;
-            transition: transform 0.2s ease, opacity 0.2s ease;
-            opacity: 0.8;
-        }
-
-        .home-btn:hover {
-            transform: scale(1.1);
-            opacity: 1;
-        }
-
-        /* Theme picker styles */
-        .theme-picker {
+        /* Header */
+        .header-row {
             position: fixed;
             top: 20px;
+            left: 20px;
             right: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             z-index: 1000;
         }
 
-        .theme-btn-active {
-            width: 40px;
-            height: 40px;
-            min-width: 40px;
-            min-height: 40px;
-            padding: 0;
-            border-radius: 50%;
-            border: 3px solid white;
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+        }
+
+        .app-icon {
+            font-size: 1.8em;
+        }
+
+        h1 {
+            color: var(--text-color);
+            font-size: 1.8em;
+            margin: 0;
+        }
+
+        /* Menu Button */
+        .menu-btn {
+            background: none;
+            border: none;
             cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            padding: 8px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
         }
 
-        .theme-btn-active:hover {
-            transform: scale(1.1);
+        .menu-btn:hover .hamburger-icon span {
+            background: var(--primary-hover);
         }
 
-        .theme-dropdown {
-            position: absolute;
-            top: 50px;
-            right: 0;
+        .hamburger-icon {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            width: 24px;
+        }
+
+        .hamburger-icon span {
+            display: block;
+            width: 100%;
+            height: 3px;
+            background: var(--primary-color);
+            border-radius: 2px;
+            transition: background 0.3s;
+        }
+
+        /* Menu Dropdown */
+        .menu-dropdown {
+            position: fixed;
+            top: 70px;
+            right: 20px;
             background: var(--container-bg);
             border: 2px solid var(--border-color);
             border-radius: 12px;
-            padding: 10px;
-            display: none;
-            grid-template-columns: 32px 32px;
-            gap: 8px;
+            padding: 8px;
+            min-width: 200px;
             box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
         }
 
-        .theme-dropdown.visible {
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            text-decoration: none;
+            color: var(--text-color);
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            background: none;
+            border: none;
+            width: 100%;
+            text-align: left;
+        }
+
+        .menu-item:hover {
+            background: var(--surface-bg);
+        }
+
+        .menu-item-button {
+            font-family: inherit;
+            font-size: inherit;
+        }
+
+        .menu-icon {
+            font-size: 1.3em;
+            width: 24px;
+            text-align: center;
+        }
+
+        .menu-label {
+            flex: 1;
+            font-size: 1em;
+            font-weight: 500;
+        }
+
+        /* Theme Submenu */
+        .theme-submenu {
+            padding: 8px;
+            margin-top: 4px;
+            margin-bottom: 4px;
             display: grid;
+            grid-template-columns: repeat(4, 32px);
+            gap: 8px;
+            justify-content: center;
         }
 
         .theme-btn {
@@ -448,62 +515,50 @@
             border-color: var(--primary-color);
         }
 
-        .theme-btn-active.theme-default,
         .theme-btn.theme-default {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
 
-        .theme-btn-active.theme-black,
         .theme-btn.theme-black {
             background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
         }
 
-        .theme-btn-active.theme-blue,
         .theme-btn.theme-blue {
             background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
         }
 
-        .theme-btn-active.theme-blue-dark,
         .theme-btn.theme-blue-dark {
             background: linear-gradient(135deg, #0c4a6e 0%, #38bdf8 100%);
         }
 
-        .theme-btn-active.theme-light,
         .theme-btn.theme-light {
             background: linear-gradient(135deg, #97B22D 0%, #E3DE81 100%);
         }
 
-        .theme-btn-active.theme-dark,
         .theme-btn.theme-dark {
             background: linear-gradient(135deg, #2d3d0f 0%, #97B22D 100%);
         }
 
-        .theme-btn-active.theme-warm-light,
         .theme-btn.theme-warm-light {
             background: linear-gradient(135deg, #E49A32 0%, #FEFCAD 100%);
         }
 
-        .theme-btn-active.theme-warm-dark,
         .theme-btn.theme-warm-dark {
             background: linear-gradient(135deg, #2a2510 0%, #E49A32 100%);
         }
 
-        .theme-btn-active.theme-red,
         .theme-btn.theme-red {
             background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
         }
 
-        .theme-btn-active.theme-red-dark,
         .theme-btn.theme-red-dark {
             background: linear-gradient(135deg, #7f1d1d 0%, #ef4444 100%);
         }
 
-        .theme-btn-active.theme-pink,
         .theme-btn.theme-pink {
             background: linear-gradient(135deg, #ec4899 0%, #be185d 100%);
         }
 
-        .theme-btn-active.theme-pink-dark,
         .theme-btn.theme-pink-dark {
             background: linear-gradient(135deg, #831843 0%, #f472b6 100%);
         }
@@ -551,10 +606,34 @@
 </head>
 
 <body>
-    <!-- Theme Picker -->
-    <div class="theme-picker">
-        <button class="theme-btn-active theme-default" data-theme="default" title="Change Theme"></button>
-        <div class="theme-dropdown">
+    <!-- Standardized Header -->
+    <div class="header-row">
+        <div class="header-left">
+            <span class="app-icon">👁️</span>
+            <h1>Tachistoscope</h1>
+        </div>
+        <div class="header-right">
+            <button id="menuBtn" class="menu-btn" title="Menu">
+                <span class="hamburger-icon">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Menu Dropdown -->
+    <div id="menuDropdown" class="menu-dropdown" style="display: none;">
+        <a href="../" class="menu-item">
+            <span class="menu-icon">💎</span>
+            <span class="menu-label">Apps</span>
+        </a>
+        <button id="themeMenuItem" class="menu-item menu-item-button">
+            <span class="menu-icon" id="themeMenuIcon">💜</span>
+            <span class="menu-label">Change Theme</span>
+        </button>
+        <div id="themeSubmenu" class="theme-submenu" style="display: none;">
             <button class="theme-btn theme-default" data-theme="default" title="Purple Theme"></button>
             <button class="theme-btn theme-black" data-theme="black" title="Black Theme"></button>
             <button class="theme-btn theme-blue" data-theme="blue" title="Blue Theme"></button>
@@ -568,10 +647,11 @@
             <button class="theme-btn theme-pink" data-theme="pink" title="Pink Theme"></button>
             <button class="theme-btn theme-pink-dark" data-theme="pink-dark" title="Dark Pink Theme"></button>
         </div>
+        <a href="about/" class="menu-item">
+            <span class="menu-icon">ⓘ</span>
+            <span class="menu-label">About This App</span>
+        </a>
     </div>
-    
-    <a href="../" class="home-btn" title="Back to Home">🏠</a>
-    <a href="about/" class="home-btn" style="left: 60px; color: var(--primary-color);" title="About Tachistoscope">ⓘ</a>
 
     <div class="wrapper">
 
@@ -824,20 +904,51 @@
 
             // Theme Management
             function initializeTheme() {
-                var themeBtnActive = document.querySelector('.theme-btn-active');
-                var themeDropdown = document.querySelector('.theme-dropdown');
-                var themeButtons = document.querySelectorAll('.theme-btn');
+                var menuBtn = document.getElementById('menuBtn');
+                var menuDropdown = document.getElementById('menuDropdown');
+                var themeMenuItem = document.getElementById('themeMenuItem');
+                var themeSubmenu = document.getElementById('themeSubmenu');
+                var themeMenuIcon = document.getElementById('themeMenuIcon');
+                var themeButtons = document.querySelectorAll('.theme-submenu .theme-btn');
 
                 // Load saved theme - use shared 'appTheme' key for consistency across all apps
                 var savedTheme = localStorage.getItem('appTheme') || 'default';
                 if (savedTheme !== 'default') {
                     document.body.classList.add('theme-' + savedTheme);
-                    themeBtnActive.className = 'theme-btn-active theme-' + savedTheme;
                 }
 
-                themeBtnActive.addEventListener('click', function(e) {
+                // Set theme icon
+                var themeIcons = {
+                    'default': '💜',
+                    'black': '⚫',
+                    'blue': '🔵',
+                    'blue-dark': '🌊',
+                    'light': '🍋',
+                    'dark': '🫒',
+                    'warm-light': '🌻',
+                    'warm-dark': '🍂',
+                    'red': '❤️',
+                    'red-dark': '🌹',
+                    'pink': '💗',
+                    'pink-dark': '🌸'
+                };
+                if (themeMenuIcon) {
+                    themeMenuIcon.textContent = themeIcons[savedTheme] || '🎨';
+                }
+
+                menuBtn.addEventListener('click', function(e) {
                     e.stopPropagation();
-                    themeDropdown.classList.toggle('visible');
+                    var isVisible = menuDropdown.style.display === 'block';
+                    menuDropdown.style.display = isVisible ? 'none' : 'block';
+                    if (isVisible) {
+                        themeSubmenu.style.display = 'none';
+                    }
+                });
+
+                themeMenuItem.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    var isVisible = themeSubmenu.style.display === 'grid';
+                    themeSubmenu.style.display = isVisible ? 'none' : 'grid';
                 });
 
                 themeButtons.forEach(function(btn) {
@@ -848,24 +959,29 @@
                         // Remove all theme classes
                         document.body.classList.remove('theme-light', 'theme-dark', 'theme-warm-light', 'theme-warm-dark',
                             'theme-red', 'theme-pink', 'theme-red-dark', 'theme-pink-dark', 'theme-black', 'theme-blue', 'theme-blue-dark');
-                        themeBtnActive.className = 'theme-btn-active';
 
                         // Apply new theme
                         if (theme !== 'default') {
                             document.body.classList.add('theme-' + theme);
                         }
-                        themeBtnActive.classList.add('theme-' + theme);
+
+                        // Update theme icon
+                        if (themeMenuIcon) {
+                            themeMenuIcon.textContent = themeIcons[theme] || '🎨';
+                        }
 
                         // Save theme using shared key for all apps
                         localStorage.setItem('appTheme', theme);
-                        themeDropdown.classList.remove('visible');
+                        themeSubmenu.style.display = 'none';
+                        menuDropdown.style.display = 'none';
                     });
                 });
 
                 // Close dropdown when clicking outside
                 document.addEventListener('click', function(e) {
-                    if (!themeBtnActive.contains(e.target) && !themeDropdown.contains(e.target)) {
-                        themeDropdown.classList.remove('visible');
+                    if (!menuBtn.contains(e.target) && !menuDropdown.contains(e.target)) {
+                        menuDropdown.style.display = 'none';
+                        themeSubmenu.style.display = 'none';
                     }
                 });
             }
