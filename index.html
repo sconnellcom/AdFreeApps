@@ -342,16 +342,19 @@
             display: inline-block;
             font-size: 2em;
             text-decoration: none;
-            background: rgba(255, 255, 255, 0.2);
+            background: none;
             padding: 10px 15px;
             border-radius: 12px;
-            transition: all 0.3s ease;
+            transition: color 0.3s, transform 0.2s ease, opacity 0.2s ease;
             z-index: 1000;
+            color: var(--primary-color);
+            opacity: 0.8;
         }
 
         .about-btn:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: scale(1.05);
+            color: var(--primary-hover);
+            transform: scale(1.1);
+            opacity: 1;
         }
 
         .theme-btn-active {
