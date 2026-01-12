@@ -327,65 +327,38 @@
             font-size: 0.9em;
         }
 
-        /* Theme picker styles */
-        .theme-picker {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1000;
-        }
-
-        .about-btn {
-            position: fixed;
-            top: 5px;
-            left: 10px;
+        footer a {
+            color: rgba(255, 255, 255, 0.9);
+            text-decoration: underline;
+            margin-top: 10px;
             display: inline-block;
-            font-size: 2em;
-            text-decoration: none;
-            background: none;
-            padding: 10px 15px;
-            border-radius: 12px;
-            transition: color 0.3s, transform 0.2s ease, opacity 0.2s ease;
-            z-index: 1000;
-            color: var(--primary-color);
-            opacity: 0.8;
+            transition: color 0.3s ease;
         }
 
-        .about-btn:hover {
-            color: var(--primary-hover);
-            transform: scale(1.1);
-            opacity: 1;
+        footer a:hover {
+            color: white;
         }
 
-        .theme-btn-active {
-            width: 40px;
-            height: 40px;
-            min-width: 40px;
-            min-height: 40px;
-            padding: 0;
-            border-radius: 50%;
-            border: 3px solid white;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-        }
-
-        .theme-btn-active:hover {
-            transform: scale(1.1);
+        /* Theme card styles */
+        .theme-card {
+            position: relative;
         }
 
         .theme-dropdown {
             position: absolute;
-            top: 50px;
-            right: 0;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            margin-bottom: 10px;
             background: var(--container-bg);
             border: 2px solid var(--border-color);
             border-radius: 12px;
             padding: 10px;
             display: none;
-            grid-template-columns: 32px 32px;
+            grid-template-columns: repeat(4, 32px);
             gap: 8px;
             box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
         }
 
         .theme-dropdown.visible {
@@ -405,6 +378,16 @@
         .theme-btn:hover {
             transform: scale(1.1);
             border-color: var(--primary-color);
+        }
+
+        /* Adjust theme dropdown position on mobile */
+        @media (max-width: 480px) {
+            .theme-dropdown {
+                grid-template-columns: repeat(3, 32px);
+                left: auto;
+                right: 0;
+                transform: none;
+            }
         }
 
         .theme-btn-active.theme-default,
@@ -470,28 +453,6 @@
 </head>
 
 <body>
-    <!-- About Button -->
-    <a href="about/" class="about-btn" title="About Ad Free Apps">ⓘ</a>
-
-    <!-- Theme Picker -->
-    <div class="theme-picker">
-        <button class="theme-btn-active theme-default" data-theme="default" title="Change Theme"></button>
-        <div class="theme-dropdown">
-            <button class="theme-btn theme-default" data-theme="default" title="Purple Theme"></button>
-            <button class="theme-btn theme-black" data-theme="black" title="Black Theme"></button>
-            <button class="theme-btn theme-blue" data-theme="blue" title="Blue Theme"></button>
-            <button class="theme-btn theme-blue-dark" data-theme="blue-dark" title="Dark Blue Theme"></button>
-            <button class="theme-btn theme-light" data-theme="light" title="Olive Theme"></button>
-            <button class="theme-btn theme-dark" data-theme="dark" title="Dark Olive Theme"></button>
-            <button class="theme-btn theme-warm-light" data-theme="warm-light" title="Warm Light Theme"></button>
-            <button class="theme-btn theme-warm-dark" data-theme="warm-dark" title="Warm Dark Theme"></button>
-            <button class="theme-btn theme-red" data-theme="red" title="Red Theme"></button>
-            <button class="theme-btn theme-red-dark" data-theme="red-dark" title="Dark Red Theme"></button>
-            <button class="theme-btn theme-pink" data-theme="pink" title="Pink Theme"></button>
-            <button class="theme-btn theme-pink-dark" data-theme="pink-dark" title="Dark Pink Theme"></button>
-        </div>
-    </div>
-
     <div class="container">
         <header>
             <h1>✨ Ad Free Apps</h1>
@@ -558,17 +519,55 @@
                 <h2 class="app-name">Morse Code</h2>
                 <p class="app-description">Learn, convert, and communicate with Morse code using flashlight and camera</p>
             </a>
+
+            <div class="app-card theme-card" id="themeCard" style="cursor: pointer;">
+                <div class="app-icon" id="themeIcon">🎨</div>
+                <h2 class="app-name">Change Theme</h2>
+                <p class="app-description">Choose your preferred color scheme</p>
+                <div class="theme-dropdown">
+                    <button class="theme-btn theme-default" data-theme="default" title="Purple Theme"></button>
+                    <button class="theme-btn theme-black" data-theme="black" title="Black Theme"></button>
+                    <button class="theme-btn theme-blue" data-theme="blue" title="Blue Theme"></button>
+                    <button class="theme-btn theme-blue-dark" data-theme="blue-dark" title="Dark Blue Theme"></button>
+                    <button class="theme-btn theme-light" data-theme="light" title="Olive Theme"></button>
+                    <button class="theme-btn theme-dark" data-theme="dark" title="Dark Olive Theme"></button>
+                    <button class="theme-btn theme-warm-light" data-theme="warm-light" title="Warm Light Theme"></button>
+                    <button class="theme-btn theme-warm-dark" data-theme="warm-dark" title="Warm Dark Theme"></button>
+                    <button class="theme-btn theme-red" data-theme="red" title="Red Theme"></button>
+                    <button class="theme-btn theme-red-dark" data-theme="red-dark" title="Dark Red Theme"></button>
+                    <button class="theme-btn theme-pink" data-theme="pink" title="Pink Theme"></button>
+                    <button class="theme-btn theme-pink-dark" data-theme="pink-dark" title="Dark Pink Theme"></button>
+                </div>
+            </div>
         </div>
 
         <footer>
             <p>No ads. No tracking. Just useful tools.</p>
+            <a href="about/">Learn More</a>
         </footer>
     </div>
 
     <script>
+        // Theme icon mapping
+        const themeIcons = {
+            'default': '💜',
+            'black': '⚫',
+            'blue': '🔵',
+            'blue-dark': '🌊',
+            'light': '🍋',
+            'dark': '🫒',
+            'warm-light': '🌻',
+            'warm-dark': '🍂',
+            'red': '❤️',
+            'red-dark': '🌹',
+            'pink': '💗',
+            'pink-dark': '🌸'
+        };
+
         // Theme Management
         function initializeTheme() {
-            const themeBtnActive = document.querySelector('.theme-btn-active');
+            const themeCard = document.getElementById('themeCard');
+            const themeIcon = document.getElementById('themeIcon');
             const themeDropdown = document.querySelector('.theme-dropdown');
             const themeButtons = document.querySelectorAll('.theme-btn');
 
@@ -576,10 +575,11 @@
             const savedTheme = localStorage.getItem('appTheme') || 'default';
             if (savedTheme !== 'default') {
                 document.body.classList.add(`theme-${savedTheme}`);
-                themeBtnActive.className = `theme-btn-active theme-${savedTheme}`;
             }
+            themeIcon.textContent = themeIcons[savedTheme] || '🎨';
 
-            themeBtnActive.addEventListener('click', (e) => {
+            themeCard.addEventListener('click', (e) => {
+                e.preventDefault();
                 e.stopPropagation();
                 themeDropdown.classList.toggle('visible');
             });
@@ -591,13 +591,14 @@
 
                     // Remove all theme classes
                     document.body.className = '';
-                    themeBtnActive.className = 'theme-btn-active';
 
                     // Apply new theme
                     if (theme !== 'default') {
                         document.body.classList.add(`theme-${theme}`);
                     }
-                    themeBtnActive.classList.add(`theme-${theme}`);
+
+                    // Update icon
+                    themeIcon.textContent = themeIcons[theme] || '🎨';
 
                     // Save theme using shared key for all apps
                     localStorage.setItem('appTheme', theme);
@@ -607,7 +608,7 @@
 
             // Close dropdown when clicking outside
             document.addEventListener('click', (e) => {
-                if (!themeBtnActive.contains(e.target) && !themeDropdown.contains(e.target)) {
+                if (!themeCard.contains(e.target)) {
                     themeDropdown.classList.remove('visible');
                 }
             });
