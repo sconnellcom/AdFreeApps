@@ -1159,22 +1159,25 @@ class Metronome {
         // Each number gets a distinct tone pattern to simulate speech
         // Frequencies chosen to sound voice-like and distinct for each number
         const voiceParams = {
-            1: { freqs: [200, 400, 800], name: 'ONE' },   // Low, steady tone
-            2: { freqs: [300, 600, 1200], name: 'TWO' },  // Mid-rising tone
-            3: { freqs: [350, 700, 1400], name: 'THREE' }, // Higher tone
-            4: { freqs: [280, 560, 1100], name: 'FOUR' }  // Mid tone with character
+            1: [200, 400, 800],   // Low, steady tone
+            2: [300, 600, 1200],  // Mid-rising tone
+            3: [350, 700, 1400],  // Higher tone
+            4: [280, 560, 1100]   // Mid tone with character
         };
 
-        const params = voiceParams[position];
-        if (!params) return;
+        const freqs = voiceParams[position];
+        if (!freqs) return;
 
         // Create a voice-like sound using multiple oscillators (formant synthesis)
         const duration = 0.15; // Short, crisp count
         const gainNode = this.audioContext.createGain();
         gainNode.connect(this.audioContext.destination);
 
+        // Formant amplitude levels: fundamental is loudest, harmonics decrease
+        const FORMANT_AMPLITUDES = [0.4, 0.2, 0.1];
+
         // Create three formant frequencies for voice-like quality
-        params.freqs.forEach((freq, index) => {
+        freqs.forEach((freq, index) => {
             const oscillator = this.audioContext.createOscillator();
             const formantGain = this.audioContext.createGain();
             
@@ -1185,7 +1188,7 @@ class Metronome {
             oscillator.type = 'sine';
             
             // Amplitude decreases with higher formants
-            const amplitude = [0.4, 0.2, 0.1][index] || 0.05;
+            const amplitude = FORMANT_AMPLITUDES[index] || 0.05;
             formantGain.gain.setValueAtTime(amplitude, time);
             formantGain.gain.exponentialRampToValueAtTime(0.01, time + duration);
             
