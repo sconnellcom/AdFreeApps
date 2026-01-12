@@ -10,6 +10,98 @@
     --border-color: #e0e0e0;
     --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     --shadow-hover: 0 4px 16px rgba(0, 0, 0, 0.15);
+    
+    /* Theme colors for header and menu */
+    --primary-color: #667eea;
+    --primary-hover: #764ba2;
+    --text-color: #212121;
+    --container-bg: #ffffff;
+    --surface-bg: #f7fafc;
+}
+
+body.theme-light {
+    --primary-color: #97B22D;
+    --primary-hover: #89751B;
+}
+
+body.theme-dark {
+    --primary-color: #97B22D;
+    --primary-hover: #E3DE81;
+    --bg-main: #1f2d0a;
+    --bg-card: #2a3a12;
+    --text-primary: #E3DAB2;
+    --text-secondary: #E3DE81;
+    --border-color: #3d4d1f;
+}
+
+body.theme-warm-light {
+    --primary-color: #E49A32;
+    --primary-hover: #C6BE28;
+}
+
+body.theme-warm-dark {
+    --primary-color: #E49A32;
+    --primary-hover: #C6BE28;
+    --bg-main: #2d2815;
+    --bg-card: #3a3220;
+    --text-primary: #FEFCAD;
+    --text-secondary: #E3DAB2;
+    --border-color: #4a3f1a;
+}
+
+body.theme-red {
+    --primary-color: #ef4444;
+    --primary-hover: #dc2626;
+}
+
+body.theme-pink {
+    --primary-color: #f472b6;
+    --primary-hover: #ec4899;
+}
+
+body.theme-red-dark {
+    --primary-color: #ef4444;
+    --primary-hover: #f87171;
+    --bg-main: #1a0505;
+    --bg-card: #450a0a;
+    --text-primary: #fecaca;
+    --text-secondary: #fca5a5;
+    --border-color: #7f1d1d;
+}
+
+body.theme-pink-dark {
+    --primary-color: #f472b6;
+    --primary-hover: #f9a8d4;
+    --bg-main: #1a050f;
+    --bg-card: #500724;
+    --text-primary: #fce7f3;
+    --text-secondary: #fbcfe8;
+    --border-color: #831843;
+}
+
+body.theme-black {
+    --primary-color: #6b7280;
+    --primary-hover: #9ca3af;
+    --bg-main: #0f172a;
+    --bg-card: #1e293b;
+    --text-primary: #f3f4f6;
+    --text-secondary: #d1d5db;
+    --border-color: #374151;
+}
+
+body.theme-blue {
+    --primary-color: #60a5fa;
+    --primary-hover: #3b82f6;
+}
+
+body.theme-blue-dark {
+    --primary-color: #38bdf8;
+    --primary-hover: #0ea5e9;
+    --bg-main: #0a1929;
+    --bg-card: #164e63;
+    --text-primary: #e0f2fe;
+    --text-secondary: #7dd3fc;
+    --border-color: #0e7490;
 }
 
 * {
@@ -29,13 +121,198 @@ body {
     max-width: 1400px;
     margin: 0 auto;
     padding: 20px;
+    position: relative;
+}
+
+/* Header Row */
+.header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+}
+
+.app-icon {
+    font-size: 1.8em;
+}
+
+.header-row h1 {
+    color: var(--text-color);
+    font-size: 2em;
+    margin: 0;
+}
+
+/* Menu Button */
+.menu-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+}
+
+.menu-btn:hover .hamburger-icon span {
+    background: var(--primary-hover);
+}
+
+.hamburger-icon {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    width: 24px;
+}
+
+.hamburger-icon span {
+    display: block;
+    width: 100%;
+    height: 3px;
+    background: var(--primary-color);
+    border-radius: 2px;
+    transition: background 0.3s;
+}
+
+/* Menu Dropdown */
+.menu-dropdown {
+    position: absolute;
+    top: 60px;
+    right: 20px;
+    background: var(--container-bg);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    padding: 8px;
+    min-width: 200px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    text-decoration: none;
+    color: var(--text-color);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    background: none;
+    border: none;
+    width: 100%;
+    text-align: left;
+}
+
+.menu-item:hover {
+    background: var(--surface-bg);
+}
+
+.menu-item-button {
+    font-family: inherit;
+    font-size: inherit;
+}
+
+.menu-icon {
+    font-size: 1.3em;
+    width: 24px;
+    text-align: center;
+}
+
+.menu-label {
+    flex: 1;
+    font-size: 1em;
+    font-weight: 500;
+}
+
+/* Theme Submenu */
+.theme-submenu {
+    padding: 8px;
+    margin-top: 4px;
+    margin-bottom: 4px;
+    display: grid;
+    grid-template-columns: repeat(4, 32px);
+    gap: 8px;
+    justify-content: center;
+}
+
+.theme-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.theme-btn:hover {
+    transform: scale(1.1);
+    border-color: var(--primary-color);
+}
+
+.theme-btn.theme-default {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.theme-btn.theme-light {
+    background: linear-gradient(135deg, #97B22D 0%, #E3DE81 100%);
+}
+
+.theme-btn.theme-dark {
+    background: linear-gradient(135deg, #2d3d0f 0%, #97B22D 100%);
+}
+
+.theme-btn.theme-warm-light {
+    background: linear-gradient(135deg, #E49A32 0%, #FEFCAD 100%);
+}
+
+.theme-btn.theme-warm-dark {
+    background: linear-gradient(135deg, #2a2510 0%, #E49A32 100%);
+}
+
+.theme-btn.theme-red {
+    background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+}
+
+.theme-btn.theme-pink {
+    background: linear-gradient(135deg, #ec4899 0%, #be185d 100%);
+}
+
+.theme-btn.theme-red-dark {
+    background: linear-gradient(135deg, #7f1d1d 0%, #ef4444 100%);
+}
+
+.theme-btn.theme-pink-dark {
+    background: linear-gradient(135deg, #831843 0%, #f472b6 100%);
+}
+
+.theme-btn.theme-black {
+    background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+}
+
+.theme-btn.theme-blue {
+    background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+}
+
+.theme-btn.theme-blue-dark {
+    background: linear-gradient(135deg, #0c4a6e 0%, #38bdf8 100%);
 }
 
 header {
     text-align: center;
     margin-bottom: 40px;
     padding: 30px 20px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
     color: white;
     border-radius: 12px;
     box-shadow: var(--shadow);
