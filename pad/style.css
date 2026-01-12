@@ -245,6 +245,7 @@ body {
 }
 
 /* Header Row */
+/* Header Row */
 .header-row {
     display: flex;
     justify-content: space-between;
@@ -254,113 +255,119 @@ body {
     flex-shrink: 0;
 }
 
-.home-btn {
-    text-decoration: none;
-    font-size: 1.5em;
-    padding: 5px;
-    transition: transform 0.2s ease, opacity 0.2s ease;
-    opacity: 0.8;
-    color: var(--primary-color);
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
-.home-btn:hover {
-    transform: scale(1.1);
-    opacity: 1;
+.header-right {
+    display: flex;
+    align-items: center;
+}
+
+.app-icon {
+    font-size: 1.8em;
 }
 
 h1 {
-    text-align: center;
-    color: var(--primary-color);
+    color: var(--text-color);
     font-size: 1.5em;
-    flex: 1;
+    margin: 0;
     transition: color 0.3s ease;
 }
 
-/* Theme Picker */
-.theme-picker {
-    position: relative;
-    margin-right: 10px;
-}
-
-.theme-btn-active {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    border: 3px solid var(--text-color);
+/* Menu Button */
+.menu-btn {
+    background: none;
+    border: none;
     cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    padding: 8px;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
 }
 
-.theme-btn-active:hover {
-    transform: scale(1.1);
+.menu-btn:hover .hamburger-icon span {
+    background: var(--primary-hover);
 }
 
-.theme-btn-active.theme-default {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+.hamburger-icon {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    width: 24px;
 }
 
-.theme-btn-active.theme-light {
-    background: linear-gradient(135deg, #97B22D 0%, #E3DE81 100%);
+.hamburger-icon span {
+    display: block;
+    width: 100%;
+    height: 3px;
+    background: var(--primary-color);
+    border-radius: 2px;
+    transition: background 0.3s;
 }
 
-.theme-btn-active.theme-dark {
-    background: linear-gradient(135deg, #2d3d0f 0%, #97B22D 100%);
-}
-
-.theme-btn-active.theme-warm-light {
-    background: linear-gradient(135deg, #E49A32 0%, #FEFCAD 100%);
-}
-
-.theme-btn-active.theme-warm-dark {
-    background: linear-gradient(135deg, #2a2510 0%, #E49A32 100%);
-}
-
-.theme-btn-active.theme-red {
-    background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
-}
-
-.theme-btn-active.theme-pink {
-    background: linear-gradient(135deg, #ec4899 0%, #be185d 100%);
-}
-
-.theme-btn-active.theme-red-dark {
-    background: linear-gradient(135deg, #7f1d1d 0%, #ef4444 100%);
-}
-
-.theme-btn-active.theme-pink-dark {
-    background: linear-gradient(135deg, #831843 0%, #f472b6 100%);
-}
-
-.theme-btn-active.theme-black {
-    background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
-}
-
-.theme-btn-active.theme-blue {
-    background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
-}
-
-.theme-btn-active.theme-blue-dark {
-    background: linear-gradient(135deg, #0c4a6e 0%, #38bdf8 100%);
-}
-
-.theme-dropdown {
+/* Menu Dropdown */
+.menu-dropdown {
     position: absolute;
-    top: 40px;
-    left: 0;
+    top: 60px;
+    right: 10px;
     background: var(--container-bg);
     border: 2px solid var(--border-color);
     border-radius: 12px;
-    padding: 10px;
-    display: none;
-    grid-template-columns: 32px 32px;
-    gap: 8px;
+    padding: 8px;
+    min-width: 200px;
     box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
     z-index: 1000;
 }
 
-.theme-dropdown.visible {
+.menu-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    text-decoration: none;
+    color: var(--text-color);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    background: none;
+    border: none;
+    width: 100%;
+    text-align: left;
+}
+
+.menu-item:hover {
+    background: var(--surface-bg);
+}
+
+.menu-item-button {
+    font-family: inherit;
+    font-size: inherit;
+}
+
+.menu-icon {
+    font-size: 1.3em;
+    width: 24px;
+    text-align: center;
+}
+
+.menu-label {
+    flex: 1;
+    font-size: 1em;
+    font-weight: 500;
+}
+
+/* Theme Submenu */
+.theme-submenu {
+    padding: 8px;
+    margin-top: 4px;
+    margin-bottom: 4px;
     display: grid;
+    grid-template-columns: repeat(4, 32px);
+    gap: 8px;
+    justify-content: center;
 }
 
 .theme-btn {
@@ -375,11 +382,6 @@ h1 {
 .theme-btn:hover {
     transform: scale(1.1);
     border-color: var(--primary-color);
-}
-
-.theme-btn.active {
-    border: 3px solid var(--text-color);
-    box-shadow: 0 0 0 2px var(--container-bg), 0 0 8px rgba(0, 0, 0, 0.3);
 }
 
 .theme-btn.theme-default {
@@ -428,25 +430,6 @@ h1 {
 
 .theme-btn.theme-blue-dark {
     background: linear-gradient(135deg, #0c4a6e 0%, #38bdf8 100%);
-}
-
-/* Info Button */
-.info-btn {
-    background: none;
-    border: none;
-    font-size: 1.5em;
-    color: var(--primary-color);
-    cursor: pointer;
-    padding: 5px;
-    text-decoration: none;
-    transition: color 0.3s, transform 0.2s ease, opacity 0.2s ease;
-    opacity: 0.8;
-}
-
-.info-btn:hover {
-    color: var(--primary-hover);
-    transform: scale(1.1);
-    opacity: 1;
 }
 
 /* Drum Pads Grid */
