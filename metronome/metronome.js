@@ -1165,19 +1165,20 @@ class Metronome {
         const position = ((this.beatCount - 1) % count) + 1;
         
         const word = this.VOICE_COUNT_WORDS[position];
-        if (!word || !this.speechSynthesis) return;
+        if (!word || !this.speechSynthesis || !this.audioContext) return;
         
-        // Calculate delay from scheduled time to now
-        const now = this.audioContext ? this.audioContext.currentTime : Date.now() / 1000;
-        const delay = Math.max(0, (time - now) * 1000);
+        // Calculate delay from scheduled time to now using audioContext timing
+        const delay = Math.max(0, (time - this.audioContext.currentTime) * 1000);
         
         // Schedule the speech synthesis to occur at the right time
         setTimeout(() => {
-            // Check if speech synthesis is available
+            // Check if speech synthesis is still available
             if (!this.speechSynthesis) return;
             
-            // Cancel any ongoing speech to ensure clean counting
-            this.speechSynthesis.cancel();
+            // Cancel any ongoing speech only if currently speaking
+            if (this.speechSynthesis.speaking) {
+                this.speechSynthesis.cancel();
+            }
             
             // Create utterance for the number
             const utterance = new SpeechSynthesisUtterance(word);
