@@ -8,7 +8,7 @@ class Metronome {
         this.intervalId = null;
         this.audioContext = null;
         this.beatTimes = [];
-        this.soundType = 'beep'; // 'beep', 'bass', 'cymbal', 'tock', 'riff4', 'riff8', 'vibrate', 'silent'
+        this.soundType = 'beep'; // 'beep', 'bass', 'cymbal', 'tock', 'riff4', 'riff8', 'voice4', 'vibrate', 'silent'
         this.beatCount = 0; // For tracking position in drum riffs
         this.sensitivityPercent = 50; // User-facing percentage (0-100)
 
@@ -637,6 +637,9 @@ class Metronome {
             case 'riff8':
                 this.playDrumRiff(8, time);
                 break;
+            case 'voice4':
+                this.playVoiceCount(4, time);
+                break;
             case 'vibrate':
                 this.playVibrate(time);
                 break;
@@ -1144,6 +1147,55 @@ class Metronome {
             }
             // position 8 is rest (no sound)
         }
+    }
+
+    playVoiceCount(count, time) {
+        if (!this.audioContext) return;
+
+        // Calculate position in the count pattern (1-based)
+        const position = ((this.beatCount - 1) % count) + 1;
+
+        // Voice-like synthesis using formant frequencies
+        // Each number gets a distinct tone pattern to simulate speech
+        // Frequencies chosen to sound voice-like and distinct for each number
+        const voiceParams = {
+            1: { freqs: [200, 400, 800], name: 'ONE' },   // Low, steady tone
+            2: { freqs: [300, 600, 1200], name: 'TWO' },  // Mid-rising tone
+            3: { freqs: [350, 700, 1400], name: 'THREE' }, // Higher tone
+            4: { freqs: [280, 560, 1100], name: 'FOUR' }  // Mid tone with character
+        };
+
+        const params = voiceParams[position];
+        if (!params) return;
+
+        // Create a voice-like sound using multiple oscillators (formant synthesis)
+        const duration = 0.15; // Short, crisp count
+        const gainNode = this.audioContext.createGain();
+        gainNode.connect(this.audioContext.destination);
+
+        // Create three formant frequencies for voice-like quality
+        params.freqs.forEach((freq, index) => {
+            const oscillator = this.audioContext.createOscillator();
+            const formantGain = this.audioContext.createGain();
+            
+            oscillator.connect(formantGain);
+            formantGain.connect(gainNode);
+            
+            oscillator.frequency.value = freq;
+            oscillator.type = 'sine';
+            
+            // Amplitude decreases with higher formants
+            const amplitude = [0.4, 0.2, 0.1][index] || 0.05;
+            formantGain.gain.setValueAtTime(amplitude, time);
+            formantGain.gain.exponentialRampToValueAtTime(0.01, time + duration);
+            
+            oscillator.start(time);
+            oscillator.stop(time + duration);
+        });
+
+        // Master gain envelope for crisp attack and decay
+        gainNode.gain.setValueAtTime(0.5, time);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, time + duration);
     }
 
     handleMotion(event) {
