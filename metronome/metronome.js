@@ -72,6 +72,18 @@ class Metronome {
         this.AUDIO_BEAT_DEBOUNCE_MS = 150; // Minimum time between audio beats
         this.AUDIO_HISTORY_SIZE = 30; // Number of energy samples to track for averaging
 
+        // Constants for voice count synthesis
+        // Voice-like synthesis using formant frequencies
+        // Each number gets a distinct tone pattern to simulate speech
+        this.VOICE_COUNT_FREQS = {
+            1: [200, 400, 800],   // Low, steady tone
+            2: [300, 600, 1200],  // Mid-rising tone
+            3: [350, 700, 1400],  // Higher tone
+            4: [280, 560, 1100]   // Mid tone with character
+        };
+        // Formant amplitude levels: fundamental is loudest, harmonics decrease
+        this.VOICE_FORMANT_AMPLITUDES = [0.4, 0.2, 0.1];
+
         // Activity log
         this.activityLog = [];
         this.loadActivityLog();
@@ -1155,26 +1167,13 @@ class Metronome {
         // Calculate position in the count pattern (1-based)
         const position = ((this.beatCount - 1) % count) + 1;
 
-        // Voice-like synthesis using formant frequencies
-        // Each number gets a distinct tone pattern to simulate speech
-        // Frequencies chosen to sound voice-like and distinct for each number
-        const voiceParams = {
-            1: [200, 400, 800],   // Low, steady tone
-            2: [300, 600, 1200],  // Mid-rising tone
-            3: [350, 700, 1400],  // Higher tone
-            4: [280, 560, 1100]   // Mid tone with character
-        };
-
-        const freqs = voiceParams[position];
+        const freqs = this.VOICE_COUNT_FREQS[position];
         if (!freqs) return;
 
         // Create a voice-like sound using multiple oscillators (formant synthesis)
         const duration = 0.15; // Short, crisp count
         const gainNode = this.audioContext.createGain();
         gainNode.connect(this.audioContext.destination);
-
-        // Formant amplitude levels: fundamental is loudest, harmonics decrease
-        const FORMANT_AMPLITUDES = [0.4, 0.2, 0.1];
 
         // Create three formant frequencies for voice-like quality
         freqs.forEach((freq, index) => {
@@ -1188,7 +1187,7 @@ class Metronome {
             oscillator.type = 'sine';
             
             // Amplitude decreases with higher formants
-            const amplitude = FORMANT_AMPLITUDES[index] || 0.05;
+            const amplitude = this.VOICE_FORMANT_AMPLITUDES[index] || 0.05;
             formantGain.gain.setValueAtTime(amplitude, time);
             formantGain.gain.exponentialRampToValueAtTime(0.01, time + duration);
             
