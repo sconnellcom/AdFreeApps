@@ -150,16 +150,24 @@ class Metronome {
             document.body.classList.add('theme-blue-dark');
         }
 
-        // Update active button class in dropdown
-        document.querySelectorAll('.theme-btn').forEach(btn => {
-            btn.classList.remove('active');
-            if (btn.dataset.theme === theme) {
-                btn.classList.add('active');
-            }
-        });
-
-        // Update the main theme button to reflect current theme
-        this.themeBtnActive.className = `theme-btn-active theme-${theme}`;
+        // Set theme icon in menu
+        const themeIcons = {
+            'default': '💜',
+            'black': '⚫',
+            'blue': '🔵',
+            'blue-dark': '🌊',
+            'light': '🍋',
+            'dark': '🫒',
+            'warm-light': '🌻',
+            'warm-dark': '🍂',
+            'red': '❤️',
+            'red-dark': '🌹',
+            'pink': '💗',
+            'pink-dark': '🌸'
+        };
+        if (this.themeMenuIcon) {
+            this.themeMenuIcon.textContent = themeIcons[theme] || '🎨';
+        }
 
         // Save to localStorage using shared key for all apps
         localStorage.setItem('appTheme', theme);
@@ -177,9 +185,16 @@ class Metronome {
         this.accelerationMeter = this.accelerationBar.parentElement;
         this.soundSelector = document.getElementById('soundSelector');
 
-        // Theme elements
-        this.themeBtnActive = document.querySelector('.theme-btn-active');
-        this.themeDropdown = document.querySelector('.theme-dropdown');
+        // Theme elements (new menu-based system)
+        this.menuBtn = document.getElementById('menuBtn');
+        this.menuDropdown = document.getElementById('menuDropdown');
+        this.themeMenuItem = document.getElementById('themeMenuItem');
+        this.themeSubmenu = document.getElementById('themeSubmenu');
+        this.themeMenuIcon = document.getElementById('themeMenuIcon');
+        
+        // Menu items for stats and log
+        this.statsMenuItem = document.getElementById('statsMenuItem');
+        this.logMenuItem = document.getElementById('logMenuItem');
 
         // Beat info displays at the top
         this.beatInfo = document.querySelector('.beat-info');
@@ -208,14 +223,12 @@ class Metronome {
         // this.closeInfoBtn = document.getElementById('closeInfoBtn');
 
         // Log modal elements
-        this.logBtn = document.getElementById('logBtn');
         this.logModal = document.getElementById('logModal');
         this.closeLogBtn = document.getElementById('closeLogBtn');
         this.clearLogBtn = document.getElementById('clearLogBtn');
         this.logEntries = document.getElementById('logEntries');
 
         // Stats modal elements
-        this.statsBtn = document.getElementById('statsBtn');
         this.statsModal = document.getElementById('statsModal');
         this.closeStatsBtn = document.getElementById('closeStatsBtn');
         this.bpmChart = document.getElementById('bpmChart');
@@ -337,43 +350,39 @@ class Metronome {
         //     }
         // });
 
-        // Log button
-        this.logBtn.addEventListener('click', () => {
-            this.displayActivityLog();
-            this.logModal.style.display = 'flex';
-        });
-
         // Close log modal
-        this.closeLogBtn.addEventListener('click', () => {
-            this.logModal.style.display = 'none';
-        });
+        if (this.closeLogBtn) {
+            this.closeLogBtn.addEventListener('click', () => {
+                this.logModal.style.display = 'none';
+            });
+        }
 
         // Close log modal when clicking outside
-        this.logModal.addEventListener('click', (e) => {
-            if (e.target === this.logModal) {
-                this.logModal.style.display = 'none';
-            }
-        });
+        if (this.logModal) {
+            this.logModal.addEventListener('click', (e) => {
+                if (e.target === this.logModal) {
+                    this.logModal.style.display = 'none';
+                }
+            });
+        }
 
         // Clear all logs button
-        this.clearLogBtn.addEventListener('click', () => {
-            if (confirm('Are you sure you want to delete all activity logs? This cannot be undone.')) {
-                this.activityLog = [];
-                this.saveActivityLog();
-                this.displayActivityLog();
-            }
-        });
-
-        // Stats button
-        this.statsBtn.addEventListener('click', () => {
-            this.displayStats();
-            this.statsModal.style.display = 'flex';
-        });
+        if (this.clearLogBtn) {
+            this.clearLogBtn.addEventListener('click', () => {
+                if (confirm('Are you sure you want to delete all activity logs? This cannot be undone.')) {
+                    this.activityLog = [];
+                    this.saveActivityLog();
+                    this.displayActivityLog();
+                }
+            });
+        }
 
         // Close stats modal
-        this.closeStatsBtn.addEventListener('click', () => {
-            this.statsModal.style.display = 'none';
-        });
+        if (this.closeStatsBtn) {
+            this.closeStatsBtn.addEventListener('click', () => {
+                this.statsModal.style.display = 'none';
+            });
+        }
 
         // Close stats modal when clicking outside
         this.statsModal.addEventListener('click', (e) => {
@@ -399,26 +408,53 @@ class Metronome {
             }
         });
 
-        // Theme switcher - toggle dropdown
-        this.themeBtnActive.addEventListener('click', (e) => {
+        // Menu button - toggle menu dropdown
+        this.menuBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            const isVisible = this.themeDropdown.style.display === 'grid';
-            this.themeDropdown.style.display = isVisible ? 'none' : 'grid';
+            const isVisible = this.menuDropdown.style.display === 'block';
+            this.menuDropdown.style.display = isVisible ? 'none' : 'block';
+            // Close theme submenu when closing main menu
+            if (isVisible) {
+                this.themeSubmenu.style.display = 'none';
+            }
         });
 
-        // Theme selection from dropdown
-        document.querySelectorAll('.theme-dropdown .theme-btn').forEach(btn => {
+        // Theme menu item - toggle theme submenu
+        this.themeMenuItem.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isVisible = this.themeSubmenu.style.display === 'grid';
+            this.themeSubmenu.style.display = isVisible ? 'none' : 'grid';
+        });
+
+        // Theme selection from submenu
+        document.querySelectorAll('.theme-submenu .theme-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 this.setTheme(btn.dataset.theme);
-                this.themeDropdown.style.display = 'none';
+                this.themeSubmenu.style.display = 'none';
+                this.menuDropdown.style.display = 'none';
             });
         });
 
-        // Close theme dropdown when clicking outside
+        // Stats menu item
+        this.statsMenuItem.addEventListener('click', () => {
+            this.statsModal.style.display = 'flex';
+            this.menuDropdown.style.display = 'none';
+            this.displayStats();
+        });
+
+        // Log menu item
+        this.logMenuItem.addEventListener('click', () => {
+            this.logModal.style.display = 'flex';
+            this.menuDropdown.style.display = 'none';
+            this.displayLog();
+        });
+
+        // Close menu dropdown when clicking outside
         document.addEventListener('click', (e) => {
-            if (!this.themeBtnActive.contains(e.target) && !this.themeDropdown.contains(e.target)) {
-                this.themeDropdown.style.display = 'none';
+            if (!this.menuBtn.contains(e.target) && !this.menuDropdown.contains(e.target)) {
+                this.menuDropdown.style.display = 'none';
+                this.themeSubmenu.style.display = 'none';
             }
         });
 
