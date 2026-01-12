@@ -414,7 +414,7 @@ class Metronome {
             const isVisible = this.menuDropdown.style.display === 'block';
             this.menuDropdown.style.display = isVisible ? 'none' : 'block';
             // Close theme submenu when closing main menu
-            if (!isVisible === false) {
+            if (isVisible) {
                 this.themeSubmenu.style.display = 'none';
             }
         });
