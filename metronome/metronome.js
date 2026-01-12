@@ -72,17 +72,16 @@ class Metronome {
         this.AUDIO_BEAT_DEBOUNCE_MS = 150; // Minimum time between audio beats
         this.AUDIO_HISTORY_SIZE = 30; // Number of energy samples to track for averaging
 
-        // Constants for voice count synthesis
-        // Voice-like synthesis using formant frequencies
-        // Each number gets a distinct tone pattern to simulate speech
-        this.VOICE_COUNT_FREQS = {
-            1: [200, 400, 800],   // Low, steady tone
-            2: [300, 600, 1200],  // Mid-rising tone
-            3: [350, 700, 1400],  // Higher tone
-            4: [280, 560, 1100]   // Mid tone with character
+        // Constants for voice count using Web Speech API
+        this.VOICE_COUNT_WORDS = {
+            1: 'one',
+            2: 'two',
+            3: 'three',
+            4: 'four'
         };
-        // Formant amplitude levels: fundamental is loudest, harmonics decrease
-        this.VOICE_FORMANT_AMPLITUDES = [0.4, 0.2, 0.1];
+        
+        // Initialize speech synthesis if available
+        this.speechSynthesis = window.speechSynthesis || null;
 
         // Activity log
         this.activityLog = [];
@@ -1162,42 +1161,35 @@ class Metronome {
     }
 
     playVoiceCount(count, time) {
-        if (!this.audioContext) return;
-
         // Calculate position in the count pattern (1-based)
         const position = ((this.beatCount - 1) % count) + 1;
-
-        const freqs = this.VOICE_COUNT_FREQS[position];
-        if (!freqs) return;
-
-        // Create a voice-like sound using multiple oscillators (formant synthesis)
-        const duration = 0.15; // Short, crisp count
-        const gainNode = this.audioContext.createGain();
-        gainNode.connect(this.audioContext.destination);
-
-        // Create three formant frequencies for voice-like quality
-        freqs.forEach((freq, index) => {
-            const oscillator = this.audioContext.createOscillator();
-            const formantGain = this.audioContext.createGain();
+        
+        const word = this.VOICE_COUNT_WORDS[position];
+        if (!word || !this.speechSynthesis) return;
+        
+        // Calculate delay from scheduled time to now
+        const now = this.audioContext ? this.audioContext.currentTime : Date.now() / 1000;
+        const delay = Math.max(0, (time - now) * 1000);
+        
+        // Schedule the speech synthesis to occur at the right time
+        setTimeout(() => {
+            // Check if speech synthesis is available
+            if (!this.speechSynthesis) return;
             
-            oscillator.connect(formantGain);
-            formantGain.connect(gainNode);
+            // Cancel any ongoing speech to ensure clean counting
+            this.speechSynthesis.cancel();
             
-            oscillator.frequency.value = freq;
-            oscillator.type = 'sine';
+            // Create utterance for the number
+            const utterance = new SpeechSynthesisUtterance(word);
             
-            // Amplitude decreases with higher formants
-            const amplitude = this.VOICE_FORMANT_AMPLITUDES[index] || 0.05;
-            formantGain.gain.setValueAtTime(amplitude, time);
-            formantGain.gain.exponentialRampToValueAtTime(0.01, time + duration);
+            // Configure for quick, crisp counting
+            utterance.rate = 1.2;  // Slightly faster for responsiveness
+            utterance.pitch = 1.0;
+            utterance.volume = 0.8;
             
-            oscillator.start(time);
-            oscillator.stop(time + duration);
-        });
-
-        // Master gain envelope for crisp attack and decay
-        gainNode.gain.setValueAtTime(0.5, time);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, time + duration);
+            // Speak the number
+            this.speechSynthesis.speak(utterance);
+        }, delay);
     }
 
     handleMotion(event) {

@@ -32,7 +32,7 @@ The Auto Mode is designed specifically for practicing violin, cello, or other ac
   - **Tock**: Wooden metronome tock sound
   - **4-Count Riff**: Bass drum on beats 1 & 3, Cymbal on beats 2 & 4
   - **8-Count Riff**: Alternating bass and cymbal over 8 beats
-  - **4-Count Voice**: Voice-like counting from 1 to 4 using formant synthesis
+  - **4-Count Voice**: Spoken word counting "one, two, three, four" using Web Speech API
 - **Visual Pulse**: Animated circle that pulses with the beat
 - **Acceleration Meter**: Visual indicator showing motion strength in Auto Mode
 - **Sensitivity Adjustment**: Control how responsive the auto mode is
