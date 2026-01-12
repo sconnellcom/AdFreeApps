@@ -8,7 +8,7 @@ class Metronome {
         this.intervalId = null;
         this.audioContext = null;
         this.beatTimes = [];
-        this.soundType = 'beep'; // 'beep', 'bass', 'cymbal', 'tock', 'riff4', 'riff8', 'vibrate', 'silent'
+        this.soundType = 'beep'; // 'beep', 'bass', 'cymbal', 'tock', 'riff4', 'riff8', 'voice4', 'vibrate', 'silent'
         this.beatCount = 0; // For tracking position in drum riffs
         this.sensitivityPercent = 50; // User-facing percentage (0-100)
 
@@ -71,6 +71,17 @@ class Metronome {
         this.AUDIO_MIN_PEAK_ENERGY = 0.01; // Minimum energy to consider as a beat
         this.AUDIO_BEAT_DEBOUNCE_MS = 150; // Minimum time between audio beats
         this.AUDIO_HISTORY_SIZE = 30; // Number of energy samples to track for averaging
+
+        // Constants for voice count using Web Speech API
+        this.VOICE_COUNT_WORDS = {
+            1: 'one',
+            2: 'two',
+            3: 'three',
+            4: 'four'
+        };
+        
+        // Initialize speech synthesis if available
+        this.speechSynthesis = window.speechSynthesis || null;
 
         // Activity log
         this.activityLog = [];
@@ -637,6 +648,9 @@ class Metronome {
             case 'riff8':
                 this.playDrumRiff(8, time);
                 break;
+            case 'voice4':
+                this.playVoiceCount(4, time);
+                break;
             case 'vibrate':
                 this.playVibrate(time);
                 break;
@@ -1144,6 +1158,39 @@ class Metronome {
             }
             // position 8 is rest (no sound)
         }
+    }
+
+    playVoiceCount(count, time) {
+        // Calculate position in the count pattern (1-based)
+        const position = ((this.beatCount - 1) % count) + 1;
+        
+        const word = this.VOICE_COUNT_WORDS[position];
+        if (!word || !this.speechSynthesis || !this.audioContext) return;
+        
+        // Calculate delay from scheduled time to now using audioContext timing
+        const delay = Math.max(0, (time - this.audioContext.currentTime) * 1000);
+        
+        // Schedule the speech synthesis to occur at the right time
+        setTimeout(() => {
+            // Check if speech synthesis is still available
+            if (!this.speechSynthesis) return;
+            
+            // Cancel any ongoing speech only if currently speaking
+            if (this.speechSynthesis.speaking) {
+                this.speechSynthesis.cancel();
+            }
+            
+            // Create utterance for the number
+            const utterance = new SpeechSynthesisUtterance(word);
+            
+            // Configure for quick, crisp counting
+            utterance.rate = 1.2;  // Slightly faster for responsiveness
+            utterance.pitch = 1.0;
+            utterance.volume = 0.8;
+            
+            // Speak the number
+            this.speechSynthesis.speak(utterance);
+        }, delay);
     }
 
     handleMotion(event) {
