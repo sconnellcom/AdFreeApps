@@ -933,7 +933,6 @@ h1 {
     border: none;
     border-radius: 12px;
     background: var(--surface-bg);
-    border: 2px solid var(--border-color);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -941,7 +940,15 @@ h1 {
     transition: all 0.2s ease;
 }
 
+.settings-menu-btn {
+    border: 2px solid var(--border-color);
+}
+
 .menu-btn:hover,
+.settings-menu-btn:hover {
+    border-color: var(--primary-color);
+}
+
 .settings-menu-btn:hover {
     border-color: var(--primary-color);
 }

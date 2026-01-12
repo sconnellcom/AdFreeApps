@@ -181,6 +181,7 @@ body {
     width: 100%;
     min-height: 550px;
     transition: background 0.3s ease;
+    position: relative;
 }
 
 /* Header Row */
@@ -189,6 +190,7 @@ body {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 30px;
+    position: relative;
 }
 
 .header-left {
