@@ -23,30 +23,51 @@
     </div>
 
     <div class="container">
+        <!-- Standardized Header -->
         <div class="header-row">
-            <a href="../" class="home-btn" title="Back to Home">🏠</a>
-            <h1>🎻 Tuner</h1>
-            <div class="header-buttons">
-                <div class="theme-picker">
-                    <button class="theme-btn-active theme-default" data-theme="default" title="Change Theme"></button>
-                    <div class="theme-dropdown" style="display: none;">
-                        <button class="theme-btn theme-default" data-theme="default" title="Purple Theme"></button>
-                        <button class="theme-btn theme-black" data-theme="black" title="Black Theme"></button>
-                        <button class="theme-btn theme-blue" data-theme="blue" title="Blue Theme"></button>
-                        <button class="theme-btn theme-blue-dark" data-theme="blue-dark" title="Dark Blue Theme"></button>
-                        <button class="theme-btn theme-light" data-theme="light" title="Olive Theme"></button>
-                        <button class="theme-btn theme-dark" data-theme="dark" title="Olive Dark Theme"></button>
-                        <button class="theme-btn theme-warm-light" data-theme="warm-light"
-                            title="Warm Light Theme"></button>
-                        <button class="theme-btn theme-warm-dark" data-theme="warm-dark" title="Warm Dark Theme"></button>
-                        <button class="theme-btn theme-red" data-theme="red" title="Red Theme"></button>
-                        <button class="theme-btn theme-red-dark" data-theme="red-dark" title="Dark Red Theme"></button>
-                        <button class="theme-btn theme-pink" data-theme="pink" title="Pink Theme"></button>
-                        <button class="theme-btn theme-pink-dark" data-theme="pink-dark" title="Dark Pink Theme"></button>
-                    </div>
-                </div>
-                <a href="about/" class="info-btn" title="About Tuner">ⓘ</a>
+            <div class="header-left">
+                <span class="app-icon">🎻</span>
+                <h1>Tuner</h1>
             </div>
+            <div class="header-right">
+                <button id="menuBtn" class="menu-btn" title="Menu">
+                    <span class="hamburger-icon">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Menu Dropdown -->
+        <div id="menuDropdown" class="menu-dropdown" style="display: none;">
+            <a href="../" class="menu-item">
+                <span class="menu-icon">💎</span>
+                <span class="menu-label">Apps</span>
+            </a>
+            <button id="themeMenuItem" class="menu-item menu-item-button">
+                <span class="menu-icon" id="themeMenuIcon">💜</span>
+                <span class="menu-label">Change Theme</span>
+            </button>
+            <div id="themeSubmenu" class="theme-submenu" style="display: none;">
+                <button class="theme-btn theme-default" data-theme="default" title="Purple Theme"></button>
+                <button class="theme-btn theme-black" data-theme="black" title="Black Theme"></button>
+                <button class="theme-btn theme-blue" data-theme="blue" title="Blue Theme"></button>
+                <button class="theme-btn theme-blue-dark" data-theme="blue-dark" title="Dark Blue Theme"></button>
+                <button class="theme-btn theme-light" data-theme="light" title="Olive Theme"></button>
+                <button class="theme-btn theme-dark" data-theme="dark" title="Dark Olive Theme"></button>
+                <button class="theme-btn theme-warm-light" data-theme="warm-light" title="Warm Light Theme"></button>
+                <button class="theme-btn theme-warm-dark" data-theme="warm-dark" title="Warm Dark Theme"></button>
+                <button class="theme-btn theme-red" data-theme="red" title="Red Theme"></button>
+                <button class="theme-btn theme-red-dark" data-theme="red-dark" title="Dark Red Theme"></button>
+                <button class="theme-btn theme-pink" data-theme="pink" title="Pink Theme"></button>
+                <button class="theme-btn theme-pink-dark" data-theme="pink-dark" title="Dark Pink Theme"></button>
+            </div>
+            <a href="about/" class="menu-item">
+                <span class="menu-icon">ⓘ</span>
+                <span class="menu-label">About This App</span>
+            </a>
         </div>
 
         <!-- Instrument Selection -->
