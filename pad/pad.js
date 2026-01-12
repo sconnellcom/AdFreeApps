@@ -96,14 +96,25 @@ class DrumPad {
             document.body.classList.add(`theme-${theme}`);
         }
 
-        document.querySelectorAll('.theme-btn').forEach(btn => {
-            btn.classList.remove('active');
-            if (btn.dataset.theme === theme) {
-                btn.classList.add('active');
-            }
-        });
+        // Set theme icon in menu
+        const themeIcons = {
+            'default': '💜',
+            'black': '⚫',
+            'blue': '🔵',
+            'blue-dark': '🌊',
+            'light': '🍋',
+            'dark': '🫒',
+            'warm-light': '🌻',
+            'warm-dark': '🍂',
+            'red': '❤️',
+            'red-dark': '🌹',
+            'pink': '💗',
+            'pink-dark': '🌸'
+        };
+        if (this.themeMenuIcon) {
+            this.themeMenuIcon.textContent = themeIcons[theme] || '🎨';
+        }
 
-        this.themeBtnActive.className = `theme-btn-active theme-${theme}`;
         // Save to localStorage using shared key for all apps
         localStorage.setItem('appTheme', theme);
     }
@@ -111,11 +122,12 @@ class DrumPad {
 
 
     initializeUI() {
-        // Theme elements
-        this.themeBtnActive = document.querySelector('.theme-btn-active');
-        this.themeDropdown = document.querySelector('.theme-dropdown');
-
-        // No info modal - using landing page link instead
+        // Menu elements
+        this.menuBtn = document.getElementById('menuBtn');
+        this.menuDropdown = document.getElementById('menuDropdown');
+        this.themeMenuItem = document.getElementById('themeMenuItem');
+        this.themeSubmenu = document.getElementById('themeSubmenu');
+        this.themeMenuIcon = document.getElementById('themeMenuIcon');
 
         // Recording controls
         this.recordBtn = document.getElementById('recordBtn');
@@ -154,23 +166,39 @@ class DrumPad {
     }
 
     setupEventListeners() {
-        // Theme picker
-        this.themeBtnActive.addEventListener('click', (e) => {
+        // Menu button - toggle menu dropdown
+        this.menuBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            this.themeDropdown.classList.toggle('visible');
+            const isVisible = this.menuDropdown.style.display === 'block';
+            this.menuDropdown.style.display = isVisible ? 'none' : 'block';
+            // Close theme submenu when closing main menu
+            if (isVisible) {
+                this.themeSubmenu.style.display = 'none';
+            }
         });
 
-        document.querySelectorAll('.theme-dropdown .theme-btn').forEach(btn => {
+        // Theme menu item - toggle theme submenu
+        this.themeMenuItem.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isVisible = this.themeSubmenu.style.display === 'grid';
+            this.themeSubmenu.style.display = isVisible ? 'none' : 'grid';
+        });
+
+        // Theme selection from submenu
+        document.querySelectorAll('.theme-submenu .theme-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 this.setTheme(btn.dataset.theme);
-                this.themeDropdown.classList.remove('visible');
+                this.themeSubmenu.style.display = 'none';
+                this.menuDropdown.style.display = 'none';
             });
         });
 
+        // Close menu when clicking outside
         document.addEventListener('click', (e) => {
-            if (!this.themeBtnActive.contains(e.target) && !this.themeDropdown.contains(e.target)) {
-                this.themeDropdown.classList.remove('visible');
+            if (!this.menuBtn.contains(e.target) && !this.menuDropdown.contains(e.target)) {
+                this.menuDropdown.style.display = 'none';
+                this.themeSubmenu.style.display = 'none';
             }
         });
 

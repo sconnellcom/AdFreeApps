@@ -414,35 +414,64 @@ class ScrollFixApp {
             document.body.classList.add(`theme-${theme}`);
         }
 
-        document.querySelectorAll('.theme-btn-active').forEach(btn => {
-            btn.className = `theme-btn-active theme-${theme}`;
-        });
+        // Set theme icon in menu
+        const themeIcons = {
+            'default': '💜',
+            'black': '⚫',
+            'blue': '🔵',
+            'blue-dark': '🌊',
+            'light': '🍋',
+            'dark': '🫒',
+            'warm-light': '🌻',
+            'warm-dark': '🍂',
+            'red': '❤️',
+            'red-dark': '🌹',
+            'pink': '💗',
+            'pink-dark': '🌸'
+        };
+        const themeMenuIcon = document.getElementById('themeMenuIcon');
+        if (themeMenuIcon) {
+            themeMenuIcon.textContent = themeIcons[theme] || '🎨';
+        }
 
         localStorage.setItem('appTheme', theme);
     }
 
     initializeEventListeners() {
-        // Theme picker
-        const themePicker = document.querySelector('.theme-picker');
-        const themeDropdown = document.querySelector('.theme-dropdown');
+        // Menu and theme picker
+        const menuBtn = document.getElementById('menuBtn');
+        const menuDropdown = document.getElementById('menuDropdown');
+        const themeMenuItem = document.getElementById('themeMenuItem');
+        const themeSubmenu = document.getElementById('themeSubmenu');
 
-        themePicker.addEventListener('click', (e) => {
-            if (e.target.closest('.theme-btn-active')) {
-                const isVisible = themeDropdown.style.display === 'grid';
-                themeDropdown.style.display = isVisible ? 'none' : 'grid';
+        menuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isVisible = menuDropdown.style.display === 'block';
+            menuDropdown.style.display = isVisible ? 'none' : 'block';
+            if (isVisible) {
+                themeSubmenu.style.display = 'none';
             }
         });
 
-        document.querySelectorAll('.theme-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
+        themeMenuItem.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isVisible = themeSubmenu.style.display === 'grid';
+            themeSubmenu.style.display = isVisible ? 'none' : 'grid';
+        });
+
+        document.querySelectorAll('.theme-submenu .theme-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
                 this.setTheme(btn.dataset.theme);
-                themeDropdown.style.display = 'none';
+                themeSubmenu.style.display = 'none';
+                menuDropdown.style.display = 'none';
             });
         });
 
         document.addEventListener('click', (e) => {
-            if (!themePicker.contains(e.target)) {
-                themeDropdown.style.display = 'none';
+            if (!menuBtn.contains(e.target) && !menuDropdown.contains(e.target)) {
+                menuDropdown.style.display = 'none';
+                themeSubmenu.style.display = 'none';
             }
         });
 

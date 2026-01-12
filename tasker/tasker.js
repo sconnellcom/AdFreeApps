@@ -404,7 +404,94 @@ class Tasker {
     }
 }
 
+// Theme initialization
+function initializeTheme() {
+    const menuBtn = document.getElementById('menuBtn');
+    const menuDropdown = document.getElementById('menuDropdown');
+    const themeMenuItem = document.getElementById('themeMenuItem');
+    const themeSubmenu = document.getElementById('themeSubmenu');
+    const themeMenuIcon = document.getElementById('themeMenuIcon');
+    const themeButtons = document.querySelectorAll('.theme-submenu .theme-btn');
+
+    // Load saved theme
+    const savedTheme = localStorage.getItem('appTheme') || 'default';
+    if (savedTheme !== 'default') {
+        document.body.classList.add(`theme-${savedTheme}`);
+    }
+
+    // Set theme icon
+    const themeIcons = {
+        'default': '💜',
+        'black': '⚫',
+        'blue': '🔵',
+        'blue-dark': '🌊',
+        'light': '🍋',
+        'dark': '🫒',
+        'warm-light': '🌻',
+        'warm-dark': '🍂',
+        'red': '❤️',
+        'red-dark': '🌹',
+        'pink': '💗',
+        'pink-dark': '🌸'
+    };
+    if (themeMenuIcon) {
+        themeMenuIcon.textContent = themeIcons[savedTheme] || '🎨';
+    }
+
+    // Menu button - toggle menu dropdown
+    menuBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isVisible = menuDropdown.style.display === 'block';
+        menuDropdown.style.display = isVisible ? 'none' : 'block';
+        if (isVisible) {
+            themeSubmenu.style.display = 'none';
+        }
+    });
+
+    // Theme menu item - toggle theme submenu
+    themeMenuItem.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isVisible = themeSubmenu.style.display === 'grid';
+        themeSubmenu.style.display = isVisible ? 'none' : 'grid';
+    });
+
+    // Theme selection from submenu
+    themeButtons.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const theme = btn.dataset.theme;
+
+            // Remove all theme classes
+            document.body.className = '';
+
+            // Apply new theme
+            if (theme !== 'default') {
+                document.body.classList.add(`theme-${theme}`);
+            }
+
+            // Update theme icon
+            if (themeMenuIcon) {
+                themeMenuIcon.textContent = themeIcons[theme] || '🎨';
+            }
+
+            // Save theme
+            localStorage.setItem('appTheme', theme);
+            themeSubmenu.style.display = 'none';
+            menuDropdown.style.display = 'none';
+        });
+    });
+
+    // Close menu when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!menuBtn.contains(e.target) && !menuDropdown.contains(e.target)) {
+            menuDropdown.style.display = 'none';
+            themeSubmenu.style.display = 'none';
+        }
+    });
+}
+
 // Initialize the app
 document.addEventListener('DOMContentLoaded', () => {
     new Tasker();
+    initializeTheme();
 });
