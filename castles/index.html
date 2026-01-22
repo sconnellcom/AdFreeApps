@@ -560,6 +560,7 @@
                     <div class="controls">
                         <button id="rotateBtn" class="btn">↻ Rotate Tile</button>
                         <button id="newGameBtn" class="btn">New Game</button>
+                        <button id="completeMapBtn" class="btn" style="display: none;">✨ Complete the Map</button>
                     </div>
                 </div>
 
@@ -715,7 +716,7 @@
 
         class Game3D {
             constructor() {
-                this.grid = Array(11).fill(null).map(() => Array(11).fill(null));
+                this.grid = Array(15).fill(null).map(() => Array(15).fill(null));
                 this.currentTile = null;
                 this.tilesPlaced = 0;
                 this.tilePool = this.createTilePool();
@@ -914,7 +915,7 @@
 
             setupGrid() {
                 // Create grid base
-                const gridSize = 11;
+                const gridSize = 15;
                 const tileSize = 1;
                 const gridGeometry = new THREE.PlaneGeometry(gridSize * tileSize, gridSize * tileSize);
                 const gridMaterial = new THREE.MeshBasicMaterial({ 
@@ -932,7 +933,7 @@
                 this.gridScene.add(gridHelper);
 
                 // Store tile meshes
-                this.tileMeshes = Array(11).fill(null).map(() => Array(11).fill(null));
+                this.tileMeshes = Array(15).fill(null).map(() => Array(15).fill(null));
             }
 
             handleGridClick(event) {
@@ -951,10 +952,10 @@
                 
                 for (let intersect of intersects) {
                     const point = intersect.point;
-                    const x = Math.floor(point.x + 5.5);
-                    const z = Math.floor(point.z + 5.5);
+                    const x = Math.floor(point.x + 7.5);
+                    const z = Math.floor(point.z + 7.5);
                     
-                    if (x >= 0 && x < 11 && z >= 0 && z < 11) {
+                    if (x >= 0 && x < 15 && z >= 0 && z < 15) {
                         this.placeTile(x, z);
                         break;
                     }
@@ -977,7 +978,7 @@
                 
                 // Create and position mesh
                 const mesh = this.currentTile.createMesh(1);
-                mesh.position.set(x - 5, 0, z - 5);
+                mesh.position.set(x - 7, 0, z - 7);
                 mesh.rotation.y = (this.currentTile.rotation * Math.PI) / 180;
                 this.gridScene.add(mesh);
                 this.tileMeshes[z][x] = mesh;
@@ -1000,7 +1001,7 @@
                     const adjX = x + dir.dx;
                     const adjZ = z + dir.dz;
 
-                    if (adjX >= 0 && adjX < 11 && adjZ >= 0 && adjZ < 11) {
+                    if (adjX >= 0 && adjX < 15 && adjZ >= 0 && adjZ < 15) {
                         const adjacentTile = this.grid[adjZ][adjX];
                         
                         if (adjacentTile !== null) {
@@ -1096,8 +1097,8 @@
             }
 
             placeStartingTile() {
-                const centerX = 5;
-                const centerZ = 5;
+                const centerX = 7;
+                const centerZ = 7;
                 const startTile = new Tile3D(['grass', 'road', 'city', 'road']);
                 this.grid[centerZ][centerX] = startTile;
                 
@@ -1112,7 +1113,9 @@
 
             drawNextTile() {
                 if (this.tilePool.length === 0) {
-                    alert('Game Over! No more tiles.');
+                    // Game over - show complete map button
+                    document.getElementById('completeMapBtn').style.display = 'block';
+                    alert('Game Over! No more tiles. Use "Complete the Map" to fill remaining spaces.');
                     return;
                 }
                 
@@ -1132,6 +1135,116 @@
                 this.updateStats();
             }
 
+            completeMap() {
+                // Find all empty cells and try to fill them with tiles that fit
+                const emptyCells = [];
+                
+                for (let z = 0; z < 15; z++) {
+                    for (let x = 0; x < 15; x++) {
+                        if (this.grid[z][x] === null) {
+                            emptyCells.push({ x, z });
+                        }
+                    }
+                }
+
+                if (emptyCells.length === 0) {
+                    alert('Map is already complete!');
+                    return;
+                }
+
+                // Generate all possible tile combinations
+                const allPossibleTiles = this.generateAllPossibleTiles();
+                
+                let filledCount = 0;
+                
+                // Try to fill each empty cell
+                for (const cell of emptyCells) {
+                    const { x, z } = cell;
+                    
+                    // Find a tile that fits
+                    const fittingTile = this.findFittingTile(x, z, allPossibleTiles);
+                    
+                    if (fittingTile) {
+                        // Place the tile
+                        this.grid[z][x] = fittingTile;
+                        
+                        const mesh = fittingTile.createMesh(1);
+                        mesh.position.set(x - 7, 0, z - 7);
+                        mesh.rotation.y = (fittingTile.rotation * Math.PI) / 180;
+                        this.gridScene.add(mesh);
+                        this.tileMeshes[z][x] = mesh;
+                        
+                        this.tilesPlaced++;
+                        filledCount++;
+                    }
+                }
+                
+                this.updateStats();
+                document.getElementById('completeMapBtn').style.display = 'none';
+                alert(`Map completed! Filled ${filledCount} empty spaces.`);
+            }
+
+            generateAllPossibleTiles() {
+                const types = ['grass', 'road', 'city', 'castle'];
+                const tiles = [];
+                
+                // Generate common patterns
+                for (const t1 of types) {
+                    for (const t2 of types) {
+                        for (const t3 of types) {
+                            for (const t4 of types) {
+                                tiles.push([t1, t2, t3, t4]);
+                            }
+                        }
+                    }
+                }
+                
+                return tiles;
+            }
+
+            findFittingTile(x, z, possibleTiles) {
+                // Check what edges are required based on neighbors
+                const requiredEdges = [null, null, null, null]; // [top, right, bottom, left]
+                
+                const directions = [
+                    { dx: 0, dz: -1, edge: 0, adjacentEdge: 2 }, // top
+                    { dx: 1, dz: 0, edge: 1, adjacentEdge: 3 },  // right
+                    { dx: 0, dz: 1, edge: 2, adjacentEdge: 0 },  // bottom
+                    { dx: -1, dz: 0, edge: 3, adjacentEdge: 1 }  // left
+                ];
+
+                for (const dir of directions) {
+                    const adjX = x + dir.dx;
+                    const adjZ = z + dir.dz;
+
+                    if (adjX >= 0 && adjX < 15 && adjZ >= 0 && adjZ < 15) {
+                        const adjacentTile = this.grid[adjZ][adjX];
+                        
+                        if (adjacentTile !== null) {
+                            requiredEdges[dir.edge] = adjacentTile.getEdge(dir.adjacentEdge);
+                        }
+                    }
+                }
+
+                // Try to find a tile that matches all required edges
+                for (const tileEdges of possibleTiles) {
+                    let matches = true;
+                    
+                    for (let i = 0; i < 4; i++) {
+                        if (requiredEdges[i] !== null && tileEdges[i] !== requiredEdges[i]) {
+                            matches = false;
+                            break;
+                        }
+                    }
+                    
+                    if (matches) {
+                        return new Tile3D(tileEdges);
+                    }
+                }
+                
+                return null;
+            }
+
             setupEventListeners() {
                 document.getElementById('rotateBtn').addEventListener('click', () => {
                     if (this.currentTile) {
@@ -1146,14 +1259,17 @@
 
                 document.getElementById('newGameBtn').addEventListener('click', () => {
                     if (confirm('Start a new game?')) {
+                        // Hide complete map button
+                        document.getElementById('completeMapBtn').style.display = 'none';
+                        
                         // Clear grid
-                        this.grid = Array(11).fill(null).map(() => Array(11).fill(null));
+                        this.grid = Array(15).fill(null).map(() => Array(15).fill(null));
                         this.tilesPlaced = 0;
                         this.tilePool = this.createTilePool();
                         
                         // Clear meshes
-                        for (let z = 0; z < 11; z++) {
-                            for (let x = 0; x < 11; x++) {
+                        for (let z = 0; z < 15; z++) {
+                            for (let x = 0; x < 15; x++) {
                                 if (this.tileMeshes[z][x]) {
                                     this.gridScene.remove(this.tileMeshes[z][x]);
                                     this.tileMeshes[z][x] = null;
@@ -1164,6 +1280,10 @@
                         this.placeStartingTile();
                         this.drawNextTile();
                     }
+                });
+
+                document.getElementById('completeMapBtn').addEventListener('click', () => {
+                    this.completeMap();
                 });
 
                 // Handle window resize
