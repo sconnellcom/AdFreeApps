@@ -52,16 +52,21 @@ The game currently uses **procedurally generated 3D tiles** with Three.js geomet
 
 ## Customization
 
-To load custom GLTF models instead of procedural tiles, modify the `createMesh()` method in `Tile3D` class:
+To load custom GLTF models instead of procedural tiles, you'll need to import GLTFLoader and modify the `createMesh()` method in the `Tile3D` class:
 
 ```javascript
-// Load from GLTF file
+// First, add GLTFLoader script to your HTML head:
+// <script src="https://unpkg.com/three@0.160.0/examples/js/loaders/GLTFLoader.js"></script>
+
+// Then modify createMesh() method:
 const loader = new THREE.GLTFLoader();
 loader.load('models/grass_tile_01.glb', (gltf) => {
     this.mesh = gltf.scene;
     // Apply rotation, position, etc.
 });
 ```
+
+Note: GLTFLoader is not part of the core Three.js library and requires a separate import from Three.js examples.
 
 ## Tile Specifications
 

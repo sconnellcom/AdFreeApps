@@ -9,6 +9,7 @@
     <link rel="manifest" href="../manifest.json">
     <link rel="apple-touch-icon" href="../icons/icon-152x152.png">
     <title>Castles - 3D Tile Game</title>
+    <script async src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -1192,11 +1193,18 @@
             }
         }
 
-        // Start the game
+        // Start the game - wait for Three.js to load
         let game;
-        window.addEventListener('DOMContentLoaded', () => {
+        function initGame() {
+            if (typeof THREE === 'undefined') {
+                console.log('Waiting for Three.js to load...');
+                setTimeout(initGame, 100);
+                return;
+            }
             game = new Game3D();
-        });
+        }
+        
+        window.addEventListener('DOMContentLoaded', initGame);
     </script>
 </body>
 
