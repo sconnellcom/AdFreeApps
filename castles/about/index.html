@@ -299,9 +299,38 @@
         <p class="subtitle">A strategic tile-placement game with 3D tiles</p>
 
         <h2>About</h2>
-        <p>Castles is a strategic tile-placement game inspired by Carcassonne. Build a medieval landscape by placing
-            tiles with roads, cities, grass fields, and castles. Each tile features 3D visual effects to bring your
-            world to life.</p>
+        <p>Castles is a strategic tile-placement game inspired by Carcassonne with full 3D rendering. Build a medieval
+            landscape by placing tiles with roads, cities, grass fields, and castles. Each tile is rendered in true 3D
+            using Three.js, allowing you to view and interact with your medieval world from any angle.</p>
+
+        <h2>3D Features</h2>
+        <div class="feature-list">
+            <ul>
+                <li><strong>True 3D Rendering:</strong> Tiles are rendered as 3D objects using Three.js/WebGL</li>
+                <li><strong>Interactive Camera:</strong> Drag to rotate, Ctrl+drag to pan, scroll to zoom</li>
+                <li><strong>Tile Preview Rotation:</strong> Click and drag on the tile preview to examine from any angle</li>
+                <li><strong>3D Model Support:</strong> Supports GLTF/GLB, OBJ, and FBX model formats</li>
+                <li><strong>Dynamic Lighting:</strong> Ambient and directional lighting creates depth and realism</li>
+                <li><strong>Smooth Controls:</strong> Intuitive camera controls for the best viewing experience</li>
+            </ul>
+        </div>
+
+        <h2>Camera Controls</h2>
+        <div class="feature-list">
+            <h3>Game Board (Main View):</h3>
+            <ul>
+                <li><strong>Drag (Left Click):</strong> Rotate camera around the board</li>
+                <li><strong>Ctrl/Cmd + Drag:</strong> Pan the camera to move your view</li>
+                <li><strong>Mouse Wheel:</strong> Zoom in and out</li>
+                <li><strong>Click on Grid:</strong> Place the current tile</li>
+            </ul>
+
+            <h3>Tile Preview (Right Panel):</h3>
+            <ul>
+                <li><strong>Drag:</strong> Rotate the tile to view it from different angles</li>
+                <li><strong>Initial View:</strong> Starts at a 45° isometric angle</li>
+            </ul>
+        </div>
 
         <h2>How to Play</h2>
         <div class="feature-list">
@@ -320,15 +349,28 @@
         <h2>Features</h2>
         <div class="feature-list">
             <ul>
-                <li><strong>3D Tile Graphics:</strong> Each tile features depth and shading for a 3D appearance</li>
+                <li><strong>True 3D Graphics:</strong> Full 3D rendering using Three.js with real-time lighting</li>
+                <li><strong>3D Model Support:</strong> Load custom GLTF/GLB, OBJ, or FBX tile models</li>
                 <li><strong>72 Unique Tiles:</strong> Various combinations of roads, cities, grass, and castles</li>
                 <li><strong>11x11 Grid:</strong> Plenty of space to build your medieval landscape</li>
-                <li><strong>Tile Rotation:</strong> Rotate tiles to fit them perfectly into your landscape</li>
+                <li><strong>Interactive Camera:</strong> Rotate, pan, and zoom to view from any angle</li>
+                <li><strong>Tile Rotation:</strong> Rotate tiles and preview from all sides before placing</li>
                 <li><strong>Edge Matching:</strong> Automatic validation ensures tiles match their neighbors</li>
                 <li><strong>Game Stats:</strong> Track your progress with tiles placed and remaining</li>
                 <li><strong>Theme Support:</strong> Choose from 12 different color themes</li>
                 <li><strong>No Ads or Tracking:</strong> Enjoy a clean, distraction-free experience</li>
             </ul>
+        </div>
+
+        <h2>3D Model Support</h2>
+        <p>You can provide custom 3D models for tiles in the following formats:</p>
+        <div class="feature-list">
+            <ul>
+                <li><strong>GLTF/GLB (Recommended):</strong> Industry standard, optimized for web, supports animations and PBR materials</li>
+                <li><strong>OBJ:</strong> Simple format with material support (.mtl files)</li>
+                <li><strong>FBX:</strong> Popular in game development, supports complex models</li>
+            </ul>
+            <p>Place your 3D model files in the <code>/castles/models/</code> directory. See the README in that directory for naming conventions and specifications.</p>
         </div>
 
         <h2>Tile Types</h2>
@@ -345,6 +387,8 @@
         <h2>Tips for Success</h2>
         <div class="feature-list">
             <ul>
+                <li>Use camera controls to get the best view of your board</li>
+                <li>Rotate the tile preview to examine all edges before placing</li>
                 <li>Plan ahead - think about which tiles might come next</li>
                 <li>Try to keep your options open by avoiding dead ends</li>
                 <li>Rotate tiles to find the best placement option</li>
@@ -353,11 +397,21 @@
             </ul>
         </div>
 
+        <h2>Technical Requirements</h2>
+        <p>Castles uses WebGL for 3D rendering via the Three.js library. Your browser must support:</p>
+        <div class="feature-list">
+            <ul>
+                <li>WebGL 1.0 or higher</li>
+                <li>Modern JavaScript (ES6+)</li>
+                <li>Recommended: Desktop or tablet device for best camera control experience</li>
+            </ul>
+        </div>
+
         <h2>Privacy & Technical Details</h2>
-        <p>Castles is a client-side application that runs entirely in your browser. No data is collected, tracked, or
+        <p>Castles is a client-side application that runs entirely in your browser using WebGL. No data is collected, tracked, or
             sent to any server. Your game progress is stored locally in your browser.</p>
 
-        <p><strong>Technologies used:</strong> HTML5, CSS3, JavaScript, Canvas API</p>
+        <p><strong>Technologies used:</strong> HTML5, CSS3, JavaScript, Three.js, WebGL, Canvas API</p>
 
         <div class="btn-group">
             <a href="../" class="btn">Play Now</a>

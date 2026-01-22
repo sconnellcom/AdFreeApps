@@ -334,41 +334,33 @@
         .grid-container {
             background: var(--surface-bg);
             border-radius: 12px;
-            padding: 15px;
-            overflow: auto;
-        }
-
-        .game-grid {
-            display: inline-grid;
-            grid-template-columns: repeat(11, 60px);
-            gap: 2px;
-            background: var(--border-color);
-            padding: 2px;
-            border-radius: 8px;
-        }
-
-        .grid-cell {
-            width: 60px;
-            height: 60px;
-            background: var(--container-bg);
-            border: 1px solid var(--border-color);
-            cursor: pointer;
-            transition: all 0.2s;
+            padding: 0;
+            overflow: hidden;
             position: relative;
+            min-height: 500px;
         }
 
-        .grid-cell:hover:not(.occupied) {
-            background: var(--surface-bg);
-            transform: scale(1.05);
+        .grid-container canvas {
+            width: 100% !important;
+            height: 100% !important;
+            cursor: grab;
         }
 
-        .grid-cell.occupied {
-            cursor: default;
+        .grid-container canvas:active {
+            cursor: grabbing;
         }
 
-        .grid-cell canvas {
-            width: 100%;
-            height: 100%;
+        .grid-instructions {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.85em;
+            pointer-events: none;
+            z-index: 10;
         }
 
         .side-panel {
@@ -393,16 +385,25 @@
             background: var(--container-bg);
             border: 2px solid var(--border-color);
             border-radius: 8px;
-            padding: 10px;
+            padding: 0;
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 150px;
+            min-height: 200px;
+            height: 200px;
+            width: 100%;
+            overflow: hidden;
+            position: relative;
         }
 
         .current-tile canvas {
-            max-width: 100%;
-            max-height: 150px;
+            width: 100% !important;
+            height: 100% !important;
+            cursor: grab;
+        }
+
+        .current-tile canvas:active {
+            cursor: grabbing;
         }
 
         .controls {
@@ -541,16 +542,16 @@
         </div>
 
         <div class="game-area">
-            <div class="grid-container">
-                <div id="gameGrid" class="game-grid"></div>
+            <div class="grid-container" id="gridContainer">
+                <div class="grid-instructions">
+                    Drag to rotate view • Ctrl+Drag to pan • Scroll to zoom
+                </div>
             </div>
 
             <div class="side-panel">
                 <div class="panel-section">
                     <h3>Current Tile</h3>
-                    <div class="current-tile">
-                        <canvas id="currentTileCanvas" width="120" height="120"></canvas>
-                    </div>
+                    <div class="current-tile" id="tilePreview"></div>
                 </div>
 
                 <div class="panel-section">
@@ -628,12 +629,13 @@
             themeSubmenu.style.display = 'none';
         });
 
-        // Game logic
-        class Tile {
+        // Game logic with Three.js
+        class Tile3D {
             constructor(edges) {
                 // edges: [top, right, bottom, left] - each can be 'grass', 'road', 'city', 'castle'
                 this.edges = edges;
                 this.rotation = 0; // 0, 90, 180, 270
+                this.mesh = null;
             }
 
             rotate() {
@@ -646,75 +648,376 @@
                 return this.edges[direction];
             }
 
-            draw(ctx, size) {
-                ctx.clearRect(0, 0, size, size);
+            // Create 3D mesh for this tile
+            createMesh(size = 1) {
+                const group = new THREE.Group();
                 
-                // Draw base
-                ctx.fillStyle = '#7cb342';
-                ctx.fillRect(0, 0, size, size);
+                // Base tile
+                const baseGeometry = new THREE.BoxGeometry(size, 0.2, size);
+                const baseMaterial = new THREE.MeshPhongMaterial({ color: 0x7cb342 });
+                const base = new THREE.Mesh(baseGeometry, baseMaterial);
+                group.add(base);
 
-                // Draw edges with 3D effect
+                // Edge indicators (raised sections)
+                const edgeSize = size * 0.3;
+                const edgeHeight = 0.3;
                 const colors = {
-                    grass: '#7cb342',
-                    road: '#8d6e63',
-                    city: '#616161',
-                    castle: '#9c27b0'
+                    grass: 0x7cb342,
+                    road: 0x8d6e63,
+                    city: 0x616161,
+                    castle: 0x9c27b0
                 };
 
-                const edgeSize = size * 0.3;
-                
                 // Top edge
-                this.drawEdge(ctx, size / 2 - edgeSize / 2, 0, edgeSize, edgeSize, colors[this.edges[0]]);
-                
+                const topGeo = new THREE.BoxGeometry(edgeSize, edgeHeight, edgeSize * 0.5);
+                const topMat = new THREE.MeshPhongMaterial({ color: colors[this.edges[0]] });
+                const topEdge = new THREE.Mesh(topGeo, topMat);
+                topEdge.position.set(0, edgeHeight / 2 + 0.1, -size / 2 + edgeSize / 4);
+                group.add(topEdge);
+
                 // Right edge
-                this.drawEdge(ctx, size - edgeSize, size / 2 - edgeSize / 2, edgeSize, edgeSize, colors[this.edges[1]]);
-                
+                const rightGeo = new THREE.BoxGeometry(edgeSize * 0.5, edgeHeight, edgeSize);
+                const rightMat = new THREE.MeshPhongMaterial({ color: colors[this.edges[1]] });
+                const rightEdge = new THREE.Mesh(rightGeo, rightMat);
+                rightEdge.position.set(size / 2 - edgeSize / 4, edgeHeight / 2 + 0.1, 0);
+                group.add(rightEdge);
+
                 // Bottom edge
-                this.drawEdge(ctx, size / 2 - edgeSize / 2, size - edgeSize, edgeSize, edgeSize, colors[this.edges[2]]);
-                
+                const bottomGeo = new THREE.BoxGeometry(edgeSize, edgeHeight, edgeSize * 0.5);
+                const bottomMat = new THREE.MeshPhongMaterial({ color: colors[this.edges[2]] });
+                const bottomEdge = new THREE.Mesh(bottomGeo, bottomMat);
+                bottomEdge.position.set(0, edgeHeight / 2 + 0.1, size / 2 - edgeSize / 4);
+                group.add(bottomEdge);
+
                 // Left edge
-                this.drawEdge(ctx, 0, size / 2 - edgeSize / 2, edgeSize, edgeSize, colors[this.edges[3]]);
+                const leftGeo = new THREE.BoxGeometry(edgeSize * 0.5, edgeHeight, edgeSize);
+                const leftMat = new THREE.MeshPhongMaterial({ color: colors[this.edges[3]] });
+                const leftEdge = new THREE.Mesh(leftGeo, leftMat);
+                leftEdge.position.set(-size / 2 + edgeSize / 4, edgeHeight / 2 + 0.1, 0);
+                group.add(leftEdge);
 
-                // Draw center indicator
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-                ctx.beginPath();
-                ctx.arc(size / 2, size / 2, size * 0.15, 0, Math.PI * 2);
-                ctx.fill();
+                // Center indicator
+                const centerGeo = new THREE.SphereGeometry(size * 0.1, 16, 16);
+                const centerMat = new THREE.MeshPhongMaterial({ 
+                    color: 0xffffff, 
+                    transparent: true, 
+                    opacity: 0.5 
+                });
+                const center = new THREE.Mesh(centerGeo, centerMat);
+                center.position.y = 0.3;
+                group.add(center);
 
-                // Add 3D effect
-                ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
-                ctx.lineWidth = 2;
-                ctx.strokeRect(0, 0, size, size);
-            }
-
-            drawEdge(ctx, x, y, w, h, color) {
-                // Base color
-                ctx.fillStyle = color;
-                ctx.fillRect(x, y, w, h);
-
-                // Highlight
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-                ctx.fillRect(x, y, w, h / 3);
-
-                // Shadow
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
-                ctx.fillRect(x, y + h * 2 / 3, w, h / 3);
+                this.mesh = group;
+                return group;
             }
         }
 
-        class Game {
+        class Game3D {
             constructor() {
                 this.grid = Array(11).fill(null).map(() => Array(11).fill(null));
                 this.currentTile = null;
                 this.tilesPlaced = 0;
                 this.tilePool = this.createTilePool();
+                
+                // Three.js setup
+                this.setupRenderers();
+                this.setupGrid();
                 this.init();
+            }
+
+            setupRenderers() {
+                // Main grid renderer
+                const gridContainer = document.getElementById('gridContainer');
+                this.gridScene = new THREE.Scene();
+                this.gridScene.background = new THREE.Color(0xf7fafc);
+                
+                this.gridRenderer = new THREE.WebGLRenderer({ antialias: true });
+                this.gridRenderer.setSize(gridContainer.clientWidth, 500);
+                this.gridRenderer.shadowMap.enabled = true;
+                gridContainer.appendChild(this.gridRenderer.domElement);
+
+                this.gridCamera = new THREE.PerspectiveCamera(
+                    60,
+                    gridContainer.clientWidth / 500,
+                    0.1,
+                    1000
+                );
+                this.gridCamera.position.set(8, 12, 8);
+                this.gridCamera.lookAt(0, 0, 0);
+
+                // Lighting for grid
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+                this.gridScene.add(ambientLight);
+                
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                directionalLight.position.set(10, 20, 10);
+                directionalLight.castShadow = true;
+                this.gridScene.add(directionalLight);
+
+                // Grid controls - drag to rotate, ctrl+drag to pan
+                this.setupGridControls();
+
+                // Tile preview renderer
+                const tilePreview = document.getElementById('tilePreview');
+                this.tileScene = new THREE.Scene();
+                this.tileScene.background = new THREE.Color(0xffffff);
+                
+                this.tileRenderer = new THREE.WebGLRenderer({ antialias: true });
+                this.tileRenderer.setSize(tilePreview.clientWidth, 200);
+                tilePreview.appendChild(this.tileRenderer.domElement);
+
+                this.tileCamera = new THREE.PerspectiveCamera(
+                    50,
+                    tilePreview.clientWidth / 200,
+                    0.1,
+                    100
+                );
+                this.tileCamera.position.set(2, 2, 2);
+                this.tileCamera.lookAt(0, 0, 0);
+
+                // Lighting for tile preview
+                const tileAmbient = new THREE.AmbientLight(0xffffff, 0.6);
+                this.tileScene.add(tileAmbient);
+                
+                const tileLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                tileLight.position.set(3, 5, 3);
+                this.tileScene.add(tileLight);
+
+                // Tile preview controls - drag to rotate
+                this.setupTileControls();
+
+                // Animation loop
+                this.animate();
+            }
+
+            setupGridControls() {
+                const canvas = this.gridRenderer.domElement;
+                let isDragging = false;
+                let previousMousePosition = { x: 0, y: 0 };
+                let cameraRotation = { theta: Math.PI / 4, phi: Math.PI / 3 };
+                let cameraDistance = 18;
+                let cameraTarget = new THREE.Vector3(0, 0, 0);
+
+                canvas.addEventListener('mousedown', (e) => {
+                    isDragging = true;
+                    previousMousePosition = { x: e.clientX, y: e.clientY };
+                });
+
+                canvas.addEventListener('mousemove', (e) => {
+                    if (!isDragging) return;
+
+                    const deltaX = e.clientX - previousMousePosition.x;
+                    const deltaY = e.clientY - previousMousePosition.y;
+
+                    if (e.ctrlKey || e.metaKey) {
+                        // Pan camera
+                        const panSpeed = 0.02;
+                        const right = new THREE.Vector3();
+                        const up = new THREE.Vector3(0, 1, 0);
+                        this.gridCamera.getWorldDirection(right);
+                        right.cross(up).normalize();
+                        
+                        cameraTarget.add(right.multiplyScalar(-deltaX * panSpeed));
+                        cameraTarget.y += deltaY * panSpeed;
+                    } else {
+                        // Rotate camera
+                        cameraRotation.theta -= deltaX * 0.01;
+                        cameraRotation.phi -= deltaY * 0.01;
+                        cameraRotation.phi = Math.max(0.1, Math.min(Math.PI / 2, cameraRotation.phi));
+                    }
+
+                    this.updateGridCamera(cameraRotation, cameraDistance, cameraTarget);
+                    previousMousePosition = { x: e.clientX, y: e.clientY };
+                });
+
+                canvas.addEventListener('mouseup', () => {
+                    isDragging = false;
+                });
+
+                canvas.addEventListener('mouseleave', () => {
+                    isDragging = false;
+                });
+
+                canvas.addEventListener('wheel', (e) => {
+                    e.preventDefault();
+                    cameraDistance += e.deltaY * 0.01;
+                    cameraDistance = Math.max(5, Math.min(30, cameraDistance));
+                    this.updateGridCamera(cameraRotation, cameraDistance, cameraTarget);
+                });
+
+                // Click to place tile
+                canvas.addEventListener('click', (e) => {
+                    if (e.ctrlKey || e.metaKey) return; // Ignore ctrl+click
+                    this.handleGridClick(e);
+                });
+
+                this.updateGridCamera(cameraRotation, cameraDistance, cameraTarget);
+            }
+
+            updateGridCamera(rotation, distance, target) {
+                const x = target.x + distance * Math.sin(rotation.phi) * Math.cos(rotation.theta);
+                const y = target.y + distance * Math.cos(rotation.phi);
+                const z = target.z + distance * Math.sin(rotation.phi) * Math.sin(rotation.theta);
+                
+                this.gridCamera.position.set(x, y, z);
+                this.gridCamera.lookAt(target);
+            }
+
+            setupTileControls() {
+                const canvas = this.tileRenderer.domElement;
+                let isDragging = false;
+                let previousMousePosition = { x: 0, y: 0 };
+                let rotation = { x: -Math.PI / 6, y: Math.PI / 4 };
+
+                canvas.addEventListener('mousedown', (e) => {
+                    isDragging = true;
+                    previousMousePosition = { x: e.clientX, y: e.clientY };
+                });
+
+                canvas.addEventListener('mousemove', (e) => {
+                    if (!isDragging) return;
+
+                    const deltaX = e.clientX - previousMousePosition.x;
+                    const deltaY = e.clientY - previousMousePosition.y;
+
+                    rotation.y += deltaX * 0.01;
+                    rotation.x += deltaY * 0.01;
+                    
+                    // Limit vertical rotation
+                    rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, rotation.x));
+
+                    this.updateTileCamera(rotation);
+                    previousMousePosition = { x: e.clientX, y: e.clientY };
+                });
+
+                canvas.addEventListener('mouseup', () => {
+                    isDragging = false;
+                });
+
+                canvas.addEventListener('mouseleave', () => {
+                    isDragging = false;
+                });
+
+                this.updateTileCamera(rotation);
+            }
+
+            updateTileCamera(rotation) {
+                const distance = 3;
+                const x = distance * Math.cos(rotation.x) * Math.cos(rotation.y);
+                const y = distance * Math.sin(rotation.x);
+                const z = distance * Math.cos(rotation.x) * Math.sin(rotation.y);
+                
+                this.tileCamera.position.set(x, y, z);
+                this.tileCamera.lookAt(0, 0, 0);
+            }
+
+            setupGrid() {
+                // Create grid base
+                const gridSize = 11;
+                const tileSize = 1;
+                const gridGeometry = new THREE.PlaneGeometry(gridSize * tileSize, gridSize * tileSize);
+                const gridMaterial = new THREE.MeshBasicMaterial({ 
+                    color: 0xe2e8f0, 
+                    side: THREE.DoubleSide 
+                });
+                const gridPlane = new THREE.Mesh(gridGeometry, gridMaterial);
+                gridPlane.rotation.x = -Math.PI / 2;
+                gridPlane.position.y = -0.1;
+                this.gridScene.add(gridPlane);
+
+                // Grid lines
+                const gridHelper = new THREE.GridHelper(gridSize * tileSize, gridSize, 0x999999, 0xcccccc);
+                gridHelper.position.y = -0.09;
+                this.gridScene.add(gridHelper);
+
+                // Store tile meshes
+                this.tileMeshes = Array(11).fill(null).map(() => Array(11).fill(null));
+            }
+
+            handleGridClick(event) {
+                if (!this.currentTile) return;
+
+                const rect = this.gridRenderer.domElement.getBoundingClientRect();
+                const mouse = new THREE.Vector2();
+                mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+                mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+                const raycaster = new THREE.Raycaster();
+                raycaster.setFromCamera(mouse, this.gridCamera);
+
+                // Raycast to find grid position
+                const intersects = raycaster.intersectObjects(this.gridScene.children, true);
+                
+                for (let intersect of intersects) {
+                    const point = intersect.point;
+                    const x = Math.floor(point.x + 5.5);
+                    const z = Math.floor(point.z + 5.5);
+                    
+                    if (x >= 0 && x < 11 && z >= 0 && z < 11) {
+                        this.placeTile(x, z);
+                        break;
+                    }
+                }
+            }
+
+            placeTile(x, z) {
+                if (this.grid[z][x] !== null) {
+                    alert('This cell is already occupied!');
+                    return;
+                }
+
+                if (!this.canPlaceTile(x, z)) {
+                    alert('Tile edges must match adjacent tiles!');
+                    return;
+                }
+
+                // Place tile
+                this.grid[z][x] = this.currentTile;
+                
+                // Create and position mesh
+                const mesh = this.currentTile.createMesh(1);
+                mesh.position.set(x - 5, 0, z - 5);
+                mesh.rotation.y = (this.currentTile.rotation * Math.PI) / 180;
+                this.gridScene.add(mesh);
+                this.tileMeshes[z][x] = mesh;
+
+                this.tilesPlaced++;
+                this.drawNextTile();
+            }
+
+            canPlaceTile(x, z) {
+                let hasAdjacentTile = false;
+                
+                const directions = [
+                    { dx: 0, dz: -1, edge: 0, adjacentEdge: 2 }, // top
+                    { dx: 1, dz: 0, edge: 1, adjacentEdge: 3 },  // right
+                    { dx: 0, dz: 1, edge: 2, adjacentEdge: 0 },  // bottom
+                    { dx: -1, dz: 0, edge: 3, adjacentEdge: 1 }  // left
+                ];
+
+                for (const dir of directions) {
+                    const adjX = x + dir.dx;
+                    const adjZ = z + dir.dz;
+
+                    if (adjX >= 0 && adjX < 11 && adjZ >= 0 && adjZ < 11) {
+                        const adjacentTile = this.grid[adjZ][adjX];
+                        
+                        if (adjacentTile !== null) {
+                            hasAdjacentTile = true;
+                            
+                            if (this.currentTile.getEdge(dir.edge) !== adjacentTile.getEdge(dir.adjacentEdge)) {
+                                return false;
+                            }
+                        }
+                    }
+                }
+
+                return hasAdjacentTile;
             }
 
             createTilePool() {
                 const pool = [];
                 
-                // Create variety of tiles
                 // All grass (corners)
                 for (let i = 0; i < 4; i++) {
                     pool.push(['grass', 'grass', 'grass', 'grass']);
@@ -736,9 +1039,7 @@
                 }
                 
                 // Road cross
-                for (let i = 0; i < 1; i++) {
-                    pool.push(['road', 'road', 'road', 'road']);
-                }
+                pool.push(['road', 'road', 'road', 'road']);
                 
                 // City straight
                 for (let i = 0; i < 5; i++) {
@@ -770,7 +1071,7 @@
                     pool.push(['castle', 'city', 'grass', 'grass']);
                 }
                 
-                // Mixed complex tiles - curated combinations
+                // Complex tiles
                 pool.push(['grass', 'city', 'road', 'grass']);
                 pool.push(['grass', 'castle', 'grass', 'road']);
                 pool.push(['road', 'city', 'grass', 'city']);
@@ -795,10 +1096,15 @@
 
             placeStartingTile() {
                 const centerX = 5;
-                const centerY = 5;
-                const startTile = new Tile(['grass', 'road', 'city', 'road']);
-                this.grid[centerY][centerX] = startTile;
-                this.renderGridCell(centerX, centerY);
+                const centerZ = 5;
+                const startTile = new Tile3D(['grass', 'road', 'city', 'road']);
+                this.grid[centerZ][centerX] = startTile;
+                
+                const mesh = startTile.createMesh(1);
+                mesh.position.set(0, 0, 0);
+                this.gridScene.add(mesh);
+                this.tileMeshes[centerZ][centerX] = mesh;
+                
                 this.tilesPlaced++;
                 this.updateStats();
             }
@@ -809,134 +1115,68 @@
                     return;
                 }
                 
+                // Remove old preview tile
+                if (this.currentTile && this.currentTile.mesh) {
+                    this.tileScene.remove(this.currentTile.mesh);
+                }
+                
                 const randomIndex = Math.floor(Math.random() * this.tilePool.length);
                 const tileEdges = this.tilePool.splice(randomIndex, 1)[0];
-                this.currentTile = new Tile(tileEdges);
-                this.renderCurrentTile();
+                this.currentTile = new Tile3D(tileEdges);
+                
+                // Add to preview scene
+                const previewMesh = this.currentTile.createMesh(1);
+                this.tileScene.add(previewMesh);
+                
                 this.updateStats();
             }
 
-            renderCurrentTile() {
-                const canvas = document.getElementById('currentTileCanvas');
-                const ctx = canvas.getContext('2d');
-                if (this.currentTile) {
-                    this.currentTile.draw(ctx, 120);
-                }
-            }
-
             setupEventListeners() {
-                const gameGrid = document.getElementById('gameGrid');
-                
-                // Create grid cells
-                for (let y = 0; y < 11; y++) {
-                    for (let x = 0; x < 11; x++) {
-                        const cell = document.createElement('div');
-                        cell.className = 'grid-cell';
-                        cell.dataset.x = x;
-                        cell.dataset.y = y;
-                        
-                        cell.addEventListener('click', () => this.handleCellClick(x, y));
-                        
-                        gameGrid.appendChild(cell);
-                    }
-                }
-
                 document.getElementById('rotateBtn').addEventListener('click', () => {
                     if (this.currentTile) {
                         this.currentTile.rotate();
-                        this.renderCurrentTile();
+                        
+                        // Update preview
+                        this.tileScene.remove(this.currentTile.mesh);
+                        const newMesh = this.currentTile.createMesh(1);
+                        this.tileScene.add(newMesh);
                     }
                 });
 
                 document.getElementById('newGameBtn').addEventListener('click', () => {
                     if (confirm('Start a new game?')) {
+                        // Clear grid
                         this.grid = Array(11).fill(null).map(() => Array(11).fill(null));
                         this.tilesPlaced = 0;
                         this.tilePool = this.createTilePool();
-                        this.clearGrid();
+                        
+                        // Clear meshes
+                        for (let z = 0; z < 11; z++) {
+                            for (let x = 0; x < 11; x++) {
+                                if (this.tileMeshes[z][x]) {
+                                    this.gridScene.remove(this.tileMeshes[z][x]);
+                                    this.tileMeshes[z][x] = null;
+                                }
+                            }
+                        }
+                        
                         this.placeStartingTile();
                         this.drawNextTile();
                     }
                 });
-            }
 
-            handleCellClick(x, y) {
-                if (!this.currentTile) return;
-                
-                if (this.grid[y][x] !== null) {
-                    alert('This cell is already occupied!');
-                    return;
-                }
-
-                if (!this.canPlaceTile(x, y)) {
-                    alert('Tile edges must match adjacent tiles!');
-                    return;
-                }
-
-                this.grid[y][x] = this.currentTile;
-                this.renderGridCell(x, y);
-                this.tilesPlaced++;
-                this.drawNextTile();
-            }
-
-            canPlaceTile(x, y) {
-                // Check if at least one adjacent cell is occupied
-                let hasAdjacentTile = false;
-                
-                // Check each direction
-                const directions = [
-                    { dx: 0, dy: -1, edge: 0, adjacentEdge: 2 }, // top
-                    { dx: 1, dy: 0, edge: 1, adjacentEdge: 3 },  // right
-                    { dx: 0, dy: 1, edge: 2, adjacentEdge: 0 },  // bottom
-                    { dx: -1, dy: 0, edge: 3, adjacentEdge: 1 }  // left
-                ];
-
-                for (const dir of directions) {
-                    const adjX = x + dir.dx;
-                    const adjY = y + dir.dy;
-
-                    if (adjX >= 0 && adjX < 11 && adjY >= 0 && adjY < 11) {
-                        const adjacentTile = this.grid[adjY][adjX];
-                        
-                        if (adjacentTile !== null) {
-                            hasAdjacentTile = true;
-                            
-                            // Check if edges match
-                            if (this.currentTile.getEdge(dir.edge) !== adjacentTile.getEdge(dir.adjacentEdge)) {
-                                return false;
-                            }
-                        }
-                    }
-                }
-
-                return hasAdjacentTile;
-            }
-
-            renderGridCell(x, y) {
-                const cells = document.querySelectorAll('.grid-cell');
-                const index = y * 11 + x;
-                const cell = cells[index];
-                
-                if (this.grid[y][x] !== null) {
-                    cell.classList.add('occupied');
+                // Handle window resize
+                window.addEventListener('resize', () => {
+                    const gridContainer = document.getElementById('gridContainer');
+                    const tilePreview = document.getElementById('tilePreview');
                     
-                    const canvas = document.createElement('canvas');
-                    canvas.width = 60;
-                    canvas.height = 60;
-                    const ctx = canvas.getContext('2d');
+                    this.gridCamera.aspect = gridContainer.clientWidth / 500;
+                    this.gridCamera.updateProjectionMatrix();
+                    this.gridRenderer.setSize(gridContainer.clientWidth, 500);
                     
-                    this.grid[y][x].draw(ctx, 60);
-                    
-                    cell.innerHTML = '';
-                    cell.appendChild(canvas);
-                }
-            }
-
-            clearGrid() {
-                const cells = document.querySelectorAll('.grid-cell');
-                cells.forEach(cell => {
-                    cell.classList.remove('occupied');
-                    cell.innerHTML = '';
+                    this.tileCamera.aspect = tilePreview.clientWidth / 200;
+                    this.tileCamera.updateProjectionMatrix();
+                    this.tileRenderer.setSize(tilePreview.clientWidth, 200);
                 });
             }
 
@@ -944,12 +1184,18 @@
                 document.getElementById('tilesPlaced').textContent = this.tilesPlaced;
                 document.getElementById('tilesRemaining').textContent = this.tilePool.length;
             }
+
+            animate() {
+                requestAnimationFrame(() => this.animate());
+                this.gridRenderer.render(this.gridScene, this.gridCamera);
+                this.tileRenderer.render(this.tileScene, this.tileCamera);
+            }
         }
 
         // Start the game
         let game;
         window.addEventListener('DOMContentLoaded', () => {
-            game = new Game();
+            game = new Game3D();
         });
     </script>
 </body>
