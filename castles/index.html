@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="../manifest.json">
+    <link rel="apple-touch-icon" href="../icons/icon-152x152.png">
+    <title>Castles - 3D Tile Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-gradient-start: #667eea;
+            --bg-gradient-end: #764ba2;
+            --primary-color: #667eea;
+            --primary-hover: #764ba2;
+            --container-bg: #ffffff;
+            --text-color: #333333;
+            --text-secondary: #555555;
+            --border-color: #e2e8f0;
+            --surface-bg: #f7fafc;
+            --tile-grass: #7cb342;
+            --tile-road: #8d6e63;
+            --tile-city: #616161;
+            --tile-castle: #9c27b0;
+        }
+
+        body.theme-light {
+            --bg-gradient-start: #97B22D;
+            --bg-gradient-end: #89751B;
+            --primary-color: #97B22D;
+            --primary-hover: #89751B;
+            --container-bg: #FEFCAD;
+            --text-color: #2d3748;
+            --text-secondary: #4a5568;
+            --border-color: #E3DE81;
+            --surface-bg: #f1ff72;
+        }
+
+        body.theme-dark {
+            --bg-gradient-start: #2d3d0f;
+            --bg-gradient-end: #1a2208;
+            --primary-color: #97B22D;
+            --primary-hover: #d2cc54;
+            --container-bg: #1f2d0a;
+            --text-color: #E3DAB2;
+            --text-secondary: #d2cc54;
+            --border-color: #3d4d1f;
+            --surface-bg: #2a3a12;
+        }
+
+        body.theme-warm-light {
+            --bg-gradient-start: #C6BE28;
+            --bg-gradient-end: #97B22D;
+            --primary-color: #E49A32;
+            --primary-hover: #C6BE28;
+            --container-bg: #FEFCAD;
+            --text-color: #3d3d1f;
+            --text-secondary: #5d5d3f;
+            --border-color: #E3DAB2;
+            --surface-bg: #faedb6;
+        }
+
+        body.theme-warm-dark {
+            --bg-gradient-start: #2a2510;
+            --bg-gradient-end: #1a1808;
+            --primary-color: #E49A32;
+            --primary-hover: #C6BE28;
+            --container-bg: #2d2815;
+            --text-color: #FEFCAD;
+            --text-secondary: #E3DAB2;
+            --border-color: #4a3f1a;
+            --surface-bg: #3a3220;
+        }
+
+        body.theme-red {
+            --bg-gradient-start: #dc2626;
+            --bg-gradient-end: #991b1b;
+            --primary-color: #ef4444;
+            --primary-hover: #dc2626;
+            --container-bg: #ffffff;
+            --text-color: #1f2937;
+            --text-secondary: #374151;
+            --border-color: #fecaca;
+            --surface-bg: #fef2f2;
+        }
+
+        body.theme-pink {
+            --bg-gradient-start: #ec4899;
+            --bg-gradient-end: #be185d;
+            --primary-color: #f472b6;
+            --primary-hover: #ec4899;
+            --container-bg: #ffffff;
+            --text-color: #1f2937;
+            --text-secondary: #374151;
+            --border-color: #fbcfe8;
+            --surface-bg: #fdf2f8;
+        }
+
+        body.theme-red-dark {
+            --bg-gradient-start: #7f1d1d;
+            --bg-gradient-end: #450a0a;
+            --primary-color: #ef4444;
+            --primary-hover: #f87171;
+            --container-bg: #1a0505;
+            --text-color: #fecaca;
+            --text-secondary: #fca5a5;
+            --border-color: #7f1d1d;
+            --surface-bg: #450a0a;
+        }
+
+        body.theme-pink-dark {
+            --bg-gradient-start: #831843;
+            --bg-gradient-end: #500724;
+            --primary-color: #f472b6;
+            --primary-hover: #f9a8d4;
+            --container-bg: #1a050f;
+            --text-color: #fce7f3;
+            --text-secondary: #fbcfe8;
+            --border-color: #831843;
+            --surface-bg: #500724;
+        }
+
+        body.theme-black {
+            --bg-gradient-start: #1f2937;
+            --bg-gradient-end: #111827;
+            --primary-color: #6b7280;
+            --primary-hover: #9ca3af;
+            --container-bg: #0f172a;
+            --text-color: #f3f4f6;
+            --text-secondary: #d1d5db;
+            --border-color: #374151;
+            --surface-bg: #1e293b;
+        }
+
+        body.theme-blue {
+            --bg-gradient-start: #3b82f6;
+            --bg-gradient-end: #1e40af;
+            --primary-color: #60a5fa;
+            --primary-hover: #3b82f6;
+            --container-bg: #ffffff;
+            --text-color: #1f2937;
+            --text-secondary: #374151;
+            --border-color: #bfdbfe;
+            --surface-bg: #eff6ff;
+        }
+
+        body.theme-blue-dark {
+            --bg-gradient-start: #0c4a6e;
+            --bg-gradient-end: #082f49;
+            --primary-color: #38bdf8;
+            --primary-hover: #0ea5e9;
+            --container-bg: #0a1929;
+            --text-color: #e0f2fe;
+            --text-secondary: #7dd3fc;
+            --border-color: #0e7490;
+            --surface-bg: #164e63;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+            min-height: 100vh;
+            padding: 10px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: var(--container-bg);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .app-icon {
+            font-size: 2em;
+        }
+
+        h1 {
+            color: var(--text-color);
+            font-size: 1.8em;
+        }
+
+        .menu-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+        }
+
+        .hamburger-icon {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .hamburger-icon span {
+            width: 25px;
+            height: 3px;
+            background: var(--text-color);
+            border-radius: 3px;
+            transition: all 0.3s;
+        }
+
+        .menu-dropdown {
+            position: absolute;
+            right: 20px;
+            top: 70px;
+            background: var(--container-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 10px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 15px;
+            text-decoration: none;
+            color: var(--text-color);
+            border-radius: 8px;
+            transition: background 0.2s;
+            cursor: pointer;
+            border: none;
+            background: none;
+            width: 100%;
+            font-size: 1em;
+        }
+
+        .menu-item:hover {
+            background: var(--surface-bg);
+        }
+
+        .theme-submenu {
+            display: grid;
+            grid-template-columns: repeat(4, 32px);
+            gap: 8px;
+            padding: 10px;
+        }
+
+        .theme-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .theme-btn:hover {
+            transform: scale(1.1);
+            border-color: var(--primary-color);
+        }
+
+        .theme-btn.theme-default {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .theme-btn.theme-black {
+            background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+        }
+
+        .theme-btn.theme-blue {
+            background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+        }
+
+        .theme-btn.theme-blue-dark {
+            background: linear-gradient(135deg, #0c4a6e 0%, #38bdf8 100%);
+        }
+
+        .theme-btn.theme-light {
+            background: linear-gradient(135deg, #97B22D 0%, #E3DE81 100%);
+        }
+
+        .theme-btn.theme-dark {
+            background: linear-gradient(135deg, #2d3d0f 0%, #97B22D 100%);
+        }
+
+        .theme-btn.theme-warm-light {
+            background: linear-gradient(135deg, #E49A32 0%, #FEFCAD 100%);
+        }
+
+        .theme-btn.theme-warm-dark {
+            background: linear-gradient(135deg, #2a2510 0%, #E49A32 100%);
+        }
+
+        .theme-btn.theme-red {
+            background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+        }
+
+        .theme-btn.theme-red-dark {
+            background: linear-gradient(135deg, #7f1d1d 0%, #ef4444 100%);
+        }
+
+        .theme-btn.theme-pink {
+            background: linear-gradient(135deg, #ec4899 0%, #be185d 100%);
+        }
+
+        .theme-btn.theme-pink-dark {
+            background: linear-gradient(135deg, #831843 0%, #f472b6 100%);
+        }
+
+        .game-area {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .grid-container {
+            background: var(--surface-bg);
+            border-radius: 12px;
+            padding: 15px;
+            overflow: auto;
+        }
+
+        .game-grid {
+            display: inline-grid;
+            grid-template-columns: repeat(11, 60px);
+            gap: 2px;
+            background: var(--border-color);
+            padding: 2px;
+            border-radius: 8px;
+        }
+
+        .grid-cell {
+            width: 60px;
+            height: 60px;
+            background: var(--container-bg);
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .grid-cell:hover:not(.occupied) {
+            background: var(--surface-bg);
+            transform: scale(1.05);
+        }
+
+        .grid-cell.occupied {
+            cursor: default;
+        }
+
+        .grid-cell canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .side-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .panel-section {
+            background: var(--surface-bg);
+            border-radius: 12px;
+            padding: 15px;
+        }
+
+        .panel-section h3 {
+            color: var(--text-color);
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .current-tile {
+            background: var(--container-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 150px;
+        }
+
+        .current-tile canvas {
+            max-width: 100%;
+            max-height: 150px;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            background: var(--primary-color);
+            color: white;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .stats {
+            color: var(--text-color);
+            line-height: 1.8;
+        }
+
+        .stats-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .stats-item:last-child {
+            border-bottom: none;
+        }
+
+        .stats-label {
+            color: var(--text-secondary);
+        }
+
+        .stats-value {
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        @media (max-width: 768px) {
+            .game-area {
+                grid-template-columns: 1fr;
+            }
+
+            .game-grid {
+                grid-template-columns: repeat(11, 50px);
+            }
+
+            .grid-cell {
+                width: 50px;
+                height: 50px;
+            }
+
+            .side-panel {
+                order: -1;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 10px;
+            }
+
+            .game-grid {
+                grid-template-columns: repeat(11, 40px);
+            }
+
+            .grid-cell {
+                width: 40px;
+                height: 40px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header-row">
+            <div class="header-left">
+                <span class="app-icon">🏰</span>
+                <h1>Castles</h1>
+            </div>
+            <div class="header-right">
+                <button id="menuBtn" class="menu-btn" title="Menu">
+                    <span class="hamburger-icon">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </span>
+                </button>
+            </div>
+        </div>
+
+        <div id="menuDropdown" class="menu-dropdown" style="display: none;">
+            <a href="../" class="menu-item">
+                <span class="menu-icon">💎</span>
+                <span class="menu-label">Apps</span>
+            </a>
+            <button id="themeMenuItem" class="menu-item">
+                <span class="menu-icon" id="themeMenuIcon">💜</span>
+                <span class="menu-label">Change Theme</span>
+            </button>
+            <div id="themeSubmenu" class="theme-submenu" style="display: none;">
+                <button class="theme-btn theme-default" data-theme="default" title="Purple Theme"></button>
+                <button class="theme-btn theme-black" data-theme="black" title="Black Theme"></button>
+                <button class="theme-btn theme-blue" data-theme="blue" title="Blue Theme"></button>
+                <button class="theme-btn theme-blue-dark" data-theme="blue-dark" title="Dark Blue Theme"></button>
+                <button class="theme-btn theme-light" data-theme="light" title="Olive Theme"></button>
+                <button class="theme-btn theme-dark" data-theme="dark" title="Dark Olive Theme"></button>
+                <button class="theme-btn theme-warm-light" data-theme="warm-light" title="Warm Light Theme"></button>
+                <button class="theme-btn theme-warm-dark" data-theme="warm-dark" title="Warm Dark Theme"></button>
+                <button class="theme-btn theme-red" data-theme="red" title="Red Theme"></button>
+                <button class="theme-btn theme-red-dark" data-theme="red-dark" title="Dark Red Theme"></button>
+                <button class="theme-btn theme-pink" data-theme="pink" title="Pink Theme"></button>
+                <button class="theme-btn theme-pink-dark" data-theme="pink-dark" title="Dark Pink Theme"></button>
+            </div>
+            <a href="about/" class="menu-item">
+                <span class="menu-icon">ⓘ</span>
+                <span class="menu-label">About This App</span>
+            </a>
+        </div>
+
+        <div class="game-area">
+            <div class="grid-container">
+                <div id="gameGrid" class="game-grid"></div>
+            </div>
+
+            <div class="side-panel">
+                <div class="panel-section">
+                    <h3>Current Tile</h3>
+                    <div class="current-tile">
+                        <canvas id="currentTileCanvas" width="120" height="120"></canvas>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h3>Controls</h3>
+                    <div class="controls">
+                        <button id="rotateBtn" class="btn">↻ Rotate Tile</button>
+                        <button id="newGameBtn" class="btn">New Game</button>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h3>Game Stats</h3>
+                    <div class="stats">
+                        <div class="stats-item">
+                            <span class="stats-label">Tiles Placed:</span>
+                            <span class="stats-value" id="tilesPlaced">0</span>
+                        </div>
+                        <div class="stats-item">
+                            <span class="stats-label">Tiles Remaining:</span>
+                            <span class="stats-value" id="tilesRemaining">--</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Theme management
+        const themeIcons = {
+            'default': '💜', 'black': '⚫', 'blue': '🔵', 'blue-dark': '🌊',
+            'light': '🍋', 'dark': '🫒', 'warm-light': '🌻', 'warm-dark': '🍂',
+            'red': '❤️', 'red-dark': '🌹', 'pink': '💗', 'pink-dark': '🌸'
+        };
+
+        const menuBtn = document.getElementById('menuBtn');
+        const menuDropdown = document.getElementById('menuDropdown');
+        const themeMenuItem = document.getElementById('themeMenuItem');
+        const themeSubmenu = document.getElementById('themeSubmenu');
+        const themeMenuIcon = document.getElementById('themeMenuIcon');
+
+        const savedTheme = localStorage.getItem('appTheme') || 'default';
+        if (savedTheme !== 'default') {
+            document.body.classList.add(`theme-${savedTheme}`);
+        }
+        themeMenuIcon.textContent = themeIcons[savedTheme] || '💜';
+
+        menuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            menuDropdown.style.display = menuDropdown.style.display === 'none' ? 'block' : 'none';
+        });
+
+        themeMenuItem.addEventListener('click', (e) => {
+            e.stopPropagation();
+            themeSubmenu.style.display = themeSubmenu.style.display === 'none' ? 'grid' : 'none';
+        });
+
+        document.querySelectorAll('.theme-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const theme = btn.dataset.theme;
+                document.body.className = '';
+                if (theme !== 'default') {
+                    document.body.classList.add(`theme-${theme}`);
+                }
+                themeMenuIcon.textContent = themeIcons[theme] || '💜';
+                localStorage.setItem('appTheme', theme);
+                menuDropdown.style.display = 'none';
+                themeSubmenu.style.display = 'none';
+            });
+        });
+
+        document.addEventListener('click', () => {
+            menuDropdown.style.display = 'none';
+            themeSubmenu.style.display = 'none';
+        });
+
+        // Game logic
+        class Tile {
+            constructor(edges) {
+                // edges: [top, right, bottom, left] - each can be 'grass', 'road', 'city', 'castle'
+                this.edges = edges;
+                this.rotation = 0; // 0, 90, 180, 270
+            }
+
+            rotate() {
+                // Rotate edges clockwise
+                this.edges = [this.edges[3], this.edges[0], this.edges[1], this.edges[2]];
+                this.rotation = (this.rotation + 90) % 360;
+            }
+
+            getEdge(direction) {
+                return this.edges[direction];
+            }
+
+            draw(ctx, size) {
+                ctx.clearRect(0, 0, size, size);
+                
+                // Draw base
+                ctx.fillStyle = '#7cb342';
+                ctx.fillRect(0, 0, size, size);
+
+                // Draw edges with 3D effect
+                const colors = {
+                    grass: '#7cb342',
+                    road: '#8d6e63',
+                    city: '#616161',
+                    castle: '#9c27b0'
+                };
+
+                const edgeSize = size * 0.3;
+                
+                // Top edge
+                this.drawEdge(ctx, size / 2 - edgeSize / 2, 0, edgeSize, edgeSize, colors[this.edges[0]]);
+                
+                // Right edge
+                this.drawEdge(ctx, size - edgeSize, size / 2 - edgeSize / 2, edgeSize, edgeSize, colors[this.edges[1]]);
+                
+                // Bottom edge
+                this.drawEdge(ctx, size / 2 - edgeSize / 2, size - edgeSize, edgeSize, edgeSize, colors[this.edges[2]]);
+                
+                // Left edge
+                this.drawEdge(ctx, 0, size / 2 - edgeSize / 2, edgeSize, edgeSize, colors[this.edges[3]]);
+
+                // Draw center indicator
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.beginPath();
+                ctx.arc(size / 2, size / 2, size * 0.15, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Add 3D effect
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(0, 0, size, size);
+            }
+
+            drawEdge(ctx, x, y, w, h, color) {
+                // Base color
+                ctx.fillStyle = color;
+                ctx.fillRect(x, y, w, h);
+
+                // Highlight
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.fillRect(x, y, w, h / 3);
+
+                // Shadow
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+                ctx.fillRect(x, y + h * 2 / 3, w, h / 3);
+            }
+        }
+
+        class Game {
+            constructor() {
+                this.grid = Array(11).fill(null).map(() => Array(11).fill(null));
+                this.currentTile = null;
+                this.tilesPlaced = 0;
+                this.tilePool = this.createTilePool();
+                this.init();
+            }
+
+            createTilePool() {
+                const pool = [];
+                
+                // Create variety of tiles
+                // All grass (corners)
+                for (let i = 0; i < 4; i++) {
+                    pool.push(['grass', 'grass', 'grass', 'grass']);
+                }
+                
+                // Road through (straight)
+                for (let i = 0; i < 8; i++) {
+                    pool.push(['road', 'grass', 'road', 'grass']);
+                }
+                
+                // Road turn
+                for (let i = 0; i < 9; i++) {
+                    pool.push(['road', 'road', 'grass', 'grass']);
+                }
+                
+                // Road T-junction
+                for (let i = 0; i < 4; i++) {
+                    pool.push(['road', 'road', 'road', 'grass']);
+                }
+                
+                // Road cross
+                for (let i = 0; i < 1; i++) {
+                    pool.push(['road', 'road', 'road', 'road']);
+                }
+                
+                // City straight
+                for (let i = 0; i < 5; i++) {
+                    pool.push(['city', 'grass', 'city', 'grass']);
+                }
+                
+                // City corner
+                for (let i = 0; i < 3; i++) {
+                    pool.push(['city', 'city', 'grass', 'grass']);
+                }
+                
+                // City with castle
+                for (let i = 0; i < 2; i++) {
+                    pool.push(['city', 'castle', 'city', 'grass']);
+                }
+                
+                // Mixed tiles
+                for (let i = 0; i < 15; i++) {
+                    pool.push(['grass', 'road', 'city', 'grass']);
+                }
+                
+                // Castle corners
+                for (let i = 0; i < 5; i++) {
+                    pool.push(['castle', 'grass', 'grass', 'grass']);
+                }
+                
+                // Castle with city
+                for (let i = 0; i < 3; i++) {
+                    pool.push(['castle', 'city', 'grass', 'grass']);
+                }
+                
+                // Mixed complex tiles - curated combinations
+                pool.push(['grass', 'city', 'road', 'grass']);
+                pool.push(['grass', 'castle', 'grass', 'road']);
+                pool.push(['road', 'city', 'grass', 'city']);
+                pool.push(['city', 'grass', 'castle', 'grass']);
+                pool.push(['road', 'grass', 'road', 'castle']);
+                pool.push(['castle', 'road', 'grass', 'city']);
+                pool.push(['grass', 'road', 'castle', 'road']);
+                pool.push(['city', 'castle', 'grass', 'grass']);
+                pool.push(['grass', 'grass', 'road', 'city']);
+                pool.push(['road', 'castle', 'city', 'grass']);
+                pool.push(['castle', 'grass', 'city', 'road']);
+                pool.push(['city', 'road', 'grass', 'castle']);
+                
+                return pool;
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.placeStartingTile();
+                this.drawNextTile();
+            }
+
+            placeStartingTile() {
+                const centerX = 5;
+                const centerY = 5;
+                const startTile = new Tile(['grass', 'road', 'city', 'road']);
+                this.grid[centerY][centerX] = startTile;
+                this.renderGridCell(centerX, centerY);
+                this.tilesPlaced++;
+                this.updateStats();
+            }
+
+            drawNextTile() {
+                if (this.tilePool.length === 0) {
+                    alert('Game Over! No more tiles.');
+                    return;
+                }
+                
+                const randomIndex = Math.floor(Math.random() * this.tilePool.length);
+                const tileEdges = this.tilePool.splice(randomIndex, 1)[0];
+                this.currentTile = new Tile(tileEdges);
+                this.renderCurrentTile();
+                this.updateStats();
+            }
+
+            renderCurrentTile() {
+                const canvas = document.getElementById('currentTileCanvas');
+                const ctx = canvas.getContext('2d');
+                if (this.currentTile) {
+                    this.currentTile.draw(ctx, 120);
+                }
+            }
+
+            setupEventListeners() {
+                const gameGrid = document.getElementById('gameGrid');
+                
+                // Create grid cells
+                for (let y = 0; y < 11; y++) {
+                    for (let x = 0; x < 11; x++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'grid-cell';
+                        cell.dataset.x = x;
+                        cell.dataset.y = y;
+                        
+                        cell.addEventListener('click', () => this.handleCellClick(x, y));
+                        
+                        gameGrid.appendChild(cell);
+                    }
+                }
+
+                document.getElementById('rotateBtn').addEventListener('click', () => {
+                    if (this.currentTile) {
+                        this.currentTile.rotate();
+                        this.renderCurrentTile();
+                    }
+                });
+
+                document.getElementById('newGameBtn').addEventListener('click', () => {
+                    if (confirm('Start a new game?')) {
+                        this.grid = Array(11).fill(null).map(() => Array(11).fill(null));
+                        this.tilesPlaced = 0;
+                        this.tilePool = this.createTilePool();
+                        this.clearGrid();
+                        this.placeStartingTile();
+                        this.drawNextTile();
+                    }
+                });
+            }
+
+            handleCellClick(x, y) {
+                if (!this.currentTile) return;
+                
+                if (this.grid[y][x] !== null) {
+                    alert('This cell is already occupied!');
+                    return;
+                }
+
+                if (!this.canPlaceTile(x, y)) {
+                    alert('Tile edges must match adjacent tiles!');
+                    return;
+                }
+
+                this.grid[y][x] = this.currentTile;
+                this.renderGridCell(x, y);
+                this.tilesPlaced++;
+                this.drawNextTile();
+            }
+
+            canPlaceTile(x, y) {
+                // Check if at least one adjacent cell is occupied
+                let hasAdjacentTile = false;
+                
+                // Check each direction
+                const directions = [
+                    { dx: 0, dy: -1, edge: 0, adjacentEdge: 2 }, // top
+                    { dx: 1, dy: 0, edge: 1, adjacentEdge: 3 },  // right
+                    { dx: 0, dy: 1, edge: 2, adjacentEdge: 0 },  // bottom
+                    { dx: -1, dy: 0, edge: 3, adjacentEdge: 1 }  // left
+                ];
+
+                for (const dir of directions) {
+                    const adjX = x + dir.dx;
+                    const adjY = y + dir.dy;
+
+                    if (adjX >= 0 && adjX < 11 && adjY >= 0 && adjY < 11) {
+                        const adjacentTile = this.grid[adjY][adjX];
+                        
+                        if (adjacentTile !== null) {
+                            hasAdjacentTile = true;
+                            
+                            // Check if edges match
+                            if (this.currentTile.getEdge(dir.edge) !== adjacentTile.getEdge(dir.adjacentEdge)) {
+                                return false;
+                            }
+                        }
+                    }
+                }
+
+                return hasAdjacentTile;
+            }
+
+            renderGridCell(x, y) {
+                const cells = document.querySelectorAll('.grid-cell');
+                const index = y * 11 + x;
+                const cell = cells[index];
+                
+                if (this.grid[y][x] !== null) {
+                    cell.classList.add('occupied');
+                    
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 60;
+                    canvas.height = 60;
+                    const ctx = canvas.getContext('2d');
+                    
+                    this.grid[y][x].draw(ctx, 60);
+                    
+                    cell.innerHTML = '';
+                    cell.appendChild(canvas);
+                }
+            }
+
+            clearGrid() {
+                const cells = document.querySelectorAll('.grid-cell');
+                cells.forEach(cell => {
+                    cell.classList.remove('occupied');
+                    cell.innerHTML = '';
+                });
+            }
+
+            updateStats() {
+                document.getElementById('tilesPlaced').textContent = this.tilesPlaced;
+                document.getElementById('tilesRemaining').textContent = this.tilePool.length;
+            }
+        }
+
+        // Start the game
+        let game;
+        window.addEventListener('DOMContentLoaded', () => {
+            game = new Game();
+        });
+    </script>
+</body>
+
+</html>
