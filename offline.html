@@ -119,7 +119,7 @@
         <h1>You're Offline</h1>
         <p>This app requires an internet connection to load for the first time. Once loaded, you'll be able to use it offline.</p>
         <div class="button-container">
-            <button class="button" onclick="location.reload()">Retry</button>
+            <button class="button" id="retryButton">Retry</button>
             <a href="/" class="button">Return to Home</a>
         </div>
         <div class="offline-info">
@@ -131,6 +131,11 @@
         // Listen for online event and redirect when connection is restored
         window.addEventListener('online', () => {
             window.location.href = '/';
+        });
+
+        // Retry button handler
+        document.getElementById('retryButton').addEventListener('click', () => {
+            location.reload();
         });
     </script>
 </body>
