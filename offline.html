@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="You are currently offline">
+    <meta name="theme-color" content="#667eea">
+    <title>Offline - Ad Free Apps</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .offline-container {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+            max-width: 500px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .offline-icon {
+            font-size: 5em;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 2em;
+            margin-bottom: 15px;
+        }
+
+        p {
+            color: #666;
+            font-size: 1.1em;
+            line-height: 1.6;
+            margin-bottom: 25px;
+        }
+
+        .button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 1.1em;
+            font-weight: 600;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .offline-info {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 1px solid #e2e8f0;
+            color: #888;
+            font-size: 0.9em;
+        }
+
+        @media (max-width: 480px) {
+            .offline-container {
+                padding: 30px 20px;
+            }
+
+            .offline-icon {
+                font-size: 3.5em;
+            }
+
+            h1 {
+                font-size: 1.5em;
+            }
+
+            p {
+                font-size: 1em;
+            }
+
+            .button {
+                padding: 12px 24px;
+                font-size: 1em;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="offline-container">
+        <div class="offline-icon">📡</div>
+        <h1>You're Offline</h1>
+        <p>This app requires an internet connection to load for the first time. Once loaded, you'll be able to use it offline.</p>
+        <a href="/" class="button">Return to Home</a>
+        <div class="offline-info">
+            <p>Make sure you're connected to the internet and try again.</p>
+        </div>
+    </div>
+
+    <script>
+        // Listen for online event and redirect when connection is restored
+        window.addEventListener('online', () => {
+            window.location.href = '/';
+        });
+    </script>
+</body>
+
+</html>
