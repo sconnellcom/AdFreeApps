@@ -1,7 +1,8 @@
-const CACHE_NAME = 'ad-free-apps-v5';
+const CACHE_NAME = 'ad-free-apps-v6';
 const urlsToCache = [
     '/',
     '/index.html',
+    '/offline.html',
     '/metronome/',
     '/metronome/index.html',
     '/metronome/style.css?v=2',
@@ -79,7 +80,7 @@ self.addEventListener('fetch', (event) => {
                     }
                     // Both cache and network failed for navigation, return offline page
                     if (event.request.mode === 'navigate') {
-                        return cache.match('/index.html');
+                        return cache.match('/offline.html');
                     }
                     return new Response('Content unavailable offline. Please check your connection and try again.', {
                         status: 503,
