@@ -2,80 +2,134 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
         <loc>https://adfreeapps.com/</loc>
-        <lastmod>2026-01-12</lastmod>
+        <lastmod>2026-02-06</lastmod>
         <changefreq>weekly</changefreq>
         <priority>1.0</priority>
     </url>
     <url>
         <loc>https://adfreeapps.com/about/</loc>
-        <lastmod>2026-01-12</lastmod>
+        <lastmod>2026-02-06</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.8</priority>
     </url>
     <url>
         <loc>https://adfreeapps.com/metronome/</loc>
-        <lastmod>2026-01-12</lastmod>
+        <lastmod>2026-02-06</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.9</priority>
+    </url>
+    <url>
+        <loc>https://adfreeapps.com/metronome/about/</loc>
+        <lastmod>2026-02-06</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
     </url>
     <url>
         <loc>https://adfreeapps.com/tuner/</loc>
-        <lastmod>2026-01-12</lastmod>
+        <lastmod>2026-02-06</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.9</priority>
+    </url>
+    <url>
+        <loc>https://adfreeapps.com/tuner/about/</loc>
+        <lastmod>2026-02-06</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
     </url>
     <url>
         <loc>https://adfreeapps.com/timer/</loc>
-        <lastmod>2026-01-12</lastmod>
+        <lastmod>2026-02-06</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.9</priority>
+    </url>
+    <url>
+        <loc>https://adfreeapps.com/timer/about/</loc>
+        <lastmod>2026-02-06</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
     </url>
     <url>
         <loc>https://adfreeapps.com/pad/</loc>
-        <lastmod>2026-01-12</lastmod>
+        <lastmod>2026-02-06</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.9</priority>
+    </url>
+    <url>
+        <loc>https://adfreeapps.com/pad/about/</loc>
+        <lastmod>2026-02-06</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
     </url>
     <url>
         <loc>https://adfreeapps.com/draw/</loc>
-        <lastmod>2026-01-12</lastmod>
+        <lastmod>2026-02-06</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.9</priority>
+    </url>
+    <url>
+        <loc>https://adfreeapps.com/draw/about/</loc>
+        <lastmod>2026-02-06</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
     </url>
     <url>
         <loc>https://adfreeapps.com/level/</loc>
-        <lastmod>2026-01-12</lastmod>
+        <lastmod>2026-02-06</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.9</priority>
+    </url>
+    <url>
+        <loc>https://adfreeapps.com/level/about/</loc>
+        <lastmod>2026-02-06</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
     </url>
     <url>
         <loc>https://adfreeapps.com/scrollfix/</loc>
-        <lastmod>2026-01-12</lastmod>
+        <lastmod>2026-02-06</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.9</priority>
+    </url>
+    <url>
+        <loc>https://adfreeapps.com/scrollfix/about/</loc>
+        <lastmod>2026-02-06</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
     </url>
     <url>
         <loc>https://adfreeapps.com/tachistoscope/</loc>
-        <lastmod>2026-01-12</lastmod>
+        <lastmod>2026-02-06</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.9</priority>
+    </url>
+    <url>
+        <loc>https://adfreeapps.com/tachistoscope/about/</loc>
+        <lastmod>2026-02-06</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
     </url>
     <url>
         <loc>https://adfreeapps.com/game-tracker/</loc>
-        <lastmod>2026-01-12</lastmod>
+        <lastmod>2026-02-06</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.9</priority>
+    </url>
+    <url>
+        <loc>https://adfreeapps.com/game-tracker/about/</loc>
+        <lastmod>2026-02-06</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
     </url>
     <url>
         <loc>https://adfreeapps.com/morse-code/</loc>
-        <lastmod>2026-01-12</lastmod>
+        <lastmod>2026-02-06</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.9</priority>
     </url>
     <url>
-        <loc>https://adfreeapps.com/tasker/</loc>
-        <lastmod>2026-01-12</lastmod>
+        <loc>https://adfreeapps.com/morse-code/about/</loc>
+        <lastmod>2026-02-06</lastmod>
         <changefreq>monthly</changefreq>
-        <priority>0.9</priority>
+        <priority>0.7</priority>
     </url>
 </urlset>
