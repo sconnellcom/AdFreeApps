@@ -460,6 +460,47 @@
             background: linear-gradient(135deg, #831843 0%, #f472b6 100%);
         }
 
+        .netguava-footer {
+            background: var(--surface-bg);
+            border-top: 3px solid var(--primary-color);
+            padding: 30px;
+            margin-top: 40px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .netguava-footer h3 {
+            color: var(--text-color);
+            margin-top: 0;
+        }
+
+        .netguava-footer p {
+            margin-bottom: 20px;
+        }
+
+        .netguava-links {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .netguava-link {
+            display: inline-block;
+            padding: 12px 25px;
+            background: var(--primary-color);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .netguava-link:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+        }
+
         @media (max-width: 768px) {
             body {
                 padding: 10px;
@@ -517,6 +558,23 @@
         <header>
             <h1>About Ad Free Apps</h1>
         </header>
+
+        <div class="content-card netguava-footer">
+            <h3>Custom App Development by Netguava</h3>
+            <p>
+                This site was created by <strong>Netguava</strong>, a custom app development company.
+                We build web applications, mobile apps, and custom software solutions for businesses and individuals.
+            </p>
+            <p>
+                Have an idea for an app we should add to AdFreeApps.com? Need a custom application for your business?
+                We'd love to hear from you.
+            </p>
+            <div class="netguava-links">
+                <a href="https://netguava.com/" class="netguava-link" target="_blank" rel="noopener">Learn About Netguava</a>
+                <a href="https://netguava.com/contact" class="netguava-link" target="_blank" rel="noopener">Contact Us</a>
+                <a href="https://netguava.com/custom-web-app-development/" class="netguava-link" target="_blank" rel="noopener">Custom Web Development</a>
+            </div>
+        </div>
 
         <div class="content-card">
             <h2>Why AdFreeApps.com?</h2>
@@ -699,6 +757,7 @@
                     </div>
                     <div class="app-item-links">
                         <a href="../morse-code/" class="app-link app-link-primary">Open App</a>
+                        <a href="../morse-code/about/" class="app-link app-link-secondary">Learn More</a>
                     </div>
                 </li>
 
