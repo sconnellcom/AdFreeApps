@@ -14,9 +14,130 @@
             box-sizing: border-box;
         }
 
+        :root {
+            --bg-gradient-start: #667eea;
+            --bg-gradient-end: #764ba2;
+            --primary-color: #667eea;
+            --primary-hover: #764ba2;
+            --container-bg: #ffffff;
+            --text-color: #333333;
+            --text-secondary: #666666;
+        }
+
+        /* Theme variations */
+        body.theme-light {
+            --bg-gradient-start: #97B22D;
+            --bg-gradient-end: #89751B;
+            --primary-color: #97B22D;
+            --primary-hover: #89751B;
+            --container-bg: #FEFCAD;
+            --text-color: #2d3748;
+            --text-secondary: #718096;
+        }
+
+        body.theme-dark {
+            --bg-gradient-start: #2d3d0f;
+            --bg-gradient-end: #1a2208;
+            --primary-color: #97B22D;
+            --primary-hover: #d2cc54;
+            --container-bg: #1f2d0a;
+            --text-color: #E3DAB2;
+            --text-secondary: #97B22D;
+        }
+
+        body.theme-warm-light {
+            --bg-gradient-start: #C6BE28;
+            --bg-gradient-end: #97B22D;
+            --primary-color: #E49A32;
+            --primary-hover: #C6BE28;
+            --container-bg: #FEFCAD;
+            --text-color: #3d3d1f;
+            --text-secondary: #7d7d5f;
+        }
+
+        body.theme-warm-dark {
+            --bg-gradient-start: #2a2510;
+            --bg-gradient-end: #1a1808;
+            --primary-color: #E49A32;
+            --primary-hover: #C6BE28;
+            --container-bg: #2d2815;
+            --text-color: #FEFCAD;
+            --text-secondary: #C6BE28;
+        }
+
+        body.theme-red {
+            --bg-gradient-start: #dc2626;
+            --bg-gradient-end: #991b1b;
+            --primary-color: #ef4444;
+            --primary-hover: #dc2626;
+            --container-bg: #ffffff;
+            --text-color: #1f2937;
+            --text-secondary: #4b5563;
+        }
+
+        body.theme-pink {
+            --bg-gradient-start: #ec4899;
+            --bg-gradient-end: #be185d;
+            --primary-color: #f472b6;
+            --primary-hover: #ec4899;
+            --container-bg: #ffffff;
+            --text-color: #1f2937;
+            --text-secondary: #4b5563;
+        }
+
+        body.theme-red-dark {
+            --bg-gradient-start: #7f1d1d;
+            --bg-gradient-end: #450a0a;
+            --primary-color: #dc2626;
+            --primary-hover: #ef4444;
+            --container-bg: #1a0a0a;
+            --text-color: #fecaca;
+            --text-secondary: #fca5a5;
+        }
+
+        body.theme-pink-dark {
+            --bg-gradient-start: #831843;
+            --bg-gradient-end: #500724;
+            --primary-color: #ec4899;
+            --primary-hover: #f472b6;
+            --container-bg: #1a0a12;
+            --text-color: #fbcfe8;
+            --text-secondary: #f9a8d4;
+        }
+
+        body.theme-black {
+            --bg-gradient-start: #1a1a1a;
+            --bg-gradient-end: #000000;
+            --primary-color: #4b5563;
+            --primary-hover: #6b7280;
+            --container-bg: #0a0a0a;
+            --text-color: #e5e7eb;
+            --text-secondary: #9ca3af;
+        }
+
+        body.theme-blue {
+            --bg-gradient-start: #3b82f6;
+            --bg-gradient-end: #1e40af;
+            --primary-color: #60a5fa;
+            --primary-hover: #3b82f6;
+            --container-bg: #ffffff;
+            --text-color: #1e3a8a;
+            --text-secondary: #3b82f6;
+        }
+
+        body.theme-blue-dark {
+            --bg-gradient-start: #1e3a8a;
+            --bg-gradient-end: #0c1844;
+            --primary-color: #60a5fa;
+            --primary-hover: #93c5fd;
+            --container-bg: #0a1628;
+            --text-color: #dbeafe;
+            --text-secondary: #93c5fd;
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -25,7 +146,7 @@
         }
 
         .offline-container {
-            background: white;
+            background: var(--container-bg);
             border-radius: 16px;
             padding: 40px;
             text-align: center;
@@ -39,13 +160,13 @@
         }
 
         h1 {
-            color: #333;
+            color: var(--text-color);
             font-size: 2em;
             margin-bottom: 15px;
         }
 
         p {
-            color: #666;
+            color: var(--text-secondary);
             font-size: 1.1em;
             line-height: 1.6;
             margin-bottom: 25px;
@@ -53,7 +174,7 @@
 
         .button {
             display: inline-block;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
             color: white;
             padding: 15px 30px;
             border-radius: 8px;
@@ -62,11 +183,22 @@
             font-weight: 600;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
             box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            border: none;
+            cursor: pointer;
+            margin: 5px;
         }
 
         .button:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .button-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
         }
 
         .offline-info {
@@ -107,16 +239,35 @@
         <div class="offline-icon">📡</div>
         <h1>You're Offline</h1>
         <p>This app requires an internet connection to load for the first time. Once loaded, you'll be able to use it offline.</p>
-        <a href="/" class="button">Return to Home</a>
+        <div class="button-container">
+            <button class="button" id="retryButton">Retry</button>
+            <a href="/" class="button">Return to Home</a>
+        </div>
         <div class="offline-info">
             <p>Make sure you're connected to the internet and try again.</p>
         </div>
     </div>
 
     <script>
+        // Apply saved theme from localStorage
+        try {
+            const savedTheme = localStorage.getItem('appTheme') || 'default';
+            if (savedTheme !== 'default') {
+                document.body.classList.add(`theme-${savedTheme}`);
+            }
+        } catch (e) {
+            // localStorage not available (e.g., private browsing mode)
+            console.warn('Could not access localStorage:', e);
+        }
+
         // Listen for online event and redirect when connection is restored
         window.addEventListener('online', () => {
             window.location.href = '/';
+        });
+
+        // Retry button handler
+        document.getElementById('retryButton').addEventListener('click', () => {
+            location.reload();
         });
     </script>
 </body>
