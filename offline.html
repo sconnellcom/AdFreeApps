@@ -250,9 +250,14 @@
 
     <script>
         // Apply saved theme from localStorage
-        const savedTheme = localStorage.getItem('appTheme') || 'default';
-        if (savedTheme !== 'default') {
-            document.body.classList.add(`theme-${savedTheme}`);
+        try {
+            const savedTheme = localStorage.getItem('appTheme') || 'default';
+            if (savedTheme !== 'default') {
+                document.body.classList.add(`theme-${savedTheme}`);
+            }
+        } catch (e) {
+            // localStorage not available (e.g., private browsing mode)
+            console.warn('Could not access localStorage:', e);
         }
 
         // Listen for online event and redirect when connection is restored
