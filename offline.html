@@ -114,12 +114,7 @@
     </div>
 
     <script>
-        // Redirect to home immediately if we're online
-        if (navigator.onLine) {
-            window.location.href = '/';
-        }
-
-        // Listen for online event
+        // Listen for online event and redirect when connection is restored
         window.addEventListener('online', () => {
             window.location.href = '/';
         });
