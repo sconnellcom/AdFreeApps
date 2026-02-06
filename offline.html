@@ -62,11 +62,22 @@
             font-weight: 600;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
             box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            border: none;
+            cursor: pointer;
+            margin: 5px;
         }
 
         .button:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .button-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
         }
 
         .offline-info {
@@ -107,7 +118,10 @@
         <div class="offline-icon">📡</div>
         <h1>You're Offline</h1>
         <p>This app requires an internet connection to load for the first time. Once loaded, you'll be able to use it offline.</p>
-        <a href="/" class="button">Return to Home</a>
+        <div class="button-container">
+            <button class="button" onclick="location.reload()">Retry</button>
+            <a href="/" class="button">Return to Home</a>
+        </div>
         <div class="offline-info">
             <p>Make sure you're connected to the internet and try again.</p>
         </div>
