@@ -9,15 +9,13 @@
     <link rel="manifest" href="../manifest.json">
     <link rel="apple-touch-icon" href="../icons/icon-152x152.png">
     <title>Castles - 3D Tile Game</title>
-    <script async src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
-    <script type="module">
-        // Import GLTFLoader as a module after THREE is loaded
-        window.addEventListener('load', async () => {
-            if (typeof THREE !== 'undefined') {
-                const { GLTFLoader } = await import('https://unpkg.com/three@0.160.0/examples/jsm/loaders/GLTFLoader.js');
-                THREE.GLTFLoader = GLTFLoader;
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/examples/jsm/": "https://unpkg.com/three@0.160.0/examples/jsm/"
             }
-        });
+        }
     </script>
     <style>
         * {
@@ -644,7 +642,9 @@
 
     <div id="notificationContainer" class="notification-container"></div>
 
-    <script>
+    <script type="module">
+        import * as THREE from 'three';
+        import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
         // Theme management
         const themeIcons = {
             'default': '💜', 'black': '⚫', 'blue': '🔵', 'blue-dark': '🌊',
@@ -1492,18 +1492,10 @@
             }
         }
 
-        // Start the game - wait for Three.js to load
-        let game;
-        function initGame() {
-            if (typeof THREE === 'undefined') {
-                console.log('Waiting for Three.js to load...');
-                setTimeout(initGame, 100);
-                return;
-            }
-            game = new Game3D();
-        }
-
-        window.addEventListener('DOMContentLoaded', initGame);
+        // Start the game
+        window.addEventListener('DOMContentLoaded', () => {
+            new Game3D();
+        });
     </script>
 </body>
 
