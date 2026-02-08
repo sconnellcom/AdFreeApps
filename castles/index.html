@@ -743,24 +743,30 @@
 
                 // Try to use loaded model if available
                 if (modelCache[modelName]) {
-                    const modelClone = modelCache[modelName].clone();
-
-                    // Scale and position the model
-                    modelClone.scale.set(size * 0.8, size * 0.8, size * 0.8);
-                    modelClone.position.set(0, 0, 0);
-
-                    group.add(modelClone);
-                    this.mesh = group;
-                    return group;
+                    try {
+                        // Deep clone the model to avoid reusing the same instance
+                        const modelClone = modelCache[modelName].clone();
+                        
+                        // Traverse and clone materials to avoid sharing
+                        modelClone.traverse((node) => {
+                            if (node.material) {
+                                node.material = node.material.clone();
+                            }
+                        });
+                        
+                        // Scale and position the model
+                        modelClone.scale.set(size, size, size);
+                        modelClone.position.set(0, 0, 0);
+                        
+                        group.add(modelClone);
+                        this.mesh = group;
+                        return group;
+                    } catch (e) {
+                        console.error(`Error cloning model ${modelName}:`, e);
+                    }
                 }
 
                 // Fallback to procedural generation if model not available
-                // Base tile
-                const baseGeometry = new THREE.BoxGeometry(size, 0.2, size);
-                const baseMaterial = new THREE.MeshPhongMaterial({ color: 0x7cb342 });
-                const base = new THREE.Mesh(baseGeometry, baseMaterial);
-                group.add(base);
-
                 // Edge indicators (raised sections)
                 const edgeSize = size * 0.3;
                 const edgeHeight = 0.3;
@@ -882,16 +888,19 @@
 
                 const loadPromises = models.map(modelName =>
                     new Promise((resolve) => {
+                        const modelPath = `./models/${modelName}`;
                         this.modelLoader.load(
-                            `models/${modelName}`,
+                            modelPath,
                             (gltf) => {
                                 this.modelCache[modelName] = gltf.scene;
-                                console.log(`Loaded model: ${modelName}`);
+                                console.log(`✓ Loaded model: ${modelName}`);
                                 resolve();
                             },
-                            undefined,
+                            (progress) => {
+                                console.log(`Loading ${modelName}: ${Math.round((progress.loaded / progress.total) * 100)}%`);
+                            },
                             (error) => {
-                                console.warn(`Could not load ${modelName}:`, error);
+                                console.error(`✗ Failed to load ${modelName}: ${error.message}`);
                                 resolve(); // Resolve anyway to not block
                             }
                         );
@@ -899,7 +908,11 @@
                 );
 
                 await Promise.all(loadPromises);
-                console.log('All models loaded:', Object.keys(this.modelCache));
+                const loadedCount = Object.keys(this.modelCache).length;
+                console.log(`Models loaded: ${loadedCount}/${models.length}`, Object.keys(this.modelCache));
+                if (loadedCount === 0) {
+                    console.warn('⚠ No models loaded. Using procedural fallback.');
+                }
             }
 
             setupRenderers() {
