@@ -1,0 +1,1510 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="../manifest.json">
+    <link rel="apple-touch-icon" href="../icons/icon-152x152.png">
+    <title>Castles - 3D Tile Game</title>
+    <script async src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+    <script type="module">
+        // Import GLTFLoader as a module after THREE is loaded
+        window.addEventListener('load', async () => {
+            if (typeof THREE !== 'undefined') {
+                const { GLTFLoader } = await import('https://unpkg.com/three@0.160.0/examples/jsm/loaders/GLTFLoader.js');
+                THREE.GLTFLoader = GLTFLoader;
+            }
+        });
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-gradient-start: #667eea;
+            --bg-gradient-end: #764ba2;
+            --primary-color: #667eea;
+            --primary-hover: #764ba2;
+            --container-bg: #ffffff;
+            --text-color: #333333;
+            --text-secondary: #555555;
+            --border-color: #e2e8f0;
+            --surface-bg: #f7fafc;
+            --tile-grass: #7cb342;
+            --tile-road: #8d6e63;
+            --tile-city: #616161;
+            --tile-castle: #9c27b0;
+        }
+
+        body.theme-light {
+            --bg-gradient-start: #97B22D;
+            --bg-gradient-end: #89751B;
+            --primary-color: #97B22D;
+            --primary-hover: #89751B;
+            --container-bg: #FEFCAD;
+            --text-color: #2d3748;
+            --text-secondary: #4a5568;
+            --border-color: #E3DE81;
+            --surface-bg: #f1ff72;
+        }
+
+        body.theme-dark {
+            --bg-gradient-start: #2d3d0f;
+            --bg-gradient-end: #1a2208;
+            --primary-color: #97B22D;
+            --primary-hover: #d2cc54;
+            --container-bg: #1f2d0a;
+            --text-color: #E3DAB2;
+            --text-secondary: #d2cc54;
+            --border-color: #3d4d1f;
+            --surface-bg: #2a3a12;
+        }
+
+        body.theme-warm-light {
+            --bg-gradient-start: #C6BE28;
+            --bg-gradient-end: #97B22D;
+            --primary-color: #E49A32;
+            --primary-hover: #C6BE28;
+            --container-bg: #FEFCAD;
+            --text-color: #3d3d1f;
+            --text-secondary: #5d5d3f;
+            --border-color: #E3DAB2;
+            --surface-bg: #faedb6;
+        }
+
+        body.theme-warm-dark {
+            --bg-gradient-start: #2a2510;
+            --bg-gradient-end: #1a1808;
+            --primary-color: #E49A32;
+            --primary-hover: #C6BE28;
+            --container-bg: #2d2815;
+            --text-color: #FEFCAD;
+            --text-secondary: #E3DAB2;
+            --border-color: #4a3f1a;
+            --surface-bg: #3a3220;
+        }
+
+        body.theme-red {
+            --bg-gradient-start: #dc2626;
+            --bg-gradient-end: #991b1b;
+            --primary-color: #ef4444;
+            --primary-hover: #dc2626;
+            --container-bg: #ffffff;
+            --text-color: #1f2937;
+            --text-secondary: #374151;
+            --border-color: #fecaca;
+            --surface-bg: #fef2f2;
+        }
+
+        body.theme-pink {
+            --bg-gradient-start: #ec4899;
+            --bg-gradient-end: #be185d;
+            --primary-color: #f472b6;
+            --primary-hover: #ec4899;
+            --container-bg: #ffffff;
+            --text-color: #1f2937;
+            --text-secondary: #374151;
+            --border-color: #fbcfe8;
+            --surface-bg: #fdf2f8;
+        }
+
+        body.theme-red-dark {
+            --bg-gradient-start: #7f1d1d;
+            --bg-gradient-end: #450a0a;
+            --primary-color: #ef4444;
+            --primary-hover: #f87171;
+            --container-bg: #1a0505;
+            --text-color: #fecaca;
+            --text-secondary: #fca5a5;
+            --border-color: #7f1d1d;
+            --surface-bg: #450a0a;
+        }
+
+        body.theme-pink-dark {
+            --bg-gradient-start: #831843;
+            --bg-gradient-end: #500724;
+            --primary-color: #f472b6;
+            --primary-hover: #f9a8d4;
+            --container-bg: #1a050f;
+            --text-color: #fce7f3;
+            --text-secondary: #fbcfe8;
+            --border-color: #831843;
+            --surface-bg: #500724;
+        }
+
+        body.theme-black {
+            --bg-gradient-start: #1f2937;
+            --bg-gradient-end: #111827;
+            --primary-color: #6b7280;
+            --primary-hover: #9ca3af;
+            --container-bg: #0f172a;
+            --text-color: #f3f4f6;
+            --text-secondary: #d1d5db;
+            --border-color: #374151;
+            --surface-bg: #1e293b;
+        }
+
+        body.theme-blue {
+            --bg-gradient-start: #3b82f6;
+            --bg-gradient-end: #1e40af;
+            --primary-color: #60a5fa;
+            --primary-hover: #3b82f6;
+            --container-bg: #ffffff;
+            --text-color: #1f2937;
+            --text-secondary: #374151;
+            --border-color: #bfdbfe;
+            --surface-bg: #eff6ff;
+        }
+
+        body.theme-blue-dark {
+            --bg-gradient-start: #0c4a6e;
+            --bg-gradient-end: #082f49;
+            --primary-color: #38bdf8;
+            --primary-hover: #0ea5e9;
+            --container-bg: #0a1929;
+            --text-color: #e0f2fe;
+            --text-secondary: #7dd3fc;
+            --border-color: #0e7490;
+            --surface-bg: #164e63;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+            min-height: 100vh;
+            padding: 10px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: var(--container-bg);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .app-icon {
+            font-size: 2em;
+        }
+
+        h1 {
+            color: var(--text-color);
+            font-size: 1.8em;
+        }
+
+        .menu-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+        }
+
+        .hamburger-icon {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .hamburger-icon span {
+            width: 25px;
+            height: 3px;
+            background: var(--text-color);
+            border-radius: 3px;
+            transition: all 0.3s;
+        }
+
+        .menu-dropdown {
+            position: absolute;
+            right: 20px;
+            top: 70px;
+            background: var(--container-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 10px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 15px;
+            text-decoration: none;
+            color: var(--text-color);
+            border-radius: 8px;
+            transition: background 0.2s;
+            cursor: pointer;
+            border: none;
+            background: none;
+            width: 100%;
+            font-size: 1em;
+        }
+
+        .menu-item:hover {
+            background: var(--surface-bg);
+        }
+
+        .theme-submenu {
+            display: grid;
+            grid-template-columns: repeat(4, 32px);
+            gap: 8px;
+            padding: 10px;
+        }
+
+        .theme-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .theme-btn:hover {
+            transform: scale(1.1);
+            border-color: var(--primary-color);
+        }
+
+        .theme-btn.theme-default {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .theme-btn.theme-black {
+            background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+        }
+
+        .theme-btn.theme-blue {
+            background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+        }
+
+        .theme-btn.theme-blue-dark {
+            background: linear-gradient(135deg, #0c4a6e 0%, #38bdf8 100%);
+        }
+
+        .theme-btn.theme-light {
+            background: linear-gradient(135deg, #97B22D 0%, #E3DE81 100%);
+        }
+
+        .theme-btn.theme-dark {
+            background: linear-gradient(135deg, #2d3d0f 0%, #97B22D 100%);
+        }
+
+        .theme-btn.theme-warm-light {
+            background: linear-gradient(135deg, #E49A32 0%, #FEFCAD 100%);
+        }
+
+        .theme-btn.theme-warm-dark {
+            background: linear-gradient(135deg, #2a2510 0%, #E49A32 100%);
+        }
+
+        .theme-btn.theme-red {
+            background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+        }
+
+        .theme-btn.theme-red-dark {
+            background: linear-gradient(135deg, #7f1d1d 0%, #ef4444 100%);
+        }
+
+        .theme-btn.theme-pink {
+            background: linear-gradient(135deg, #ec4899 0%, #be185d 100%);
+        }
+
+        .theme-btn.theme-pink-dark {
+            background: linear-gradient(135deg, #831843 0%, #f472b6 100%);
+        }
+
+        .game-area {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .grid-container {
+            background: var(--surface-bg);
+            border-radius: 12px;
+            padding: 0;
+            overflow: hidden;
+            position: relative;
+            min-height: 500px;
+        }
+
+        .grid-container canvas {
+            width: 100% !important;
+            height: 100% !important;
+            cursor: grab;
+        }
+
+        .grid-container canvas:active {
+            cursor: grabbing;
+        }
+
+        .grid-instructions {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.85em;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .side-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .panel-section {
+            background: var(--surface-bg);
+            border-radius: 12px;
+            padding: 15px;
+        }
+
+        .panel-section h3 {
+            color: var(--text-color);
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .current-tile {
+            background: var(--container-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 200px;
+            height: 200px;
+            width: 100%;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .current-tile canvas {
+            width: 100% !important;
+            height: 100% !important;
+            cursor: grab;
+        }
+
+        .current-tile canvas:active {
+            cursor: grabbing;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            background: var(--primary-color);
+            color: white;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .stats {
+            color: var(--text-color);
+            line-height: 1.8;
+        }
+
+        .stats-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .stats-item:last-child {
+            border-bottom: none;
+        }
+
+        .stats-label {
+            color: var(--text-secondary);
+        }
+
+        .stats-value {
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .notification-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 2000;
+        }
+
+        .notification {
+            background: var(--container-bg);
+            color: var(--text-color);
+            border: 2px solid var(--border-color);
+            border-left-width: 6px;
+            border-radius: 10px;
+            padding: 12px 14px;
+            min-width: 220px;
+            max-width: 320px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            font-size: 0.95em;
+            animation: slideIn 0.2s ease-out;
+        }
+
+        .notification.info {
+            border-left-color: #3b82f6;
+        }
+
+        .notification.success {
+            border-left-color: #10b981;
+        }
+
+        .notification.warning {
+            border-left-color: #f59e0b;
+        }
+
+        .notification.error {
+            border-left-color: #ef4444;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(10px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .game-area {
+                grid-template-columns: 1fr;
+            }
+
+            .game-grid {
+                grid-template-columns: repeat(11, 50px);
+            }
+
+            .grid-cell {
+                width: 50px;
+                height: 50px;
+            }
+
+            .side-panel {
+                order: -1;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 10px;
+            }
+
+            .game-grid {
+                grid-template-columns: repeat(11, 40px);
+            }
+
+            .grid-cell {
+                width: 40px;
+                height: 40px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header-row">
+            <div class="header-left">
+                <span class="app-icon">🏰</span>
+                <h1>Castles</h1>
+            </div>
+            <div class="header-right">
+                <button id="menuBtn" class="menu-btn" title="Menu">
+                    <span class="hamburger-icon">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </span>
+                </button>
+            </div>
+        </div>
+
+        <div id="menuDropdown" class="menu-dropdown" style="display: none;">
+            <a href="../" class="menu-item">
+                <span class="menu-icon">💎</span>
+                <span class="menu-label">Apps</span>
+            </a>
+            <button id="themeMenuItem" class="menu-item">
+                <span class="menu-icon" id="themeMenuIcon">💜</span>
+                <span class="menu-label">Change Theme</span>
+            </button>
+            <div id="themeSubmenu" class="theme-submenu" style="display: none;">
+                <button class="theme-btn theme-default" data-theme="default" title="Purple Theme"></button>
+                <button class="theme-btn theme-black" data-theme="black" title="Black Theme"></button>
+                <button class="theme-btn theme-blue" data-theme="blue" title="Blue Theme"></button>
+                <button class="theme-btn theme-blue-dark" data-theme="blue-dark" title="Dark Blue Theme"></button>
+                <button class="theme-btn theme-light" data-theme="light" title="Olive Theme"></button>
+                <button class="theme-btn theme-dark" data-theme="dark" title="Dark Olive Theme"></button>
+                <button class="theme-btn theme-warm-light" data-theme="warm-light" title="Warm Light Theme"></button>
+                <button class="theme-btn theme-warm-dark" data-theme="warm-dark" title="Warm Dark Theme"></button>
+                <button class="theme-btn theme-red" data-theme="red" title="Red Theme"></button>
+                <button class="theme-btn theme-red-dark" data-theme="red-dark" title="Dark Red Theme"></button>
+                <button class="theme-btn theme-pink" data-theme="pink" title="Pink Theme"></button>
+                <button class="theme-btn theme-pink-dark" data-theme="pink-dark" title="Dark Pink Theme"></button>
+            </div>
+            <a href="about/" class="menu-item">
+                <span class="menu-icon">ⓘ</span>
+                <span class="menu-label">About This App</span>
+            </a>
+        </div>
+
+        <div class="game-area">
+            <div class="grid-container" id="gridContainer">
+                <div class="grid-instructions">
+                    Drag to rotate view • Ctrl+Drag to pan • Scroll to zoom
+                </div>
+            </div>
+
+            <div class="side-panel">
+                <div class="panel-section">
+                    <h3>Current Tile</h3>
+                    <div class="current-tile" id="tilePreview"></div>
+                </div>
+
+                <div class="panel-section">
+                    <h3>Controls</h3>
+                    <div class="controls">
+                        <button id="rotateBtn" class="btn">↻ Rotate Tile</button>
+                        <button id="newGameBtn" class="btn">New Game</button>
+                        <button id="completeMapBtn" class="btn" style="display: none;">✨ Complete the Map</button>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h3>Game Stats</h3>
+                    <div class="stats">
+                        <div class="stats-item">
+                            <span class="stats-label">Tiles Placed:</span>
+                            <span class="stats-value" id="tilesPlaced">0</span>
+                        </div>
+                        <div class="stats-item">
+                            <span class="stats-label">Tiles Remaining:</span>
+                            <span class="stats-value" id="tilesRemaining">--</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="notificationContainer" class="notification-container"></div>
+
+    <script>
+        // Theme management
+        const themeIcons = {
+            'default': '💜', 'black': '⚫', 'blue': '🔵', 'blue-dark': '🌊',
+            'light': '🍋', 'dark': '🫒', 'warm-light': '🌻', 'warm-dark': '🍂',
+            'red': '❤️', 'red-dark': '🌹', 'pink': '💗', 'pink-dark': '🌸'
+        };
+
+        function showNotification(message, options = {}) {
+            const { type = 'info', duration = 4000 } = options;
+            const container = document.getElementById('notificationContainer');
+            if (!container) return;
+
+            const note = document.createElement('div');
+            note.className = `notification ${type}`;
+            note.textContent = message;
+            container.appendChild(note);
+
+            const timeoutId = setTimeout(() => {
+                note.remove();
+            }, duration);
+
+            note.addEventListener('click', () => {
+                clearTimeout(timeoutId);
+                note.remove();
+            });
+        }
+
+        const menuBtn = document.getElementById('menuBtn');
+        const menuDropdown = document.getElementById('menuDropdown');
+        const themeMenuItem = document.getElementById('themeMenuItem');
+        const themeSubmenu = document.getElementById('themeSubmenu');
+        const themeMenuIcon = document.getElementById('themeMenuIcon');
+
+        const savedTheme = localStorage.getItem('appTheme') || 'default';
+        if (savedTheme !== 'default') {
+            document.body.classList.add(`theme-${savedTheme}`);
+        }
+        themeMenuIcon.textContent = themeIcons[savedTheme] || '💜';
+
+        menuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            menuDropdown.style.display = menuDropdown.style.display === 'none' ? 'block' : 'none';
+        });
+
+        themeMenuItem.addEventListener('click', (e) => {
+            e.stopPropagation();
+            themeSubmenu.style.display = themeSubmenu.style.display === 'none' ? 'grid' : 'none';
+        });
+
+        document.querySelectorAll('.theme-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const theme = btn.dataset.theme;
+                document.body.className = '';
+                if (theme !== 'default') {
+                    document.body.classList.add(`theme-${theme}`);
+                }
+                themeMenuIcon.textContent = themeIcons[theme] || '💜';
+                localStorage.setItem('appTheme', theme);
+                menuDropdown.style.display = 'none';
+                themeSubmenu.style.display = 'none';
+            });
+        });
+
+        document.addEventListener('click', () => {
+            menuDropdown.style.display = 'none';
+            themeSubmenu.style.display = 'none';
+        });
+
+        // Game logic with Three.js
+        class Tile3D {
+            constructor(edges) {
+                // edges: [top, right, bottom, left] - each can be 'grass', 'road', 'city', 'castle'
+                this.edges = edges;
+                this.rotation = 0; // 0, 90, 180, 270
+                this.mesh = null;
+            }
+
+            rotate() {
+                // Rotate edges clockwise
+                this.edges = [this.edges[3], this.edges[0], this.edges[1], this.edges[2]];
+                this.rotation = (this.rotation + 90) % 360;
+            }
+
+            getEdge(direction) {
+                return this.edges[direction];
+            }
+
+            // Create 3D mesh for this tile
+            createMesh(size = 1, modelCache = {}) {
+                const group = new THREE.Group();
+
+                // Determine which model to use based on tile edges
+                let modelName = this.selectModel();
+
+                // Try to use loaded model if available
+                if (modelCache[modelName]) {
+                    const modelClone = modelCache[modelName].clone();
+
+                    // Scale and position the model
+                    modelClone.scale.set(size * 0.8, size * 0.8, size * 0.8);
+                    modelClone.position.set(0, 0, 0);
+
+                    group.add(modelClone);
+                    this.mesh = group;
+                    return group;
+                }
+
+                // Fallback to procedural generation if model not available
+                // Base tile
+                const baseGeometry = new THREE.BoxGeometry(size, 0.2, size);
+                const baseMaterial = new THREE.MeshPhongMaterial({ color: 0x7cb342 });
+                const base = new THREE.Mesh(baseGeometry, baseMaterial);
+                group.add(base);
+
+                // Edge indicators (raised sections)
+                const edgeSize = size * 0.3;
+                const edgeHeight = 0.3;
+                const colors = {
+                    grass: 0x7cb342,
+                    road: 0x8d6e63,
+                    city: 0x616161,
+                    castle: 0x9c27b0
+                };
+
+                // Top edge
+                const topGeo = new THREE.BoxGeometry(edgeSize, edgeHeight, edgeSize * 0.5);
+                const topMat = new THREE.MeshPhongMaterial({ color: colors[this.edges[0]] });
+                const topEdge = new THREE.Mesh(topGeo, topMat);
+                topEdge.position.set(0, edgeHeight / 2 + 0.1, -size / 2 + edgeSize / 4);
+                group.add(topEdge);
+
+                // Right edge
+                const rightGeo = new THREE.BoxGeometry(edgeSize * 0.5, edgeHeight, edgeSize);
+                const rightMat = new THREE.MeshPhongMaterial({ color: colors[this.edges[1]] });
+                const rightEdge = new THREE.Mesh(rightGeo, rightMat);
+                rightEdge.position.set(size / 2 - edgeSize / 4, edgeHeight / 2 + 0.1, 0);
+                group.add(rightEdge);
+
+                // Bottom edge
+                const bottomGeo = new THREE.BoxGeometry(edgeSize, edgeHeight, edgeSize * 0.5);
+                const bottomMat = new THREE.MeshPhongMaterial({ color: colors[this.edges[2]] });
+                const bottomEdge = new THREE.Mesh(bottomGeo, bottomMat);
+                bottomEdge.position.set(0, edgeHeight / 2 + 0.1, size / 2 - edgeSize / 4);
+                group.add(bottomEdge);
+
+                // Left edge
+                const leftGeo = new THREE.BoxGeometry(edgeSize * 0.5, edgeHeight, edgeSize);
+                const leftMat = new THREE.MeshPhongMaterial({ color: colors[this.edges[3]] });
+                const leftEdge = new THREE.Mesh(leftGeo, leftMat);
+                leftEdge.position.set(-size / 2 + edgeSize / 4, edgeHeight / 2 + 0.1, 0);
+                group.add(leftEdge);
+
+                // Center indicator
+                const centerGeo = new THREE.SphereGeometry(size * 0.1, 16, 16);
+                const centerMat = new THREE.MeshPhongMaterial({
+                    color: 0xffffff,
+                    transparent: true,
+                    opacity: 0.5
+                });
+                const center = new THREE.Mesh(centerGeo, centerMat);
+                center.position.y = 0.3;
+                group.add(center);
+
+                this.mesh = group;
+                return group;
+            }
+
+            selectModel() {
+                // Select model based on edge types
+                // Priority: castle > city > road > grass
+                const edgeTypes = this.edges.join('_');
+
+                // Check for castle tiles
+                if (this.edges.includes('castle')) {
+                    // Use different castle models based on configuration
+                    if (this.edges.filter(e => e === 'castle').length >= 2) {
+                        return 'castle.glb';
+                    } else if (this.edges.includes('grass')) {
+                        return 'grass_castle.glb';
+                    } else {
+                        return 'castle.glb';
+                    }
+                }
+
+                // Check for cloister-like patterns (same on all sides)
+                if (this.edges[0] === this.edges[1] && this.edges[1] === this.edges[2] && this.edges[2] === this.edges[3]) {
+                    if (this.edges[0] === 'grass') {
+                        return 'coister.glb';
+                    }
+                }
+
+                // Check for city tiles
+                if (this.edges.includes('city')) {
+                    return 'coister2.glb';
+                }
+
+                // Default fallback
+                return 'coister.glb';
+            }
+        }
+
+        class Game3D {
+            constructor() {
+                this.grid = Array(15).fill(null).map(() => Array(15).fill(null));
+                this.currentTile = null;
+                this.tilesPlaced = 0;
+                this.tilePool = this.createTilePool();
+
+                // Model loader and cache
+                this.modelLoader = null;
+                this.modelCache = {};
+                this.modelsLoaded = false;
+
+                // Three.js setup
+                this.setupRenderers();
+                this.setupGrid();
+                this.loadModels().then(() => {
+                    this.modelsLoaded = true;
+                    this.init();
+                });
+            }
+
+            async loadModels() {
+                // Wait for THREE and GLTFLoader to be available
+                while (typeof THREE === 'undefined' || typeof THREE.GLTFLoader === 'undefined') {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+
+                this.modelLoader = new THREE.GLTFLoader();
+
+                // Load all available models
+                const models = [
+                    'castle.glb',
+                    'coister.glb',
+                    'coister2.glb',
+                    'grass_castle.glb'
+                ];
+
+                const loadPromises = models.map(modelName =>
+                    new Promise((resolve) => {
+                        this.modelLoader.load(
+                            `models/${modelName}`,
+                            (gltf) => {
+                                this.modelCache[modelName] = gltf.scene;
+                                console.log(`Loaded model: ${modelName}`);
+                                resolve();
+                            },
+                            undefined,
+                            (error) => {
+                                console.warn(`Could not load ${modelName}:`, error);
+                                resolve(); // Resolve anyway to not block
+                            }
+                        );
+                    })
+                );
+
+                await Promise.all(loadPromises);
+                console.log('All models loaded:', Object.keys(this.modelCache));
+            }
+
+            setupRenderers() {
+                // Main grid renderer
+                const gridContainer = document.getElementById('gridContainer');
+                this.gridScene = new THREE.Scene();
+                this.gridScene.background = new THREE.Color(0xf7fafc);
+
+                this.gridRenderer = new THREE.WebGLRenderer({ antialias: true });
+                this.gridRenderer.setSize(gridContainer.clientWidth, 500);
+                this.gridRenderer.shadowMap.enabled = true;
+                gridContainer.appendChild(this.gridRenderer.domElement);
+
+                this.gridCamera = new THREE.PerspectiveCamera(
+                    60,
+                    gridContainer.clientWidth / 500,
+                    0.1,
+                    1000
+                );
+                this.gridCamera.position.set(8, 12, 8);
+                this.gridCamera.lookAt(0, 0, 0);
+
+                // Lighting for grid
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+                this.gridScene.add(ambientLight);
+
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                directionalLight.position.set(10, 20, 10);
+                directionalLight.castShadow = true;
+                this.gridScene.add(directionalLight);
+
+                // Grid controls - drag to rotate, ctrl+drag to pan
+                this.setupGridControls();
+
+                // Tile preview renderer
+                const tilePreview = document.getElementById('tilePreview');
+                this.tileScene = new THREE.Scene();
+                this.tileScene.background = new THREE.Color(0xffffff);
+
+                this.tileRenderer = new THREE.WebGLRenderer({ antialias: true });
+                this.tileRenderer.setSize(tilePreview.clientWidth, 200);
+                tilePreview.appendChild(this.tileRenderer.domElement);
+
+                this.tileCamera = new THREE.PerspectiveCamera(
+                    50,
+                    tilePreview.clientWidth / 200,
+                    0.1,
+                    100
+                );
+                this.tileCamera.position.set(2, 2, 2);
+                this.tileCamera.lookAt(0, 0, 0);
+
+                // Lighting for tile preview
+                const tileAmbient = new THREE.AmbientLight(0xffffff, 0.6);
+                this.tileScene.add(tileAmbient);
+
+                const tileLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                tileLight.position.set(3, 5, 3);
+                this.tileScene.add(tileLight);
+
+                // Tile preview controls - drag to rotate
+                this.setupTileControls();
+
+                // Animation loop
+                this.animate();
+            }
+
+            setupGridControls() {
+                const canvas = this.gridRenderer.domElement;
+                let isDragging = false;
+                let previousMousePosition = { x: 0, y: 0 };
+                let cameraRotation = { theta: Math.PI / 4, phi: Math.PI / 3 };
+                let cameraDistance = 18;
+                let cameraTarget = new THREE.Vector3(0, 0, 0);
+
+                canvas.addEventListener('mousedown', (e) => {
+                    isDragging = true;
+                    previousMousePosition = { x: e.clientX, y: e.clientY };
+                });
+
+                canvas.addEventListener('mousemove', (e) => {
+                    if (!isDragging) return;
+
+                    const deltaX = e.clientX - previousMousePosition.x;
+                    const deltaY = e.clientY - previousMousePosition.y;
+
+                    if (e.ctrlKey || e.metaKey) {
+                        // Pan camera
+                        const panSpeed = 0.02;
+                        const right = new THREE.Vector3();
+                        const up = new THREE.Vector3(0, 1, 0);
+                        this.gridCamera.getWorldDirection(right);
+                        right.cross(up).normalize();
+
+                        cameraTarget.add(right.multiplyScalar(-deltaX * panSpeed));
+                        cameraTarget.y += deltaY * panSpeed;
+                    } else {
+                        // Rotate camera
+                        cameraRotation.theta -= deltaX * 0.01;
+                        cameraRotation.phi -= deltaY * 0.01;
+                        cameraRotation.phi = Math.max(0.1, Math.min(Math.PI / 2, cameraRotation.phi));
+                    }
+
+                    this.updateGridCamera(cameraRotation, cameraDistance, cameraTarget);
+                    previousMousePosition = { x: e.clientX, y: e.clientY };
+                });
+
+                canvas.addEventListener('mouseup', () => {
+                    isDragging = false;
+                });
+
+                canvas.addEventListener('mouseleave', () => {
+                    isDragging = false;
+                });
+
+                canvas.addEventListener('wheel', (e) => {
+                    e.preventDefault();
+                    cameraDistance += e.deltaY * 0.01;
+                    cameraDistance = Math.max(5, Math.min(30, cameraDistance));
+                    this.updateGridCamera(cameraRotation, cameraDistance, cameraTarget);
+                });
+
+                // Click to place tile
+                canvas.addEventListener('click', (e) => {
+                    if (e.ctrlKey || e.metaKey) return; // Ignore ctrl+click
+                    this.handleGridClick(e);
+                });
+
+                this.updateGridCamera(cameraRotation, cameraDistance, cameraTarget);
+            }
+
+            updateGridCamera(rotation, distance, target) {
+                const x = target.x + distance * Math.sin(rotation.phi) * Math.cos(rotation.theta);
+                const y = target.y + distance * Math.cos(rotation.phi);
+                const z = target.z + distance * Math.sin(rotation.phi) * Math.sin(rotation.theta);
+
+                this.gridCamera.position.set(x, y, z);
+                this.gridCamera.lookAt(target);
+            }
+
+            setupTileControls() {
+                const canvas = this.tileRenderer.domElement;
+                let isDragging = false;
+                let previousMousePosition = { x: 0, y: 0 };
+                let rotation = { x: -Math.PI / 6, y: Math.PI / 4 };
+
+                canvas.addEventListener('mousedown', (e) => {
+                    isDragging = true;
+                    previousMousePosition = { x: e.clientX, y: e.clientY };
+                });
+
+                canvas.addEventListener('mousemove', (e) => {
+                    if (!isDragging) return;
+
+                    const deltaX = e.clientX - previousMousePosition.x;
+                    const deltaY = e.clientY - previousMousePosition.y;
+
+                    rotation.y += deltaX * 0.01;
+                    rotation.x += deltaY * 0.01;
+
+                    // Limit vertical rotation
+                    rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, rotation.x));
+
+                    this.updateTileCamera(rotation);
+                    previousMousePosition = { x: e.clientX, y: e.clientY };
+                });
+
+                canvas.addEventListener('mouseup', () => {
+                    isDragging = false;
+                });
+
+                canvas.addEventListener('mouseleave', () => {
+                    isDragging = false;
+                });
+
+                this.updateTileCamera(rotation);
+            }
+
+            updateTileCamera(rotation) {
+                const distance = 3;
+                const x = distance * Math.cos(rotation.x) * Math.cos(rotation.y);
+                const y = distance * Math.sin(rotation.x);
+                const z = distance * Math.cos(rotation.x) * Math.sin(rotation.y);
+
+                this.tileCamera.position.set(x, y, z);
+                this.tileCamera.lookAt(0, 0, 0);
+            }
+
+            setupGrid() {
+                // Create grid base
+                const gridSize = 15;
+                const tileSize = 1;
+                const gridGeometry = new THREE.PlaneGeometry(gridSize * tileSize, gridSize * tileSize);
+                const gridMaterial = new THREE.MeshBasicMaterial({
+                    color: 0xe2e8f0,
+                    side: THREE.DoubleSide
+                });
+                const gridPlane = new THREE.Mesh(gridGeometry, gridMaterial);
+                gridPlane.rotation.x = -Math.PI / 2;
+                gridPlane.position.y = -0.1;
+                this.gridScene.add(gridPlane);
+
+                // Grid lines
+                const gridHelper = new THREE.GridHelper(gridSize * tileSize, gridSize, 0x999999, 0xcccccc);
+                gridHelper.position.y = -0.09;
+                this.gridScene.add(gridHelper);
+
+                // Store tile meshes
+                this.tileMeshes = Array(15).fill(null).map(() => Array(15).fill(null));
+            }
+
+            handleGridClick(event) {
+                if (!this.currentTile) return;
+
+                const rect = this.gridRenderer.domElement.getBoundingClientRect();
+                const mouse = new THREE.Vector2();
+                mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+                mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+                const raycaster = new THREE.Raycaster();
+                raycaster.setFromCamera(mouse, this.gridCamera);
+
+                // Raycast to find grid position
+                const intersects = raycaster.intersectObjects(this.gridScene.children, true);
+
+                for (let intersect of intersects) {
+                    const point = intersect.point;
+                    const x = Math.floor(point.x + 7.5);
+                    const z = Math.floor(point.z + 7.5);
+
+                    if (x >= 0 && x < 15 && z >= 0 && z < 15) {
+                        this.placeTile(x, z);
+                        break;
+                    }
+                }
+            }
+
+            placeTile(x, z) {
+                if (this.grid[z][x] !== null) {
+                    showNotification('This cell is already occupied!', { type: 'warning', duration: 4000 });
+                    return;
+                }
+
+                if (!this.canPlaceTile(x, z)) {
+                    showNotification('Tile edges must match adjacent tiles!', { type: 'warning', duration: 4000 });
+                    return;
+                }
+
+                // Place tile
+                this.grid[z][x] = this.currentTile;
+
+                // Create and position mesh
+                const mesh = this.currentTile.createMesh(1, this.modelCache);
+                mesh.position.set(x - 7, 0, z - 7);
+                mesh.rotation.y = (this.currentTile.rotation * Math.PI) / 180;
+                this.gridScene.add(mesh);
+                this.tileMeshes[z][x] = mesh;
+
+                this.tilesPlaced++;
+                this.drawNextTile();
+            }
+
+            canPlaceTile(x, z) {
+                let hasAdjacentTile = false;
+
+                const directions = [
+                    { dx: 0, dz: -1, edge: 0, adjacentEdge: 2 }, // top
+                    { dx: 1, dz: 0, edge: 1, adjacentEdge: 3 },  // right
+                    { dx: 0, dz: 1, edge: 2, adjacentEdge: 0 },  // bottom
+                    { dx: -1, dz: 0, edge: 3, adjacentEdge: 1 }  // left
+                ];
+
+                for (const dir of directions) {
+                    const adjX = x + dir.dx;
+                    const adjZ = z + dir.dz;
+
+                    if (adjX >= 0 && adjX < 15 && adjZ >= 0 && adjZ < 15) {
+                        const adjacentTile = this.grid[adjZ][adjX];
+
+                        if (adjacentTile !== null) {
+                            hasAdjacentTile = true;
+
+                            if (this.currentTile.getEdge(dir.edge) !== adjacentTile.getEdge(dir.adjacentEdge)) {
+                                return false;
+                            }
+                        }
+                    }
+                }
+
+                return hasAdjacentTile;
+            }
+
+            createTilePool() {
+                const pool = [];
+
+                // All grass (corners)
+                for (let i = 0; i < 4; i++) {
+                    pool.push(['grass', 'grass', 'grass', 'grass']);
+                }
+
+                // Road through (straight)
+                for (let i = 0; i < 8; i++) {
+                    pool.push(['road', 'grass', 'road', 'grass']);
+                }
+
+                // Road turn
+                for (let i = 0; i < 9; i++) {
+                    pool.push(['road', 'road', 'grass', 'grass']);
+                }
+
+                // Road T-junction
+                for (let i = 0; i < 4; i++) {
+                    pool.push(['road', 'road', 'road', 'grass']);
+                }
+
+                // Road cross
+                pool.push(['road', 'road', 'road', 'road']);
+
+                // City straight
+                for (let i = 0; i < 5; i++) {
+                    pool.push(['city', 'grass', 'city', 'grass']);
+                }
+
+                // City corner
+                for (let i = 0; i < 3; i++) {
+                    pool.push(['city', 'city', 'grass', 'grass']);
+                }
+
+                // City with castle
+                for (let i = 0; i < 2; i++) {
+                    pool.push(['city', 'castle', 'city', 'grass']);
+                }
+
+                // Mixed tiles
+                for (let i = 0; i < 15; i++) {
+                    pool.push(['grass', 'road', 'city', 'grass']);
+                }
+
+                // Castle corners
+                for (let i = 0; i < 5; i++) {
+                    pool.push(['castle', 'grass', 'grass', 'grass']);
+                }
+
+                // Castle with city
+                for (let i = 0; i < 3; i++) {
+                    pool.push(['castle', 'city', 'grass', 'grass']);
+                }
+
+                // Complex tiles
+                pool.push(['grass', 'city', 'road', 'grass']);
+                pool.push(['grass', 'castle', 'grass', 'road']);
+                pool.push(['road', 'city', 'grass', 'city']);
+                pool.push(['city', 'grass', 'castle', 'grass']);
+                pool.push(['road', 'grass', 'road', 'castle']);
+                pool.push(['castle', 'road', 'grass', 'city']);
+                pool.push(['grass', 'road', 'castle', 'road']);
+                pool.push(['city', 'castle', 'grass', 'grass']);
+                pool.push(['grass', 'grass', 'road', 'city']);
+                pool.push(['road', 'castle', 'city', 'grass']);
+                pool.push(['castle', 'grass', 'city', 'road']);
+                pool.push(['city', 'road', 'grass', 'castle']);
+
+                return pool;
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.placeStartingTile();
+                this.drawNextTile();
+            }
+
+            placeStartingTile() {
+                const centerX = 7;
+                const centerZ = 7;
+                const startTile = new Tile3D(['grass', 'road', 'city', 'road']);
+                this.grid[centerZ][centerX] = startTile;
+
+                const mesh = startTile.createMesh(1, this.modelCache);
+                mesh.position.set(0, 0, 0);
+                this.gridScene.add(mesh);
+                this.tileMeshes[centerZ][centerX] = mesh;
+
+                this.tilesPlaced++;
+                this.updateStats();
+            }
+
+            drawNextTile() {
+                if (this.tilePool.length === 0) {
+                    // Game over - show complete map button
+                    document.getElementById('completeMapBtn').style.display = 'block';
+                    showNotification('Game Over! No more tiles. Use "Complete the Map" to fill remaining spaces.', { type: 'info', duration: 6000 });
+                    return;
+                }
+
+                // Remove old preview tile
+                if (this.currentTile && this.currentTile.mesh) {
+                    this.tileScene.remove(this.currentTile.mesh);
+                }
+
+                const randomIndex = Math.floor(Math.random() * this.tilePool.length);
+                const tileEdges = this.tilePool.splice(randomIndex, 1)[0];
+                this.currentTile = new Tile3D(tileEdges);
+
+                // Add to preview scene
+                const previewMesh = this.currentTile.createMesh(1, this.modelCache);
+                this.tileScene.add(previewMesh);
+
+                this.updateStats();
+            }
+
+            completeMap() {
+                // Find all empty cells and try to fill them with tiles that fit
+                const emptyCells = [];
+
+                for (let z = 0; z < 15; z++) {
+                    for (let x = 0; x < 15; x++) {
+                        if (this.grid[z][x] === null) {
+                            emptyCells.push({ x, z });
+                        }
+                    }
+                }
+
+                if (emptyCells.length === 0) {
+                    showNotification('Map is already complete!', { type: 'info', duration: 4000 });
+                    return;
+                }
+
+                // Generate all possible tile combinations
+                const allPossibleTiles = this.generateAllPossibleTiles();
+
+                let filledCount = 0;
+
+                // Try to fill each empty cell
+                for (const cell of emptyCells) {
+                    const { x, z } = cell;
+
+                    // Find a tile that fits
+                    const fittingTile = this.findFittingTile(x, z, allPossibleTiles);
+
+                    if (fittingTile) {
+                        // Place the tile
+                        this.grid[z][x] = fittingTile;
+
+                        const mesh = fittingTile.createMesh(1, this.modelCache);
+                        mesh.position.set(x - 7, 0, z - 7);
+                        mesh.rotation.y = (fittingTile.rotation * Math.PI) / 180;
+                        this.gridScene.add(mesh);
+                        this.tileMeshes[z][x] = mesh;
+
+                        this.tilesPlaced++;
+                        filledCount++;
+                    }
+                }
+
+                this.updateStats();
+                document.getElementById('completeMapBtn').style.display = 'none';
+                showNotification(`Map completed! Filled ${filledCount} empty spaces.`, { type: 'success', duration: 6000 });
+            }
+
+            generateAllPossibleTiles() {
+                const types = ['grass', 'road', 'city', 'castle'];
+                const tiles = [];
+
+                // Generate common patterns
+                for (const t1 of types) {
+                    for (const t2 of types) {
+                        for (const t3 of types) {
+                            for (const t4 of types) {
+                                tiles.push([t1, t2, t3, t4]);
+                            }
+                        }
+                    }
+                }
+
+                return tiles;
+            }
+
+            findFittingTile(x, z, possibleTiles) {
+                // Check what edges are required based on neighbors
+                const requiredEdges = [null, null, null, null]; // [top, right, bottom, left]
+
+                const directions = [
+                    { dx: 0, dz: -1, edge: 0, adjacentEdge: 2 }, // top
+                    { dx: 1, dz: 0, edge: 1, adjacentEdge: 3 },  // right
+                    { dx: 0, dz: 1, edge: 2, adjacentEdge: 0 },  // bottom
+                    { dx: -1, dz: 0, edge: 3, adjacentEdge: 1 }  // left
+                ];
+
+                for (const dir of directions) {
+                    const adjX = x + dir.dx;
+                    const adjZ = z + dir.dz;
+
+                    if (adjX >= 0 && adjX < 15 && adjZ >= 0 && adjZ < 15) {
+                        const adjacentTile = this.grid[adjZ][adjX];
+
+                        if (adjacentTile !== null) {
+                            requiredEdges[dir.edge] = adjacentTile.getEdge(dir.adjacentEdge);
+                        }
+                    }
+                }
+
+                // Try to find a tile that matches all required edges
+                for (const tileEdges of possibleTiles) {
+                    let matches = true;
+
+                    for (let i = 0; i < 4; i++) {
+                        if (requiredEdges[i] !== null && tileEdges[i] !== requiredEdges[i]) {
+                            matches = false;
+                            break;
+                        }
+                    }
+
+                    if (matches) {
+                        return new Tile3D(tileEdges);
+                    }
+                }
+
+                return null;
+            }
+
+            setupEventListeners() {
+                document.getElementById('rotateBtn').addEventListener('click', () => {
+                    if (this.currentTile) {
+                        this.currentTile.rotate();
+
+                        // Update preview
+                        this.tileScene.remove(this.currentTile.mesh);
+                        const newMesh = this.currentTile.createMesh(1, this.modelCache);
+                        this.tileScene.add(newMesh);
+                    }
+                });
+
+                document.getElementById('newGameBtn').addEventListener('click', () => {
+                    if (confirm('Start a new game?')) {
+                        // Hide complete map button
+                        document.getElementById('completeMapBtn').style.display = 'none';
+
+                        // Clear grid
+                        this.grid = Array(15).fill(null).map(() => Array(15).fill(null));
+                        this.tilesPlaced = 0;
+                        this.tilePool = this.createTilePool();
+
+                        // Clear meshes
+                        for (let z = 0; z < 15; z++) {
+                            for (let x = 0; x < 15; x++) {
+                                if (this.tileMeshes[z][x]) {
+                                    this.gridScene.remove(this.tileMeshes[z][x]);
+                                    this.tileMeshes[z][x] = null;
+                                }
+                            }
+                        }
+
+                        this.placeStartingTile();
+                        this.drawNextTile();
+                    }
+                });
+
+                document.getElementById('completeMapBtn').addEventListener('click', () => {
+                    this.completeMap();
+                });
+
+                // Handle window resize
+                window.addEventListener('resize', () => {
+                    const gridContainer = document.getElementById('gridContainer');
+                    const tilePreview = document.getElementById('tilePreview');
+
+                    this.gridCamera.aspect = gridContainer.clientWidth / 500;
+                    this.gridCamera.updateProjectionMatrix();
+                    this.gridRenderer.setSize(gridContainer.clientWidth, 500);
+
+                    this.tileCamera.aspect = tilePreview.clientWidth / 200;
+                    this.tileCamera.updateProjectionMatrix();
+                    this.tileRenderer.setSize(tilePreview.clientWidth, 200);
+                });
+            }
+
+            updateStats() {
+                document.getElementById('tilesPlaced').textContent = this.tilesPlaced;
+                document.getElementById('tilesRemaining').textContent = this.tilePool.length;
+            }
+
+            animate() {
+                requestAnimationFrame(() => this.animate());
+                this.gridRenderer.render(this.gridScene, this.gridCamera);
+                this.tileRenderer.render(this.tileScene, this.tileCamera);
+            }
+        }
+
+        // Start the game - wait for Three.js to load
+        let game;
+        function initGame() {
+            if (typeof THREE === 'undefined') {
+                console.log('Waiting for Three.js to load...');
+                setTimeout(initGame, 100);
+                return;
+            }
+            game = new Game3D();
+        }
+
+        window.addEventListener('DOMContentLoaded', initGame);
+    </script>
+</body>
+
+</html>

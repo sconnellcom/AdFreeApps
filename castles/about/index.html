@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="../../manifest.json">
+    <link rel="apple-touch-icon" href="../../icons/icon-152x152.png">
+    <title>About Castles - Ad Free Apps</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-gradient-start: #667eea;
+            --bg-gradient-end: #764ba2;
+            --primary-color: #667eea;
+            --primary-hover: #764ba2;
+            --container-bg: #ffffff;
+            --text-color: #333333;
+            --text-secondary: #555555;
+            --border-color: #e2e8f0;
+            --surface-bg: #f7fafc;
+        }
+
+        body.theme-light {
+            --bg-gradient-start: #97B22D;
+            --bg-gradient-end: #89751B;
+            --primary-color: #97B22D;
+            --primary-hover: #89751B;
+            --container-bg: #FEFCAD;
+            --text-color: #2d3748;
+            --text-secondary: #4a5568;
+            --border-color: #E3DE81;
+            --surface-bg: #f1ff72;
+        }
+
+        body.theme-dark {
+            --bg-gradient-start: #2d3d0f;
+            --bg-gradient-end: #1a2208;
+            --primary-color: #97B22D;
+            --primary-hover: #d2cc54;
+            --container-bg: #1f2d0a;
+            --text-color: #E3DAB2;
+            --text-secondary: #d2cc54;
+            --border-color: #3d4d1f;
+            --surface-bg: #2a3a12;
+        }
+
+        body.theme-warm-light {
+            --bg-gradient-start: #C6BE28;
+            --bg-gradient-end: #97B22D;
+            --primary-color: #E49A32;
+            --primary-hover: #C6BE28;
+            --container-bg: #FEFCAD;
+            --text-color: #3d3d1f;
+            --text-secondary: #5d5d3f;
+            --border-color: #E3DAB2;
+            --surface-bg: #faedb6;
+        }
+
+        body.theme-warm-dark {
+            --bg-gradient-start: #2a2510;
+            --bg-gradient-end: #1a1808;
+            --primary-color: #E49A32;
+            --primary-hover: #C6BE28;
+            --container-bg: #2d2815;
+            --text-color: #FEFCAD;
+            --text-secondary: #E3DAB2;
+            --border-color: #4a3f1a;
+            --surface-bg: #3a3220;
+        }
+
+        body.theme-red {
+            --bg-gradient-start: #dc2626;
+            --bg-gradient-end: #991b1b;
+            --primary-color: #ef4444;
+            --primary-hover: #dc2626;
+            --container-bg: #ffffff;
+            --text-color: #1f2937;
+            --text-secondary: #374151;
+            --border-color: #fecaca;
+            --surface-bg: #fef2f2;
+        }
+
+        body.theme-pink {
+            --bg-gradient-start: #ec4899;
+            --bg-gradient-end: #be185d;
+            --primary-color: #f472b6;
+            --primary-hover: #ec4899;
+            --container-bg: #ffffff;
+            --text-color: #1f2937;
+            --text-secondary: #374151;
+            --border-color: #fbcfe8;
+            --surface-bg: #fdf2f8;
+        }
+
+        body.theme-red-dark {
+            --bg-gradient-start: #7f1d1d;
+            --bg-gradient-end: #450a0a;
+            --primary-color: #ef4444;
+            --primary-hover: #f87171;
+            --container-bg: #1a0505;
+            --text-color: #fecaca;
+            --text-secondary: #fca5a5;
+            --border-color: #7f1d1d;
+            --surface-bg: #450a0a;
+        }
+
+        body.theme-pink-dark {
+            --bg-gradient-start: #831843;
+            --bg-gradient-end: #500724;
+            --primary-color: #f472b6;
+            --primary-hover: #f9a8d4;
+            --container-bg: #1a050f;
+            --text-color: #fce7f3;
+            --text-secondary: #fbcfe8;
+            --border-color: #831843;
+            --surface-bg: #500724;
+        }
+
+        body.theme-black {
+            --bg-gradient-start: #1f2937;
+            --bg-gradient-end: #111827;
+            --primary-color: #6b7280;
+            --primary-hover: #9ca3af;
+            --container-bg: #0f172a;
+            --text-color: #f3f4f6;
+            --text-secondary: #d1d5db;
+            --border-color: #374151;
+            --surface-bg: #1e293b;
+        }
+
+        body.theme-blue {
+            --bg-gradient-start: #3b82f6;
+            --bg-gradient-end: #1e40af;
+            --primary-color: #60a5fa;
+            --primary-hover: #3b82f6;
+            --container-bg: #ffffff;
+            --text-color: #1f2937;
+            --text-secondary: #374151;
+            --border-color: #bfdbfe;
+            --surface-bg: #eff6ff;
+        }
+
+        body.theme-blue-dark {
+            --bg-gradient-start: #0c4a6e;
+            --bg-gradient-end: #082f49;
+            --primary-color: #38bdf8;
+            --primary-hover: #0ea5e9;
+            --container-bg: #0a1929;
+            --text-color: #e0f2fe;
+            --text-secondary: #7dd3fc;
+            --border-color: #0e7490;
+            --surface-bg: #164e63;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: var(--container-bg);
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--primary-color);
+            text-decoration: none;
+            font-size: 1.1em;
+            margin-bottom: 30px;
+            transition: color 0.2s;
+        }
+
+        .back-btn:hover {
+            color: var(--primary-hover);
+        }
+
+        h1 {
+            color: var(--text-color);
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.2em;
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            color: var(--text-color);
+            font-size: 1.8em;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+
+        h3 {
+            color: var(--text-color);
+            font-size: 1.3em;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        p {
+            color: var(--text-secondary);
+            line-height: 1.8;
+            margin-bottom: 15px;
+        }
+
+        ul {
+            color: var(--text-secondary);
+            line-height: 1.8;
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+
+        .feature-list {
+            background: var(--surface-bg);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .feature-list li {
+            margin-bottom: 10px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            background: var(--primary-color);
+            color: white;
+            text-decoration: none;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: var(--surface-bg);
+            color: var(--text-color);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            h2 {
+                font-size: 1.5em;
+            }
+
+            .btn-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <a href="../" class="back-btn">← Back to Game</a>
+
+        <h1>🏰 Castles</h1>
+        <p class="subtitle">A strategic tile-placement game with 3D tiles</p>
+
+        <h2>About</h2>
+        <p>Castles is a strategic tile-placement game inspired by Carcassonne with full 3D rendering. Build a medieval
+            landscape by placing tiles with roads, cities, grass fields, and castles. Each tile is rendered in true 3D
+            using Three.js, allowing you to view and interact with your medieval world from any angle.</p>
+
+        <h2>3D Features</h2>
+        <div class="feature-list">
+            <ul>
+                <li><strong>True 3D Rendering:</strong> Tiles are rendered as 3D objects using Three.js/WebGL</li>
+                <li><strong>Interactive Camera:</strong> Drag to rotate, Ctrl+drag to pan, scroll to zoom</li>
+                <li><strong>Tile Preview Rotation:</strong> Click and drag on the tile preview to examine from any angle</li>
+                <li><strong>3D Model Support:</strong> Supports GLTF/GLB, OBJ, and FBX model formats</li>
+                <li><strong>Dynamic Lighting:</strong> Ambient and directional lighting creates depth and realism</li>
+                <li><strong>Smooth Controls:</strong> Intuitive camera controls for the best viewing experience</li>
+            </ul>
+        </div>
+
+        <h2>Camera Controls</h2>
+        <div class="feature-list">
+            <h3>Game Board (Main View):</h3>
+            <ul>
+                <li><strong>Drag (Left Click):</strong> Rotate camera around the board</li>
+                <li><strong>Ctrl/Cmd + Drag:</strong> Pan the camera to move your view</li>
+                <li><strong>Mouse Wheel:</strong> Zoom in and out</li>
+                <li><strong>Click on Grid:</strong> Place the current tile</li>
+            </ul>
+
+            <h3>Tile Preview (Right Panel):</h3>
+            <ul>
+                <li><strong>Drag:</strong> Rotate the tile to view it from different angles</li>
+                <li><strong>Initial View:</strong> Starts at a 45° isometric angle</li>
+            </ul>
+        </div>
+
+        <h2>How to Play</h2>
+        <div class="feature-list">
+            <h3>Basic Rules:</h3>
+            <ul>
+                <li><strong>Place Tiles:</strong> Click on an empty grid cell to place your current tile</li>
+                <li><strong>Match Edges:</strong> Tile edges must match the adjacent tiles (road to road, city to city,
+                    etc.)</li>
+                <li><strong>Rotate Tiles:</strong> Click the "Rotate Tile" button to rotate your current tile before
+                    placing it</li>
+                <li><strong>Strategic Placement:</strong> Think ahead about how tiles will connect to create larger
+                    features</li>
+            </ul>
+        </div>
+
+        <h2>Features</h2>
+        <div class="feature-list">
+            <ul>
+                <li><strong>True 3D Graphics:</strong> Full 3D rendering using Three.js with real-time lighting</li>
+                <li><strong>3D Tile Models:</strong> Uses actual 3D models (GLB format) for authentic medieval tiles</li>
+                <li><strong>72 Unique Tiles:</strong> Various combinations of roads, cities, grass, and castles</li>
+                <li><strong>15x15 Grid:</strong> Expansive play area to build your medieval landscape</li>
+                <li><strong>Auto-Complete:</strong> Fill remaining gaps with matching tiles when out of pieces</li>
+                <li><strong>Interactive Camera:</strong> Rotate, pan, and zoom to view from any angle</li>
+                <li><strong>Tile Rotation:</strong> Rotate tiles and preview from all sides before placing</li>
+                <li><strong>Edge Matching:</strong> Automatic validation ensures tiles match their neighbors</li>
+                <li><strong>Game Stats:</strong> Track your progress with tiles placed and remaining</li>
+                <li><strong>Theme Support:</strong> Choose from 12 different color themes</li>
+                <li><strong>No Ads or Tracking:</strong> Enjoy a clean, distraction-free experience</li>
+            </ul>
+        </div>
+
+        <h2>3D Models</h2>
+        <p>The game now uses actual 3D models for the tiles! The following models are currently loaded:</p>
+        <div class="feature-list">
+            <ul>
+                <li><strong>castle.glb:</strong> Castle tiles with fortification structures</li>
+                <li><strong>grass_castle.glb:</strong> Mixed grass and castle tiles</li>
+                <li><strong>coister.glb:</strong> Monastery/cloister tiles</li>
+                <li><strong>coister2.glb:</strong> City and cloister variations</li>
+            </ul>
+            <p>The game automatically selects the appropriate model based on tile edge types. Models are loaded using the GLTF format and rendered with Three.js.</p>
+            <p>To add more models, place GLTF/GLB files in the <code>/castles/models/</code> directory. The game will fall back to procedural generation if a model can't be loaded.</p>
+        </div>
+
+        <h2>Tile Types</h2>
+        <p>The game includes four types of terrain features:</p>
+        <div class="feature-list">
+            <ul>
+                <li><strong>Grass (Green):</strong> Open fields and meadows</li>
+                <li><strong>Road (Brown):</strong> Paths connecting different parts of the landscape</li>
+                <li><strong>City (Gray):</strong> Walled settlements and fortifications</li>
+                <li><strong>Castle (Purple):</strong> Special fortress structures</li>
+            </ul>
+        </div>
+
+        <h2>Tips for Success</h2>
+        <div class="feature-list">
+            <ul>
+                <li>Use camera controls to get the best view of your board</li>
+                <li>Rotate the tile preview to examine all edges before placing</li>
+                <li>Plan ahead - think about which tiles might come next</li>
+                <li>Try to keep your options open by avoiding dead ends</li>
+                <li>Rotate tiles to find the best placement option</li>
+                <li>Start from the center and expand outward strategically</li>
+                <li>Match edges carefully to avoid getting stuck</li>
+            </ul>
+        </div>
+
+        <h2>Technical Requirements</h2>
+        <p>Castles uses WebGL for 3D rendering via the Three.js library. Your browser must support:</p>
+        <div class="feature-list">
+            <ul>
+                <li>WebGL 1.0 or higher</li>
+                <li>Modern JavaScript (ES6+)</li>
+                <li>Recommended: Desktop or tablet device for best camera control experience</li>
+            </ul>
+        </div>
+
+        <h2>Privacy & Technical Details</h2>
+        <p>Castles is a client-side application that runs entirely in your browser using WebGL. No data is collected, tracked, or
+            sent to any server. Your game progress is stored locally in your browser.</p>
+
+        <p><strong>Technologies used:</strong> HTML5, CSS3, JavaScript, Three.js, WebGL, Canvas API</p>
+
+        <div class="btn-group">
+            <a href="../" class="btn">Play Now</a>
+            <a href="../../" class="btn btn-secondary">More Apps</a>
+        </div>
+    </div>
+
+    <script>
+        // Load saved theme
+        const savedTheme = localStorage.getItem('appTheme') || 'default';
+        if (savedTheme !== 'default') {
+            document.body.classList.add(`theme-${savedTheme}`);
+        }
+    </script>
+</body>
+
+</html>
