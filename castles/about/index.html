@@ -350,7 +350,7 @@
         <div class="feature-list">
             <ul>
                 <li><strong>True 3D Graphics:</strong> Full 3D rendering using Three.js with real-time lighting</li>
-                <li><strong>3D Model Support:</strong> Load custom GLTF/GLB, OBJ, or FBX tile models</li>
+                <li><strong>3D Tile Models:</strong> Uses actual 3D models (GLB format) for authentic medieval tiles</li>
                 <li><strong>72 Unique Tiles:</strong> Various combinations of roads, cities, grass, and castles</li>
                 <li><strong>15x15 Grid:</strong> Expansive play area to build your medieval landscape</li>
                 <li><strong>Auto-Complete:</strong> Fill remaining gaps with matching tiles when out of pieces</li>
@@ -363,15 +363,17 @@
             </ul>
         </div>
 
-        <h2>3D Model Support</h2>
-        <p>You can provide custom 3D models for tiles in the following formats:</p>
+        <h2>3D Models</h2>
+        <p>The game now uses actual 3D models for the tiles! The following models are currently loaded:</p>
         <div class="feature-list">
             <ul>
-                <li><strong>GLTF/GLB (Recommended):</strong> Industry standard, optimized for web, supports animations and PBR materials</li>
-                <li><strong>OBJ:</strong> Simple format with material support (.mtl files)</li>
-                <li><strong>FBX:</strong> Popular in game development, supports complex models</li>
+                <li><strong>castle.glb:</strong> Castle tiles with fortification structures</li>
+                <li><strong>grass_castle.glb:</strong> Mixed grass and castle tiles</li>
+                <li><strong>coister.glb:</strong> Monastery/cloister tiles</li>
+                <li><strong>coister2.glb:</strong> City and cloister variations</li>
             </ul>
-            <p>Place your 3D model files in the <code>/castles/models/</code> directory. See the README in that directory for naming conventions and specifications.</p>
+            <p>The game automatically selects the appropriate model based on tile edge types. Models are loaded using the GLTF format and rendered with Three.js.</p>
+            <p>To add more models, place GLTF/GLB files in the <code>/castles/models/</code> directory. The game will fall back to procedural generation if a model can't be loaded.</p>
         </div>
 
         <h2>Tile Types</h2>

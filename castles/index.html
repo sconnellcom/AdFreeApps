@@ -10,6 +10,15 @@
     <link rel="apple-touch-icon" href="../icons/icon-152x152.png">
     <title>Castles - 3D Tile Game</title>
     <script async src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+    <script type="module">
+        // Import GLTFLoader as a module after THREE is loaded
+        window.addEventListener('load', async () => {
+            if (typeof THREE !== 'undefined') {
+                const { GLTFLoader } = await import('https://unpkg.com/three@0.160.0/examples/jsm/loaders/GLTFLoader.js');
+                THREE.GLTFLoader = GLTFLoader;
+            }
+        });
+    </script>
     <style>
         * {
             margin: 0;
@@ -651,9 +660,26 @@
             }
 
             // Create 3D mesh for this tile
-            createMesh(size = 1) {
+            createMesh(size = 1, modelCache = {}) {
                 const group = new THREE.Group();
                 
+                // Determine which model to use based on tile edges
+                let modelName = this.selectModel();
+                
+                // Try to use loaded model if available
+                if (modelCache[modelName]) {
+                    const modelClone = modelCache[modelName].clone();
+                    
+                    // Scale and position the model
+                    modelClone.scale.set(size * 0.8, size * 0.8, size * 0.8);
+                    modelClone.position.set(0, 0, 0);
+                    
+                    group.add(modelClone);
+                    this.mesh = group;
+                    return group;
+                }
+                
+                // Fallback to procedural generation if model not available
                 // Base tile
                 const baseGeometry = new THREE.BoxGeometry(size, 0.2, size);
                 const baseMaterial = new THREE.MeshPhongMaterial({ color: 0x7cb342 });
@@ -712,6 +738,39 @@
                 this.mesh = group;
                 return group;
             }
+
+            selectModel() {
+                // Select model based on edge types
+                // Priority: castle > city > road > grass
+                const edgeTypes = this.edges.join('_');
+                
+                // Check for castle tiles
+                if (this.edges.includes('castle')) {
+                    // Use different castle models based on configuration
+                    if (this.edges.filter(e => e === 'castle').length >= 2) {
+                        return 'castle.glb';
+                    } else if (this.edges.includes('grass')) {
+                        return 'grass_castle.glb';
+                    } else {
+                        return 'castle.glb';
+                    }
+                }
+                
+                // Check for cloister-like patterns (same on all sides)
+                if (this.edges[0] === this.edges[1] && this.edges[1] === this.edges[2] && this.edges[2] === this.edges[3]) {
+                    if (this.edges[0] === 'grass') {
+                        return 'coister.glb';
+                    }
+                }
+                
+                // Check for city tiles
+                if (this.edges.includes('city')) {
+                    return 'coister2.glb';
+                }
+                
+                // Default fallback
+                return 'coister.glb';
+            }
         }
 
         class Game3D {
@@ -721,10 +780,56 @@
                 this.tilesPlaced = 0;
                 this.tilePool = this.createTilePool();
                 
+                // Model loader and cache
+                this.modelLoader = null;
+                this.modelCache = {};
+                this.modelsLoaded = false;
+                
                 // Three.js setup
                 this.setupRenderers();
                 this.setupGrid();
-                this.init();
+                this.loadModels().then(() => {
+                    this.modelsLoaded = true;
+                    this.init();
+                });
+            }
+
+            async loadModels() {
+                // Wait for THREE and GLTFLoader to be available
+                while (typeof THREE === 'undefined' || typeof THREE.GLTFLoader === 'undefined') {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+                
+                this.modelLoader = new THREE.GLTFLoader();
+                
+                // Load all available models
+                const models = [
+                    'castle.glb',
+                    'coister.glb', 
+                    'coister2.glb',
+                    'grass_castle.glb'
+                ];
+                
+                const loadPromises = models.map(modelName => 
+                    new Promise((resolve) => {
+                        this.modelLoader.load(
+                            `models/${modelName}`,
+                            (gltf) => {
+                                this.modelCache[modelName] = gltf.scene;
+                                console.log(`Loaded model: ${modelName}`);
+                                resolve();
+                            },
+                            undefined,
+                            (error) => {
+                                console.warn(`Could not load ${modelName}:`, error);
+                                resolve(); // Resolve anyway to not block
+                            }
+                        );
+                    })
+                );
+                
+                await Promise.all(loadPromises);
+                console.log('All models loaded:', Object.keys(this.modelCache));
             }
 
             setupRenderers() {
@@ -977,7 +1082,7 @@
                 this.grid[z][x] = this.currentTile;
                 
                 // Create and position mesh
-                const mesh = this.currentTile.createMesh(1);
+                const mesh = this.currentTile.createMesh(1, this.modelCache);
                 mesh.position.set(x - 7, 0, z - 7);
                 mesh.rotation.y = (this.currentTile.rotation * Math.PI) / 180;
                 this.gridScene.add(mesh);
@@ -1102,7 +1207,7 @@
                 const startTile = new Tile3D(['grass', 'road', 'city', 'road']);
                 this.grid[centerZ][centerX] = startTile;
                 
-                const mesh = startTile.createMesh(1);
+                const mesh = startTile.createMesh(1, this.modelCache);
                 mesh.position.set(0, 0, 0);
                 this.gridScene.add(mesh);
                 this.tileMeshes[centerZ][centerX] = mesh;
@@ -1129,7 +1234,7 @@
                 this.currentTile = new Tile3D(tileEdges);
                 
                 // Add to preview scene
-                const previewMesh = this.currentTile.createMesh(1);
+                const previewMesh = this.currentTile.createMesh(1, this.modelCache);
                 this.tileScene.add(previewMesh);
                 
                 this.updateStats();
@@ -1168,7 +1273,7 @@
                         // Place the tile
                         this.grid[z][x] = fittingTile;
                         
-                        const mesh = fittingTile.createMesh(1);
+                        const mesh = fittingTile.createMesh(1, this.modelCache);
                         mesh.position.set(x - 7, 0, z - 7);
                         mesh.rotation.y = (fittingTile.rotation * Math.PI) / 180;
                         this.gridScene.add(mesh);
@@ -1252,7 +1357,7 @@
                         
                         // Update preview
                         this.tileScene.remove(this.currentTile.mesh);
-                        const newMesh = this.currentTile.createMesh(1);
+                        const newMesh = this.currentTile.createMesh(1, this.modelCache);
                         this.tileScene.add(newMesh);
                     }
                 });
