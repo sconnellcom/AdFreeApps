@@ -744,8 +744,8 @@
                 if (modelCache[modelName]) {
                     const modelClone = modelCache[modelName].clone();
 
-                    // Scale and position the model
-                    modelClone.scale.set(size * 0.8, size * 0.8, size * 0.8);
+                    // Scale and position the model (reduced size)
+                    modelClone.scale.set(size * 0.02, size * 0.02, size * 0.02);
                     modelClone.position.set(0, 0, 0);
 
                     group.add(modelClone);
@@ -869,12 +869,7 @@
             }
 
             async loadModels() {
-                // Wait for THREE and GLTFLoader to be available
-                while (typeof THREE === 'undefined' || typeof THREE.GLTFLoader === 'undefined') {
-                    await new Promise(resolve => setTimeout(resolve, 100));
-                }
-
-                this.modelLoader = new THREE.GLTFLoader();
+                this.modelLoader = new GLTFLoader();
 
                 // Load all available models
                 const models = [
@@ -886,16 +881,19 @@
 
                 const loadPromises = models.map(modelName =>
                     new Promise((resolve) => {
+                        const modelPath = `./models/${modelName}`;
                         this.modelLoader.load(
-                            `models/${modelName}`,
+                            modelPath,
                             (gltf) => {
                                 this.modelCache[modelName] = gltf.scene;
-                                console.log(`Loaded model: ${modelName}`);
+                                console.log(`✓ Loaded model: ${modelName}`);
                                 resolve();
                             },
-                            undefined,
+                            (progress) => {
+                                console.log(`Loading ${modelName}: ${Math.round((progress.loaded / progress.total) * 100)}%`);
+                            },
                             (error) => {
-                                console.warn(`Could not load ${modelName}:`, error);
+                                console.error(`✗ Failed to load ${modelName}:`, error);
                                 resolve(); // Resolve anyway to not block
                             }
                         );
@@ -903,7 +901,11 @@
                 );
 
                 await Promise.all(loadPromises);
-                console.log('All models loaded:', Object.keys(this.modelCache));
+                const loadedCount = Object.keys(this.modelCache).length;
+                console.log(`Models loaded: ${loadedCount}/${models.length}`, Object.keys(this.modelCache));
+                if (loadedCount === 0) {
+                    console.warn('⚠ No models loaded. Using procedural fallback.');
+                }
             }
 
             setupRenderers() {
