@@ -122,7 +122,6 @@ class Tuner {
         // Smoothing for display - using a frequency buffer for better stability
         this.frequencyBuffer = [];
         this.frequencyBufferSize = 10; // Average over last 10 readings
-        this.smoothedFrequency = 0;
         this.smoothedCents = 0;
         this.smoothingFactor = 0.3;
 
@@ -540,7 +539,7 @@ class Tuner {
     }
 
     updateDisplay(frequency) {
-        // Add frequency to buffer for smoothing
+        // Add frequency to buffer for smoothing (ensuring buffer is never empty before averaging)
         this.frequencyBuffer.push(frequency);
         if (this.frequencyBuffer.length > this.frequencyBufferSize) {
             this.frequencyBuffer.shift();
