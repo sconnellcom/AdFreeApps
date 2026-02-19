@@ -119,7 +119,9 @@ class Tuner {
         this.currentInstrument = 'chromatic';
         this.selectedString = null;
 
-        // Smoothing for display
+        // Smoothing for display - using a frequency buffer for better stability
+        this.frequencyBuffer = [];
+        this.frequencyBufferSize = 10; // Average over last 10 readings
         this.smoothedCents = 0;
         this.smoothingFactor = 0.3;
 
@@ -411,6 +413,10 @@ class Tuner {
         this.audioLevelStatus.textContent = 'No signal';
         this.audioLevelStatus.classList.remove('weak', 'good');
         this.audioLevelStatus.classList.add('no-signal');
+
+        // Reset smoothing buffers
+        this.frequencyBuffer = [];
+        this.smoothedCents = 0;
     }
 
     detectPitch() {
@@ -533,15 +539,24 @@ class Tuner {
     }
 
     updateDisplay(frequency) {
-        // Get note info from frequency
-        const noteInfo = this.frequencyToNote(frequency);
+        // Add frequency to buffer for smoothing (ensuring buffer is never empty before averaging)
+        this.frequencyBuffer.push(frequency);
+        if (this.frequencyBuffer.length > this.frequencyBufferSize) {
+            this.frequencyBuffer.shift();
+        }
+
+        // Calculate smoothed frequency as average of buffer
+        const smoothedFrequency = this.frequencyBuffer.reduce((sum, f) => sum + f, 0) / this.frequencyBuffer.length;
+
+        // Get note info from smoothed frequency
+        const noteInfo = this.frequencyToNote(smoothedFrequency);
 
         // Update note display
         this.detectedNote.textContent = noteInfo.note;
         this.octaveDisplay.textContent = `Octave ${noteInfo.octave}`;
-        this.frequencyValue.textContent = frequency.toFixed(1);
+        this.frequencyValue.textContent = smoothedFrequency.toFixed(1);
 
-        // Smooth the cents value
+        // Smooth the cents value for even more stability
         this.smoothedCents = this.smoothedCents * (1 - this.smoothingFactor) + noteInfo.cents * this.smoothingFactor;
         const displayCents = Math.round(this.smoothedCents);
 
