@@ -183,8 +183,8 @@ function renderCardEditors(cardData) {
             <div class="card-num">Card ${i + 1}</div>
             <button class="card-editor-remove" onclick="removeCardEditor(${i})" title="Remove card">✕</button>
             <div class="card-fields">
-                <input class="form-input card-front" type="text" placeholder="Front (term)" value="${escapeHtml(card.front)}">
-                <input class="form-input card-back" type="text" placeholder="Back (definition)" value="${escapeHtml(card.back)}">
+                <textarea class="form-input card-front" placeholder="Front (term)" rows="2">${escapeHtml(card.front)}</textarea>
+                <textarea class="form-input card-back" placeholder="Back (definition)" rows="2">${escapeHtml(card.back)}</textarea>
             </div>
         </div>`).join('');
 }
