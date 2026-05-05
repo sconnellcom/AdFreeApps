@@ -410,7 +410,8 @@ function startStudy(deckId) {
         seenCount: 0,
         totalCards: cards.length,
         isFlipped: false,
-        currentIndex: 0,
+        history: [],
+        historyPos: -1,
         startTime: Date.now()
     };
 
@@ -426,10 +427,18 @@ function showStudyCard() {
         return;
     }
 
-    const cardId = s.queue[s.currentIndex];
+    const cardId = s.queue[0];
+    s.seenCount++;
+    s.history.push(cardId);
+    s.historyPos = s.history.length - 1;
+
+    renderStudyCard(cardId);
+}
+
+function renderStudyCard(cardId) {
+    const s = studyState;
     const card = s.cards[cardId];
     s.isFlipped = false;
-    s.seenCount++;
 
     // Progress
     const learned = s.knownIds.size;
@@ -483,8 +492,8 @@ function showStudyCard() {
     // Update prev/next button states
     const prevBtn = document.getElementById('prevCardBtn');
     const nextBtn = document.getElementById('nextCardBtn');
-    if (prevBtn) prevBtn.disabled = s.currentIndex <= 0;
-    if (nextBtn) nextBtn.disabled = s.currentIndex >= s.queue.length - 1;
+    if (prevBtn) prevBtn.disabled = s.historyPos <= 0;
+    if (nextBtn) nextBtn.disabled = s.historyPos >= s.history.length - 1;
 }
 
 function flipCard() {
@@ -503,33 +512,32 @@ function flipCard() {
 }
 
 function prevCard() {
-    if (!studyState || studyState.currentIndex <= 0) return;
-    studyState.currentIndex--;
-    showStudyCard();
+    if (!studyState || studyState.historyPos <= 0) return;
+    studyState.historyPos--;
+    renderStudyCard(studyState.history[studyState.historyPos]);
 }
 
 function nextCard() {
-    if (!studyState || studyState.currentIndex >= studyState.queue.length - 1) return;
-    studyState.currentIndex++;
-    showStudyCard();
+    if (!studyState || studyState.historyPos >= studyState.history.length - 1) return;
+    studyState.historyPos++;
+    renderStudyCard(studyState.history[studyState.historyPos]);
 }
 
 function rateCard(knewIt) {
     if (!studyState) return;
     const s = studyState;
-    const cardId = s.queue.splice(s.currentIndex, 1)[0]; // remove current card
+    const cardId = s.history[s.historyPos];
+    const cardQueueIndex = s.queue.indexOf(cardId);
 
-    if (knewIt) {
-        s.knownIds.add(cardId);
-    } else {
-        // Reinsert 3 positions later from current position (or at end if fewer remain)
-        const insertAt = Math.min(s.currentIndex + 3, s.queue.length);
-        s.queue.splice(insertAt, 0, cardId);
-    }
-
-    // Clamp currentIndex in case we were at the end
-    if (s.currentIndex >= s.queue.length) {
-        s.currentIndex = Math.max(0, s.queue.length - 1);
+    if (cardQueueIndex !== -1) {
+        s.queue.splice(cardQueueIndex, 1);
+        if (knewIt) {
+            s.knownIds.add(cardId);
+        } else {
+            // Reinsert 3 positions later (or at end if fewer remain)
+            const insertAt = Math.min(cardQueueIndex + 3, s.queue.length);
+            s.queue.splice(insertAt, 0, cardId);
+        }
     }
 
     showStudyCard();
