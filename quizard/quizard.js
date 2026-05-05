@@ -467,9 +467,13 @@ function showStudyCard() {
     }
     updateFlashcardHeight();
 
-    // Reset flip state
+    // Reset flip state without animating (suppress transition for one frame)
     const flashcard = document.getElementById('flashcard');
+    flashcard.classList.add('no-transition');
     flashcard.classList.remove('flipped');
+    // eslint-disable-next-line no-unused-expressions
+    flashcard.offsetWidth; // force reflow so the removal takes effect instantly
+    flashcard.classList.remove('no-transition');
 
     // Show/hide rating buttons
     document.getElementById('studyRatingRow').style.display = 'none';
