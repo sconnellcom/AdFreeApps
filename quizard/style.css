@@ -751,6 +751,12 @@ h1 {
     padding: 8px 14px;
 }
 
+.study-nav-row .btn:disabled {
+    opacity: 0.35;
+    cursor: default;
+    pointer-events: none;
+}
+
 /* ===== RESULTS SCREEN ===== */
 .results-content {
     text-align: center;

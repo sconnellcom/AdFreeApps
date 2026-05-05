@@ -410,6 +410,7 @@ function startStudy(deckId) {
         seenCount: 0,
         totalCards: cards.length,
         isFlipped: false,
+        currentIndex: 0,
         startTime: Date.now()
     };
 
@@ -425,7 +426,7 @@ function showStudyCard() {
         return;
     }
 
-    const cardId = s.queue[0];
+    const cardId = s.queue[s.currentIndex];
     const card = s.cards[cardId];
     s.isFlipped = false;
     s.seenCount++;
@@ -478,6 +479,12 @@ function showStudyCard() {
     // Show/hide rating buttons
     document.getElementById('studyRatingRow').style.display = 'none';
     document.getElementById('cardTapHint').style.display = 'block';
+
+    // Update prev/next button states
+    const prevBtn = document.getElementById('prevCardBtn');
+    const nextBtn = document.getElementById('nextCardBtn');
+    if (prevBtn) prevBtn.disabled = s.currentIndex <= 0;
+    if (nextBtn) nextBtn.disabled = s.currentIndex >= s.queue.length - 1;
 }
 
 function flipCard() {
@@ -495,17 +502,34 @@ function flipCard() {
     }
 }
 
+function prevCard() {
+    if (!studyState || studyState.currentIndex <= 0) return;
+    studyState.currentIndex--;
+    showStudyCard();
+}
+
+function nextCard() {
+    if (!studyState || studyState.currentIndex >= studyState.queue.length - 1) return;
+    studyState.currentIndex++;
+    showStudyCard();
+}
+
 function rateCard(knewIt) {
     if (!studyState) return;
     const s = studyState;
-    const cardId = s.queue.shift(); // remove from front
+    const cardId = s.queue.splice(s.currentIndex, 1)[0]; // remove current card
 
     if (knewIt) {
         s.knownIds.add(cardId);
     } else {
-        // Reinsert 3 positions later (or at end if fewer than 3 remain)
-        const insertAt = Math.min(3, s.queue.length);
+        // Reinsert 3 positions later from current position (or at end if fewer remain)
+        const insertAt = Math.min(s.currentIndex + 3, s.queue.length);
         s.queue.splice(insertAt, 0, cardId);
+    }
+
+    // Clamp currentIndex in case we were at the end
+    if (s.currentIndex >= s.queue.length) {
+        s.currentIndex = Math.max(0, s.queue.length - 1);
     }
 
     showStudyCard();
@@ -583,7 +607,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (studyState) restartStudy();
     });
 
-    // Keyboard shortcut: space to flip, 1 for know, 2 for still learning
+    // Keyboard shortcut: space to flip, 1 for know, 2 for still learning, arrows to navigate
     document.addEventListener('keydown', (e) => {
         if (document.getElementById('screen-study').classList.contains('active')) {
             if (e.key === ' ' || e.key === 'Enter') {
@@ -595,6 +619,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 rateCard(true);
             } else if (e.key === '2' && studyState.isFlipped) {
                 rateCard(false);
+            } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                prevCard();
+            } else if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                nextCard();
             }
         }
     });
