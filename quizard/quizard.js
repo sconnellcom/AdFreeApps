@@ -1,3 +1,74 @@
+// ===== IMAGE RESIZE =====
+
+function resizeImage(file) {
+    return new Promise((resolve) => {
+        const MAX_W = 800, MAX_H = 600;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                let w = img.width, h = img.height;
+                if (w > MAX_W || h > MAX_H) {
+                    const ratio = Math.min(MAX_W / w, MAX_H / h);
+                    w = Math.round(w * ratio);
+                    h = Math.round(h * ratio);
+                }
+                const canvas = document.createElement('canvas');
+                canvas.width = w;
+                canvas.height = h;
+                canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                resolve(canvas.toDataURL('image/jpeg', 0.85));
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+function handleCardImage(input, side) {
+    const file = input.files[0];
+    if (!file) return;
+    const item = input.closest('.card-editor-item');
+    resizeImage(file).then(dataUrl => {
+        item.querySelector(`.card-${side}-image`).value = dataUrl;
+        updateCardImagePreview(item, side, dataUrl);
+    });
+    input.value = '';
+}
+
+function removeCardImage(btn, side) {
+    const item = btn.closest('.card-editor-item');
+    item.querySelector(`.card-${side}-image`).value = '';
+    updateCardImagePreview(item, side, '');
+}
+
+function updateCardImagePreview(item, side, dataUrl) {
+    const row = item.querySelector(`.card-image-row[data-side="${side}"]`);
+    let thumb = row.querySelector('.card-thumb');
+    let removeBtn = row.querySelector('.btn-img-remove');
+    if (dataUrl) {
+        if (!thumb) {
+            thumb = document.createElement('img');
+            thumb.className = 'card-thumb';
+            thumb.alt = `${side.charAt(0).toUpperCase() + side.slice(1)} card image`;
+            row.insertBefore(thumb, row.querySelector('.btn-img-upload'));
+        }
+        thumb.src = dataUrl;
+        if (!removeBtn) {
+            removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.className = 'btn-img-remove';
+            removeBtn.title = 'Remove image';
+            removeBtn.textContent = '✕';
+            removeBtn.onclick = function () { removeCardImage(this, side); };
+            row.appendChild(removeBtn);
+        }
+    } else {
+        if (thumb) thumb.remove();
+        if (removeBtn) removeBtn.remove();
+    }
+}
+
 // ===== DATA LAYER =====
 
 const STORAGE_KEYS = {
@@ -168,8 +239,8 @@ function openEditor(deckId) {
 
     // Start with existing cards, or two blank cards for new deck
     const cardData = existingCards.length > 0
-        ? existingCards.map(c => ({ front: c.front, back: c.back }))
-        : [{ front: '', back: '' }, { front: '', back: '' }];
+        ? existingCards.map(c => ({ front: c.front, back: c.back, frontImage: c.frontImage || '', backImage: c.backImage || '' }))
+        : [{ front: '', back: '', frontImage: '', backImage: '' }, { front: '', back: '', frontImage: '', backImage: '' }];
 
     renderCardEditors(cardData);
     showScreen('deck-editor');
@@ -183,8 +254,24 @@ function renderCardEditors(cardData) {
             <div class="card-num">Card ${i + 1}</div>
             <button class="card-editor-remove" onclick="removeCardEditor(${i})" title="Remove card">✕</button>
             <div class="card-fields">
-                <textarea class="form-input card-front" placeholder="Front (term)" rows="2">${escapeHtml(card.front)}</textarea>
-                <textarea class="form-input card-back" placeholder="Back (definition)" rows="2">${escapeHtml(card.back)}</textarea>
+                <div class="card-field-group">
+                    <textarea class="form-input card-front" placeholder="Front (term)" rows="2">${escapeHtml(card.front)}</textarea>
+                    <div class="card-image-row" data-side="front">
+                        <input type="hidden" class="card-front-image" value="${escapeHtml(card.frontImage || '')}">
+                        ${card.frontImage ? `<img class="card-thumb" src="${card.frontImage}" alt="Front card image">` : ''}
+                        <label class="btn-img-upload" title="Add image to front">📷 Photo<input type="file" accept="image/*" class="card-img-file-input" onchange="handleCardImage(this,'front')"></label>
+                        ${card.frontImage ? `<button type="button" class="btn-img-remove" onclick="removeCardImage(this,'front')" title="Remove image">✕</button>` : ''}
+                    </div>
+                </div>
+                <div class="card-field-group">
+                    <textarea class="form-input card-back" placeholder="Back (definition)" rows="2">${escapeHtml(card.back)}</textarea>
+                    <div class="card-image-row" data-side="back">
+                        <input type="hidden" class="card-back-image" value="${escapeHtml(card.backImage || '')}">
+                        ${card.backImage ? `<img class="card-thumb" src="${card.backImage}" alt="Back card image">` : ''}
+                        <label class="btn-img-upload" title="Add image to back">📷 Photo<input type="file" accept="image/*" class="card-img-file-input" onchange="handleCardImage(this,'back')"></label>
+                        ${card.backImage ? `<button type="button" class="btn-img-remove" onclick="removeCardImage(this,'back')" title="Remove image">✕</button>` : ''}
+                    </div>
+                </div>
             </div>
         </div>`).join('');
 }
@@ -203,7 +290,7 @@ function removeCardEditor(index) {
 
 function addCardEditor() {
     const cards = getEditorCardData();
-    cards.push({ front: '', back: '' });
+    cards.push({ front: '', back: '', frontImage: '', backImage: '' });
     renderCardEditors(cards);
     // Scroll to last card
     const list = document.getElementById('cardEditorList');
@@ -218,7 +305,9 @@ function getEditorCardData() {
     const items = document.querySelectorAll('.card-editor-item');
     return Array.from(items).map(item => ({
         front: item.querySelector('.card-front').value,
-        back: item.querySelector('.card-back').value
+        back: item.querySelector('.card-back').value,
+        frontImage: item.querySelector('.card-front-image').value,
+        backImage: item.querySelector('.card-back-image').value
     }));
 }
 
@@ -237,7 +326,7 @@ function saveDeck() {
     }
     msgEl.textContent = '';
 
-    const cardData = getEditorCardData().filter(c => c.front.trim() || c.back.trim());
+    const cardData = getEditorCardData().filter(c => c.front.trim() || c.back.trim() || c.frontImage || c.backImage);
 
     let decks = loadDecks();
     let allCards = loadCards();
@@ -259,6 +348,8 @@ function saveDeck() {
         deckId: editorDeckId,
         front: c.front.trim(),
         back: c.back.trim(),
+        frontImage: c.frontImage || '',
+        backImage: c.backImage || '',
         position: i
     }));
     allCards = allCards.concat(newCards);
@@ -329,6 +420,27 @@ function showStudyCard() {
     // Card faces
     document.getElementById('cardFrontText').textContent = card.front;
     document.getElementById('cardBackText').textContent = card.back;
+
+    // Card images
+    const frontImg = document.getElementById('cardFrontImage');
+    const backImg = document.getElementById('cardBackImage');
+    if (card.frontImage) {
+        frontImg.src = card.frontImage;
+        frontImg.style.display = 'block';
+        frontImg.onload = updateFlashcardHeight;
+    } else {
+        frontImg.src = '';
+        frontImg.style.display = 'none';
+    }
+    if (card.backImage) {
+        backImg.src = card.backImage;
+        backImg.style.display = 'block';
+        backImg.onload = updateFlashcardHeight;
+    } else {
+        backImg.src = '';
+        backImg.style.display = 'none';
+    }
+    updateFlashcardHeight();
 
     // Reset flip state
     const flashcard = document.getElementById('flashcard');
@@ -415,6 +527,16 @@ function escapeHtml(str) {
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;');
+}
+
+function updateFlashcardHeight() {
+    const flashcard = document.getElementById('flashcard');
+    const faces = flashcard.querySelectorAll('.card-face');
+    let maxH = 200;
+    faces.forEach(f => {
+        if (f.scrollHeight > maxH) maxH = f.scrollHeight;
+    });
+    flashcard.style.minHeight = maxH + 'px';
 }
 
 // ===== INIT =====

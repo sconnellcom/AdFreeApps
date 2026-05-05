@@ -822,6 +822,84 @@ h1 {
     accent-color: var(--primary-color);
 }
 
+/* ===== CARD IMAGES ===== */
+
+/* Image shown on flashcard face during study */
+.card-image {
+    max-width: 100%;
+    max-height: 220px;
+    object-fit: contain;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+/* Wrapper for textarea + image upload row in the editor */
+.card-field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+/* Row below each textarea holding thumb, upload button, remove button */
+.card-image-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding: 4px 0;
+}
+
+/* Thumbnail preview in the editor */
+.card-thumb {
+    max-height: 60px;
+    max-width: 100px;
+    object-fit: contain;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+}
+
+/* "📷 Photo" upload label */
+.btn-img-upload {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 8px;
+    background: var(--surface-bg);
+    border: 1px dashed var(--border-color);
+    cursor: pointer;
+    font-size: 0.82em;
+    color: var(--text-secondary);
+    transition: background 0.2s;
+    user-select: none;
+}
+
+.btn-img-upload:hover {
+    background: var(--border-color);
+}
+
+/* Remove image button in the editor */
+.btn-img-remove {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--danger-color);
+    font-size: 0.9em;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: background 0.2s;
+    font-family: inherit;
+}
+
+.btn-img-remove:hover {
+    background: var(--surface-bg);
+}
+
+/* Hidden file input inside the upload label */
+.card-img-file-input {
+    display: none;
+}
+
 /* Responsive */
 @media (max-width: 480px) {
     body {
