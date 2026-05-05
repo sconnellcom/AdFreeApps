@@ -82,6 +82,7 @@
                 <label for="deckTitleInput">Deck Title</label>
                 <input id="deckTitleInput" class="form-input" type="text" placeholder="e.g. Spanish Vocabulary">
             </div>
+            <div id="editorMsg" aria-live="polite" style="font-size:0.85em; color:var(--danger-color); min-height:1.2em; margin-bottom:4px;"></div>
 
             <div class="cards-section-header">
                 <span class="cards-section-label">Cards</span>
@@ -101,7 +102,7 @@
             <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
                 <button class="btn-icon" onclick="renderDeckList()" title="Exit study">◀</button>
                 <span style="font-size:0.9em; font-weight:600; color:var(--text-secondary); flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" id="studyDeckName"></span>
-                <label class="shuffle-toggle">
+                <label class="shuffle-toggle" for="shuffleToggle">
                     <input type="checkbox" id="shuffleToggle"> Shuffle
                 </label>
             </div>

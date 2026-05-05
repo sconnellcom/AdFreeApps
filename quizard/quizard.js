@@ -191,7 +191,12 @@ function renderCardEditors(cardData) {
 
 function removeCardEditor(index) {
     const cards = getEditorCardData();
-    if (cards.length <= 1) return; // keep at least 1
+    if (cards.length <= 1) {
+        const msg = document.getElementById('editorMsg');
+        msg.textContent = 'A deck must have at least one card.';
+        setTimeout(() => { msg.textContent = ''; }, 2000);
+        return;
+    }
     cards.splice(index, 1);
     renderCardEditors(cards);
 }
@@ -219,12 +224,18 @@ function getEditorCardData() {
 
 function saveDeck() {
     const title = document.getElementById('deckTitleInput').value.trim();
+    const msgEl = document.getElementById('editorMsg');
     if (!title) {
         document.getElementById('deckTitleInput').focus();
         document.getElementById('deckTitleInput').style.borderColor = 'var(--danger-color)';
-        setTimeout(() => { document.getElementById('deckTitleInput').style.borderColor = ''; }, 1500);
+        msgEl.textContent = 'Please enter a deck title.';
+        setTimeout(() => {
+            document.getElementById('deckTitleInput').style.borderColor = '';
+            msgEl.textContent = '';
+        }, 2000);
         return;
     }
+    msgEl.textContent = '';
 
     const cardData = getEditorCardData().filter(c => c.front.trim() || c.back.trim());
 
@@ -415,6 +426,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Flashcard flip on click
     document.getElementById('flashcard').addEventListener('click', flipCard);
+
+    // Shuffle toggle: restart study with new order when changed mid-session
+    document.getElementById('shuffleToggle').addEventListener('change', () => {
+        if (studyState) restartStudy();
+    });
 
     // Keyboard shortcut: space to flip, 1 for know, 2 for still learning
     document.addEventListener('keydown', (e) => {
