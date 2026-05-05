@@ -25,14 +25,18 @@ function resizeImage(file) {
     });
 }
 
-function handleCardImage(input, side) {
-    const file = input.files[0];
-    if (!file) return;
-    const item = input.closest('.card-editor-item');
+function handleCardImageFile(file, item, side) {
     resizeImage(file).then(dataUrl => {
         item.querySelector(`.card-${side}-image`).value = dataUrl;
         updateCardImagePreview(item, side, dataUrl);
     });
+}
+
+function handleCardImage(input, side) {
+    const file = input.files[0];
+    if (!file) return;
+    const item = input.closest('.card-editor-item');
+    handleCardImageFile(file, item, side);
     input.value = '';
 }
 
@@ -247,6 +251,26 @@ function openEditor(deckId) {
     document.getElementById('deckTitleInput').focus();
 }
 
+function attachCardEditorPasteListeners() {
+    document.querySelectorAll('.card-editor-item').forEach(item => {
+        ['front', 'back'].forEach(side => {
+            const textarea = item.querySelector(`.card-${side}`);
+            if (!textarea) return;
+            textarea.addEventListener('paste', (e) => {
+                const items = e.clipboardData && e.clipboardData.items;
+                if (!items) return;
+                for (let i = 0; i < items.length; i++) {
+                    if (items[i].type.startsWith('image/')) {
+                        e.preventDefault();
+                        handleCardImageFile(items[i].getAsFile(), item, side);
+                        return;
+                    }
+                }
+            });
+        });
+    });
+}
+
 function renderCardEditors(cardData) {
     const list = document.getElementById('cardEditorList');
     list.innerHTML = cardData.map((card, i) => `
@@ -274,6 +298,7 @@ function renderCardEditors(cardData) {
                 </div>
             </div>
         </div>`).join('');
+    attachCardEditorPasteListeners();
 }
 
 function removeCardEditor(index) {
