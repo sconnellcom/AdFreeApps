@@ -1251,3 +1251,219 @@ h1 {
     margin-bottom: 4px;
 }
 
+/* ===== TRIAL SCREEN ===== */
+
+.trial-loading-area {
+    text-align: center;
+    padding: 30px 20px;
+}
+
+.trial-loading-icon {
+    font-size: 3.5em;
+    margin-bottom: 16px;
+    display: inline-block;
+    animation: trialPulse 1.6s ease-in-out infinite;
+}
+
+@keyframes trialPulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.18); opacity: 0.8; }
+}
+
+.trial-loading-text {
+    font-size: 1em;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+    line-height: 1.5;
+}
+
+.trial-question-text {
+    font-size: 1.15em;
+    font-weight: 600;
+    color: var(--text-color);
+    line-height: 1.45;
+    word-break: break-word;
+    margin-bottom: 16px;
+    padding: 16px 18px;
+    background: var(--surface-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+}
+
+.trial-answers {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.trial-answer-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 12px 16px;
+    background: var(--surface-bg);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    cursor: pointer;
+    text-align: left;
+    transition: border-color 0.2s, background 0.2s, opacity 0.2s;
+    font-family: inherit;
+    font-size: 0.95em;
+    color: var(--text-color);
+}
+
+.trial-answer-btn:hover:not(:disabled) {
+    border-color: var(--primary-color);
+    background: var(--container-bg);
+}
+
+.trial-answer-btn:disabled {
+    cursor: default;
+}
+
+.trial-answer-label {
+    font-weight: 700;
+    font-size: 0.88em;
+    color: var(--primary-color);
+    min-width: 20px;
+    flex-shrink: 0;
+    transition: color 0.2s;
+}
+
+.trial-answer-text {
+    flex: 1;
+    line-height: 1.4;
+    word-break: break-word;
+}
+
+.trial-answer-btn.trial-answer-correct {
+    background: var(--know-color);
+    border-color: var(--know-color);
+    color: #fff;
+}
+
+.trial-answer-btn.trial-answer-correct .trial-answer-label {
+    color: #fff;
+}
+
+.trial-answer-btn.trial-answer-wrong {
+    background: var(--danger-color);
+    border-color: var(--danger-color);
+    color: #fff;
+}
+
+.trial-answer-btn.trial-answer-wrong .trial-answer-label {
+    color: #fff;
+}
+
+.trial-answer-btn.trial-answer-dim {
+    opacity: 0.4;
+}
+
+.trial-feedback {
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 0.92em;
+    font-weight: 600;
+    margin-bottom: 14px;
+    line-height: 1.4;
+    word-break: break-word;
+}
+
+.trial-feedback-correct {
+    background: rgba(34, 197, 94, 0.15);
+    border: 1px solid var(--know-color);
+    color: var(--know-color);
+}
+
+.trial-feedback-wrong {
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid var(--danger-color);
+    color: var(--danger-color);
+}
+
+.trial-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+/* ===== VIEW SOURCE SPELL MODAL ===== */
+
+.view-spell-modal {
+    max-width: 420px;
+}
+
+.view-spell-flashcard-wrap {
+    perspective: 1200px;
+    margin-bottom: 16px;
+    min-height: 200px;
+}
+
+.view-spell-flashcard {
+    width: 100%;
+    min-height: 200px;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.5s ease;
+    cursor: pointer;
+}
+
+.view-spell-flashcard.flipped {
+    transform: rotateY(180deg);
+}
+
+/* ===== EDIT TRIAL QUESTION MODAL ===== */
+
+.edit-trial-question-modal {
+    max-width: 480px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.edit-trial-question-body {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.edit-trial-answers-hint {
+    font-size: 0.82em;
+    color: var(--text-tertiary);
+    margin-bottom: 4px;
+}
+
+.edit-trial-answer-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.edit-trial-correct-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    cursor: pointer;
+    padding-top: 8px;
+    flex-shrink: 0;
+}
+
+.edit-trial-correct-radio {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--know-color);
+    cursor: pointer;
+    margin: 0;
+}
+
+.edit-trial-answer-input {
+    flex: 1;
+    min-height: 50px;
+}

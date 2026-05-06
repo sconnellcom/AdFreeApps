@@ -78,7 +78,8 @@ function updateCardImagePreview(item, side, dataUrl) {
 const STORAGE_KEYS = {
     DECKS: 'quizard_decks',
     CARDS: 'quizard_cards',
-    STUDY_LOG: 'quizard_study_log'
+    STUDY_LOG: 'quizard_study_log',
+    TRIAL_QUESTIONS: 'quizard_trial_questions'
 };
 
 function loadDecks() {
@@ -581,6 +582,7 @@ function renderDeckList() {
             </div>
             <div class="deck-actions">
                 <button class="btn btn-primary" onclick="startStudy('${deck.id}')" title="Rehearse" ${cardCount === 0 ? 'disabled' : ''}>Rehearse</button>
+                <button class="btn btn-secondary" onclick="openTrial('${deck.id}')" title="Trial — AI multiple-choice quiz" ${cardCount === 0 ? 'disabled' : ''}>🔮 Trial</button>
                 <button class="btn-icon" onclick="renderDeckStudyLog('${deck.id}')" title="View Chronicle for this Spellbook" aria-label="View Chronicle for ${escapeHtml(deck.title)}">📊</button>
                 <button class="btn-icon" onclick="openEditor('${deck.id}')" title="Edit">✏️</button>
                 <button class="btn-icon" onclick="exportDeck('${deck.id}')" title="Export Spellbook as file" aria-label="Export ${escapeHtml(deck.title)} as file">⬇️</button>
@@ -1332,6 +1334,392 @@ function saveAiDeck() {
     renderDeckList();
 }
 
+// ===== TRIAL =====
+
+const TRIAL_MAX_QUESTIONS = 20;
+
+function loadAllTrialQuestions() {
+    try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEYS.TRIAL_QUESTIONS)) || {};
+    } catch (e) {
+        return {};
+    }
+}
+
+function loadTrialQuestions(deckId) {
+    return loadAllTrialQuestions()[deckId] || null;
+}
+
+function saveTrialQuestionsForDeck(deckId, questions) {
+    const all = loadAllTrialQuestions();
+    all[deckId] = questions;
+    localStorage.setItem(STORAGE_KEYS.TRIAL_QUESTIONS, JSON.stringify(all));
+}
+
+let trialState = null;
+let trialDeckId = null;
+
+function openTrial(deckId) {
+    const deck = loadDecks().find(d => d.id === deckId);
+    const cards = getCardsForDeck(deckId);
+    if (!deck || cards.length === 0) return;
+
+    trialDeckId = deckId;
+    showScreen('trial');
+
+    const saved = loadTrialQuestions(deckId);
+    if (saved && saved.length > 0) {
+        startTrialWithQuestions(deck, saved);
+    } else {
+        startTrialGeneration(deck, cards);
+    }
+}
+
+async function startTrialGeneration(deck, cards) {
+    document.getElementById('trialLoadingPanel').style.display = '';
+    document.getElementById('trialQuestionPanel').style.display = 'none';
+    document.getElementById('trialResultsPanel').style.display = 'none';
+    document.getElementById('trialLoadingTitle').textContent = deck.title;
+    setTrialLoadingStatus('The Quizard AI is conjuring your trial…', 0);
+
+    const modelId = 'SmolLM2-1.7B-Instruct-q4f16_1-MLC';
+
+    try {
+        if (!webllmEngine || webllmLoadedModel !== modelId) {
+            webllmEngine = null;
+            webllmLoadedModel = null;
+            setTrialLoadingStatus('Downloading model… this may take a few minutes on first use.', 0);
+            const { CreateMLCEngine } = await import('https://esm.run/@mlc-ai/web-llm');
+            webllmEngine = await CreateMLCEngine(modelId, {
+                initProgressCallback: (p) => setTrialLoadingStatus(p.text || 'Loading model…', p.progress || 0)
+            });
+            webllmLoadedModel = modelId;
+        }
+
+        const selectedCards = cards.slice(0, TRIAL_MAX_QUESTIONS);
+        setTrialLoadingStatus('The Quizard AI is conjuring your trial…', 0.85);
+
+        const systemPrompt =
+            'You are a multiple-choice quiz question generator. ' +
+            'Given flashcards (each with id, front, back), create one multiple-choice question per card. ' +
+            'Each question should test whether the user knows the back (answer/definition) when shown the front (term/question). ' +
+            'Output ONLY a valid JSON array. Each element must have exactly: ' +
+            '"cardId" (string, the card id from the input), ' +
+            '"question" (string), ' +
+            '"answers" (array of exactly 5 strings, with the correct answer placed at a random position), ' +
+            '"correctIndex" (integer 0-4, index of correct answer in the answers array). ' +
+            'Make the 4 distractors plausible. No markdown, no code fences — just the raw JSON array.';
+
+        const userPrompt =
+            'Create one multiple-choice question for each flashcard below:\n\n' +
+            JSON.stringify(selectedCards.map(c => ({ id: c.id, front: c.front, back: c.back })));
+
+        const response = await webllmEngine.chat.completions.create({
+            messages: [
+                { role: 'system', content: systemPrompt },
+                { role: 'user', content: userPrompt }
+            ],
+            temperature: 0.7,
+            max_tokens: 4096
+        });
+
+        const text = response.choices[0].message.content || '';
+        const questions = parseTrialQuestions(text, selectedCards);
+
+        if (!questions || questions.length === 0) {
+            throw new Error('Could not parse quiz questions from the model response. Try again.');
+        }
+
+        saveTrialQuestionsForDeck(trialDeckId, questions);
+        startTrialWithQuestions(deck, questions);
+
+    } catch (err) {
+        console.error('Trial generation error:', err);
+        webllmEngine = null;
+        webllmLoadedModel = null;
+        document.getElementById('trialLoadingPanel').style.display = 'none';
+        const msg = err.message || '';
+        if (msg.toLowerCase().includes('webgpu') || msg.toLowerCase().includes('gpu')) {
+            alert('WebGPU is required for AI Trial. Please use Chrome or Edge on a desktop device.');
+        } else {
+            alert('Trial generation failed: ' + (msg.slice(0, 140) || 'Unknown error'));
+        }
+        renderDeckList();
+    }
+}
+
+function setTrialLoadingStatus(text, progress) {
+    document.getElementById('trialLoadingText').textContent = text;
+    document.getElementById('trialAiProgressFill').style.width = `${Math.round((progress || 0) * 100)}%`;
+}
+
+function cancelTrialGeneration() {
+    webllmEngine = null;
+    webllmLoadedModel = null;
+    renderDeckList();
+}
+
+function parseTrialQuestions(text, cards) {
+    const tryParse = (str) => {
+        try {
+            const data = JSON.parse(str);
+            if (Array.isArray(data)) return sanitizeTrialQuestions(data, cards);
+            const arr = data.questions || data.quiz || data.items;
+            if (Array.isArray(arr)) return sanitizeTrialQuestions(arr, cards);
+        } catch (e) {
+            console.warn('Trial question JSON parse attempt failed:', e);
+        }
+        return null;
+    };
+
+    let result = tryParse(text.trim());
+    if (result) return result;
+
+    const match = text.match(/\[[\s\S]*\]/);
+    if (match) {
+        result = tryParse(match[0]);
+        if (result) return result;
+    }
+
+    return null;
+}
+
+function sanitizeTrialQuestions(arr, cards) {
+    const cardIds = cards.map(c => c.id);
+    return arr
+        .filter(q => q && typeof q.question === 'string' && Array.isArray(q.answers))
+        .map((q, i) => {
+            const cardId = cardIds.includes(String(q.cardId || ''))
+                ? String(q.cardId)
+                : (cardIds[i] || '');
+            const answers = (q.answers || []).slice(0, 5).map(a => String(a || '').trim());
+            while (answers.length < 5) answers.push('');
+            return {
+                id: generateId(),
+                cardId,
+                question: String(q.question || '').trim(),
+                answers,
+                correctIndex: Math.max(0, Math.min(4, parseInt(q.correctIndex) || 0))
+            };
+        })
+        .filter(q => q.question && q.answers.filter(a => a).length >= 2);
+}
+
+function startTrialWithQuestions(deck, questions) {
+    trialState = {
+        deckId: deck.id,
+        deckTitle: deck.title,
+        questions,
+        currentIndex: 0,
+        score: 0,
+        answered: false
+    };
+
+    document.getElementById('trialLoadingPanel').style.display = 'none';
+    document.getElementById('trialResultsPanel').style.display = 'none';
+    document.getElementById('trialQuestionPanel').style.display = '';
+    document.getElementById('trialDeckName').textContent = deck.title;
+
+    renderTrialQuestion();
+}
+
+function renderTrialQuestion() {
+    const s = trialState;
+    const q = s.questions[s.currentIndex];
+    s.answered = false;
+
+    const total = s.questions.length;
+    const current = s.currentIndex + 1;
+
+    document.getElementById('trialProgressText').textContent = `Question ${current} of ${total}`;
+    document.getElementById('trialScoreText').textContent = `Score: ${s.score}`;
+    document.getElementById('trialQuestionProgressFill').style.width = `${((current - 1) / total) * 100}%`;
+    document.getElementById('trialQuestionText').textContent = q.question;
+
+    const labels = ['A', 'B', 'C', 'D', 'E'];
+    const answersEl = document.getElementById('trialAnswers');
+    answersEl.innerHTML = q.answers.map((ans, i) =>
+        `<button class="trial-answer-btn" onclick="selectTrialAnswer(${i})" data-index="${i}">` +
+        `<span class="trial-answer-label">${labels[i]}</span>` +
+        `<span class="trial-answer-text">${escapeHtml(ans)}</span>` +
+        `</button>`
+    ).join('');
+
+    document.getElementById('trialQuestionFeedback').style.display = 'none';
+    document.getElementById('trialNextBtn').style.display = 'none';
+}
+
+function selectTrialAnswer(selectedIndex) {
+    const s = trialState;
+    if (s.answered) return;
+    s.answered = true;
+
+    const q = s.questions[s.currentIndex];
+    const isCorrect = selectedIndex === q.correctIndex;
+    if (isCorrect) s.score++;
+
+    const buttons = document.querySelectorAll('.trial-answer-btn');
+    buttons.forEach((btn, i) => {
+        btn.disabled = true;
+        if (i === q.correctIndex) {
+            btn.classList.add('trial-answer-correct');
+        } else if (i === selectedIndex && !isCorrect) {
+            btn.classList.add('trial-answer-wrong');
+        } else {
+            btn.classList.add('trial-answer-dim');
+        }
+    });
+
+    const feedbackEl = document.getElementById('trialQuestionFeedback');
+    feedbackEl.style.display = '';
+    feedbackEl.className = 'trial-feedback ' + (isCorrect ? 'trial-feedback-correct' : 'trial-feedback-wrong');
+    feedbackEl.textContent = isCorrect
+        ? '✓ Correct!'
+        : `✗ Incorrect — the correct answer is "${q.answers[q.correctIndex]}"`;
+
+    document.getElementById('trialScoreText').textContent = `Score: ${s.score}`;
+
+    const nextBtn = document.getElementById('trialNextBtn');
+    nextBtn.style.display = '';
+    nextBtn.textContent = s.currentIndex >= s.questions.length - 1 ? 'See Results →' : 'Next Question →';
+}
+
+function trialNextQuestion() {
+    const s = trialState;
+    s.currentIndex++;
+    if (s.currentIndex >= s.questions.length) {
+        showTrialResults();
+    } else {
+        renderTrialQuestion();
+    }
+}
+
+function showTrialResults() {
+    const s = trialState;
+    const pct = s.questions.length > 0 ? Math.round((s.score / s.questions.length) * 100) : 0;
+
+    document.getElementById('trialQuestionPanel').style.display = 'none';
+    document.getElementById('trialResultsPanel').style.display = '';
+
+    document.getElementById('trialResultsDeckName').textContent = s.deckTitle;
+    document.getElementById('trialResultsScore').textContent = s.score;
+    document.getElementById('trialResultsPercent').textContent = `${pct}%`;
+    document.getElementById('trialResultsTotal').textContent = s.questions.length;
+
+    let trophy = '🎉';
+    if (pct === 100) trophy = '🏆';
+    else if (pct >= 80) trophy = '🌟';
+    else if (pct >= 50) trophy = '👍';
+    document.getElementById('trialResultsTrophy').textContent = trophy;
+}
+
+function retryTrial() {
+    if (!trialState) return;
+    const deck = loadDecks().find(d => d.id === trialState.deckId);
+    if (!deck) return;
+    const questions = loadTrialQuestions(trialState.deckId);
+    if (questions && questions.length > 0) {
+        startTrialWithQuestions(deck, questions);
+    }
+}
+
+function regenerateTrial() {
+    const deckId = trialState ? trialState.deckId : trialDeckId;
+    if (!deckId) return;
+    const all = loadAllTrialQuestions();
+    delete all[deckId];
+    localStorage.setItem(STORAGE_KEYS.TRIAL_QUESTIONS, JSON.stringify(all));
+    openTrial(deckId);
+}
+
+// ===== TRIAL: VIEW SOURCE SPELL =====
+
+function viewTrialSourceSpell() {
+    if (!trialState) return;
+    const q = trialState.questions[trialState.currentIndex];
+    const cards = getCardsForDeck(trialState.deckId);
+    const card = cards.find(c => c.id === q.cardId);
+    if (!card) {
+        showToast('Source Spell not found.');
+        return;
+    }
+
+    document.getElementById('viewSpellFront').textContent = card.front;
+    document.getElementById('viewSpellBack').textContent = card.back;
+
+    const frontImg = document.getElementById('viewSpellFrontImg');
+    const backImg = document.getElementById('viewSpellBackImg');
+    if (card.frontImage) { frontImg.src = card.frontImage; frontImg.style.display = 'block'; }
+    else { frontImg.src = ''; frontImg.style.display = 'none'; }
+    if (card.backImage) { backImg.src = card.backImage; backImg.style.display = 'block'; }
+    else { backImg.src = ''; backImg.style.display = 'none'; }
+
+    document.getElementById('viewSpellFlashcard').classList.remove('flipped');
+    document.getElementById('viewSpellModal').style.display = 'flex';
+}
+
+function flipViewSpell() {
+    document.getElementById('viewSpellFlashcard').classList.toggle('flipped');
+}
+
+function closeViewSpellModal() {
+    document.getElementById('viewSpellModal').style.display = 'none';
+}
+
+// ===== TRIAL: EDIT QUESTION =====
+
+function openEditTrialQuestionModal() {
+    if (!trialState) return;
+    const q = trialState.questions[trialState.currentIndex];
+    document.getElementById('editTrialQuestionText').value = q.question;
+
+    const labels = ['A', 'B', 'C', 'D', 'E'];
+    const listEl = document.getElementById('editTrialAnswersList');
+    listEl.innerHTML = q.answers.map((ans, i) =>
+        `<div class="edit-trial-answer-row">` +
+        `<label class="edit-trial-correct-label" title="Mark as correct answer">` +
+        `<input type="radio" name="editTrialCorrect" value="${i}" class="edit-trial-correct-radio"${i === q.correctIndex ? ' checked' : ''}>` +
+        `<span class="trial-answer-label">${labels[i]}</span>` +
+        `</label>` +
+        `<textarea class="form-input edit-card-textarea edit-trial-answer-input" rows="2" data-answer-index="${i}">${escapeHtml(ans)}</textarea>` +
+        `</div>`
+    ).join('');
+
+    document.getElementById('editTrialQuestionModal').style.display = 'flex';
+    document.getElementById('editTrialQuestionText').focus();
+}
+
+function saveEditTrialQuestionModal() {
+    if (!trialState) return;
+    const q = trialState.questions[trialState.currentIndex];
+    const newQuestion = document.getElementById('editTrialQuestionText').value.trim();
+    if (!newQuestion) {
+        showToast('Question text cannot be empty.');
+        return;
+    }
+
+    const newAnswers = Array.from(
+        document.querySelectorAll('.edit-trial-answer-input')
+    ).map(t => t.value.trim());
+
+    const correctRadio = document.querySelector('input[name="editTrialCorrect"]:checked');
+    const newCorrectIndex = correctRadio ? parseInt(correctRadio.value) : q.correctIndex;
+
+    q.question = newQuestion;
+    q.answers = newAnswers;
+    q.correctIndex = newCorrectIndex;
+
+    saveTrialQuestionsForDeck(trialState.deckId, trialState.questions);
+
+    document.getElementById('editTrialQuestionModal').style.display = 'none';
+    renderTrialQuestion();
+    showToast('Question updated!');
+}
+
+function cancelEditTrialQuestionModal() {
+    document.getElementById('editTrialQuestionModal').style.display = 'none';
+}
+
 // ===== INIT =====
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -1358,6 +1746,14 @@ document.addEventListener('DOMContentLoaded', () => {
         // Don't intercept keys while the edit card modal is open
         if (document.getElementById('editCardModal').style.display !== 'none') {
             if (e.key === 'Escape') cancelEditCardModal();
+            return;
+        }
+        if (document.getElementById('viewSpellModal').style.display !== 'none') {
+            if (e.key === 'Escape') closeViewSpellModal();
+            return;
+        }
+        if (document.getElementById('editTrialQuestionModal').style.display !== 'none') {
+            if (e.key === 'Escape') cancelEditTrialQuestionModal();
             return;
         }
         if (document.getElementById('screen-study').classList.contains('active')) {
