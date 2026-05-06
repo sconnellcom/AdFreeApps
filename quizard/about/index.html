@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="About Quizard - Free ad-free flashcard study app. Create decks, flip cards, and track progress.">
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="../../manifest.json">
+    <link rel="apple-touch-icon" href="../../icons/icon-152x152.png">
+    <title>About Quizard | AdFreeApps.com</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg-gradient-start: #667eea;
+            --bg-gradient-end: #764ba2;
+            --primary-color: #667eea;
+            --container-bg: #ffffff;
+            --text-color: #333333;
+            --text-secondary: #555555;
+            --border-color: #e2e8f0;
+            --surface-bg: #f7fafc;
+        }
+
+        body.theme-light { --bg-gradient-start: #97B22D; --bg-gradient-end: #89751B; --primary-color: #97B22D; --container-bg: #FEFCAD; --text-color: #2d3748; --text-secondary: #4a5568; --border-color: #E3DE81; --surface-bg: #f1ff72; }
+        body.theme-dark { --bg-gradient-start: #2d3d0f; --bg-gradient-end: #1a2208; --primary-color: #97B22D; --container-bg: #1f2d0a; --text-color: #E3DAB2; --text-secondary: #E3DE81; --border-color: #3d4d1f; --surface-bg: #2a3a12; }
+        body.theme-warm-light { --bg-gradient-start: #C6BE28; --bg-gradient-end: #97B22D; --primary-color: #E49A32; --container-bg: #FEFCAD; --text-color: #3d3d1f; --text-secondary: #5d5d3f; --border-color: #E3DAB2; --surface-bg: #faedb6; }
+        body.theme-warm-dark { --bg-gradient-start: #2a2510; --bg-gradient-end: #1a1808; --primary-color: #E49A32; --container-bg: #2d2815; --text-color: #FEFCAD; --text-secondary: #E3DAB2; --border-color: #4a3f1a; --surface-bg: #3a3220; }
+        body.theme-red { --bg-gradient-start: #dc2626; --bg-gradient-end: #991b1b; --primary-color: #ef4444; --container-bg: #ffffff; --text-color: #1f2937; --text-secondary: #374151; --border-color: #fecaca; --surface-bg: #fef2f2; }
+        body.theme-pink { --bg-gradient-start: #ec4899; --bg-gradient-end: #be185d; --primary-color: #f472b6; --container-bg: #ffffff; --text-color: #1f2937; --text-secondary: #374151; --border-color: #fbcfe8; --surface-bg: #fdf2f8; }
+        body.theme-red-dark { --bg-gradient-start: #7f1d1d; --bg-gradient-end: #450a0a; --primary-color: #ef4444; --container-bg: #1a0505; --text-color: #fecaca; --text-secondary: #fca5a5; --border-color: #7f1d1d; --surface-bg: #450a0a; }
+        body.theme-pink-dark { --bg-gradient-start: #831843; --bg-gradient-end: #500724; --primary-color: #f472b6; --container-bg: #1a050f; --text-color: #fce7f3; --text-secondary: #fbcfe8; --border-color: #831843; --surface-bg: #500724; }
+        body.theme-black { --bg-gradient-start: #1f2937; --bg-gradient-end: #111827; --primary-color: #6b7280; --container-bg: #0f172a; --text-color: #f3f4f6; --text-secondary: #d1d5db; --border-color: #374151; --surface-bg: #1e293b; }
+        body.theme-blue { --bg-gradient-start: #3b82f6; --bg-gradient-end: #1e40af; --primary-color: #60a5fa; --container-bg: #ffffff; --text-color: #1f2937; --text-secondary: #374151; --border-color: #bfdbfe; --surface-bg: #eff6ff; }
+        body.theme-blue-dark { --bg-gradient-start: #0c4a6e; --bg-gradient-end: #082f49; --primary-color: #38bdf8; --container-bg: #0a1929; --text-color: #e0f2fe; --text-secondary: #7dd3fc; --border-color: #0e7490; --surface-bg: #164e63; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 640px;
+            margin: 0 auto;
+            background: var(--container-bg);
+            border-radius: 20px;
+            padding: 28px 24px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--primary-color);
+            text-decoration: none;
+            font-size: 0.9em;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .back-link:hover { text-decoration: underline; }
+
+        .hero {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        .hero-icon { font-size: 3.5em; margin-bottom: 10px; }
+
+        h1 { color: var(--text-color); font-size: 1.9em; margin-bottom: 8px; }
+
+        .tagline { color: var(--text-secondary); font-size: 1em; }
+
+        h2 { color: var(--text-color); font-size: 1.15em; margin-bottom: 10px; margin-top: 22px; }
+
+        p { color: var(--text-secondary); font-size: 0.95em; line-height: 1.65; margin-bottom: 12px; }
+
+        .feature-list { list-style: none; padding: 0; margin-bottom: 12px; }
+
+        .feature-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 8px 0;
+            color: var(--text-secondary);
+            font-size: 0.95em;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .feature-list li:last-child { border-bottom: none; }
+
+        .feature-list li .fi { font-size: 1.1em; flex-shrink: 0; }
+
+        .footer { text-align: center; margin-top: 28px; padding-top: 16px; border-top: 1px solid var(--border-color); color: var(--text-secondary); font-size: 0.85em; }
+
+        .footer a { color: var(--primary-color); text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <a href="../" class="back-link">◀ Back to Quizard</a>
+
+        <div class="hero">
+            <div class="hero-icon">🧙</div>
+            <h1>Quizard</h1>
+            <p class="tagline">The ad-free flashcard study app</p>
+        </div>
+
+        <h2>What is Quizard?</h2>
+        <p>
+            Quizard is a simple, distraction-free flashcard app inspired by the classic Quizlet flashcard experience.
+            Create decks, add cards, and study using a tried-and-true flip-and-rate loop — completely free, with no ads and no account required.
+        </p>
+
+        <h2>Features</h2>
+        <ul class="feature-list">
+            <li><span class="fi">🃏</span> Create unlimited decks with any number of text cards</li>
+            <li><span class="fi">👆</span> Tap to flip each card and reveal the answer</li>
+            <li><span class="fi">✅</span> Mark cards as "Know" or "Still Learning" after each flip</li>
+            <li><span class="fi">🔄</span> "Still Learning" cards reappear later in the same session</li>
+            <li><span class="fi">🔀</span> Optional shuffle mode to randomize card order</li>
+            <li><span class="fi">📊</span> Session summary with mastery percentage and review count</li>
+            <li><span class="fi">💾</span> All data saved locally in your browser — no sign-in needed</li>
+            <li><span class="fi">⌨️</span> Keyboard shortcuts: Space to flip, 1 = Know, 2 = Still Learning</li>
+        </ul>
+
+        <h2>How to Use</h2>
+        <p>
+            1. Tap <strong>New Deck</strong> on the home screen and give it a title.<br>
+            2. Add cards with a term on the front and a definition on the back.<br>
+            3. Tap <strong>Study</strong> on any deck to start a session.<br>
+            4. Tap the card to flip it, then choose <strong>Know</strong> or <strong>Still Learning</strong>.<br>
+            5. Missed cards come back later. Keep going until your queue is empty!
+        </p>
+
+        <h2>Privacy</h2>
+        <p>
+            All your decks and cards are stored only in your browser's local storage.
+            Nothing is sent to a server. No accounts. No tracking.
+        </p>
+
+        <div class="footer">
+            <p>Part of <a href="../../">AdFreeApps.com</a> — No ads. No tracking. Just useful tools.</p>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            const saved = localStorage.getItem('appTheme') || 'default';
+            if (saved !== 'default') document.body.classList.add('theme-' + saved);
+        })();
+    </script>
+</body>
+
+</html>
