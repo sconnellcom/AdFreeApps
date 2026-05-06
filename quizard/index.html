@@ -66,7 +66,11 @@
         <div id="screen-deck-list" class="screen active">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                 <span class="screen-title">My Decks</span>
-                <button class="btn btn-primary" onclick="openEditor(null)">＋ New Deck</button>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <button class="btn btn-secondary" onclick="triggerImport()" title="Import a deck from a file">📂 Import</button>
+                    <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="handleImportFile(this)">
+                    <button class="btn btn-primary" onclick="openEditor(null)">＋ New Deck</button>
+                </div>
             </div>
             <div id="deckList"></div>
         </div>
@@ -76,6 +80,8 @@
             <div class="editor-header">
                 <button class="btn-icon" onclick="renderDeckList()" title="Back">◀</button>
                 <h2 id="editorTitle">New Deck</h2>
+                <button class="btn-icon" id="exportDeckBtn" onclick="exportDeck(editorDeckId)" title="Export deck as file" style="display:none">⬇️</button>
+                <button class="btn-icon" id="shareDeckBtn" onclick="shareDeckLink(editorDeckId)" title="Copy share link" style="display:none">🔗</button>
             </div>
 
             <div class="form-group">
@@ -179,6 +185,21 @@
         </div>
 
     </div><!-- .container -->
+
+    <!-- Import / Share modal -->
+    <div id="shareImportModal" class="share-modal-overlay" style="display:none;">
+        <div class="share-modal">
+            <div class="share-modal-title">Import Deck?</div>
+            <div class="share-modal-body" id="shareImportBody"></div>
+            <div class="share-modal-actions">
+                <button class="btn btn-primary" onclick="confirmShareImport()">Import</button>
+                <button class="btn btn-secondary" onclick="cancelShareImport()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast notification -->
+    <div id="toast" class="toast"></div>
 
     <script src="quizard.js"></script>
 </body>

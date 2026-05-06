@@ -114,6 +114,195 @@ function generateId() {
     return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
 
+// ===== EXPORT / IMPORT =====
+
+function exportDeck(deckId) {
+    const decks = loadDecks();
+    const deck = decks.find(d => d.id === deckId);
+    if (!deck) return;
+    const cards = getCardsForDeck(deckId).map(({ front, back, frontImage, backImage, position }) =>
+        ({ front, back, frontImage: frontImage || '', backImage: backImage || '', position }));
+    const data = { deck: { title: deck.title, createdAt: deck.createdAt }, cards };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = deck.title.replace(/[^a-z0-9_\-]/gi, '_') + '.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+function triggerImport() {
+    document.getElementById('importFileInput').click();
+}
+
+function handleImportFile(input) {
+    const file = input.files[0];
+    if (!file) return;
+    input.value = '';
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        let data;
+        try {
+            data = JSON.parse(e.target.result);
+        } catch {
+            alert('Could not read the file. Make sure it is a valid deck export.');
+            return;
+        }
+        if (!data || !data.deck || typeof data.deck.title !== 'string' || !Array.isArray(data.cards)) {
+            alert('This file does not look like a Quizard deck export.');
+            return;
+        }
+        showImportModal(data);
+    };
+    reader.readAsText(file);
+}
+
+function importDeckData(data) {
+    const deckId = generateId();
+    const decks = loadDecks();
+    decks.push({ id: deckId, title: data.deck.title, createdAt: data.deck.createdAt || Date.now() });
+    saveDecks(decks);
+    const allCards = loadCards();
+    const newCards = data.cards.map((c, i) => ({
+        id: generateId(),
+        deckId,
+        front: String(c.front || ''),
+        back: String(c.back || ''),
+        frontImage: String(c.frontImage || ''),
+        backImage: String(c.backImage || ''),
+        position: typeof c.position === 'number' ? c.position : i
+    }));
+    saveCards(allCards.concat(newCards));
+    renderDeckList();
+}
+
+// ===== IMPORT MODAL =====
+
+let pendingImportData = null;
+
+function showImportModal(data) {
+    pendingImportData = data;
+    const cardCount = data.cards.length;
+    document.getElementById('shareImportBody').innerHTML =
+        `&ldquo;${escapeHtml(data.deck.title)}&rdquo; &mdash; ${cardCount} card${cardCount !== 1 ? 's' : ''}`;
+    document.getElementById('shareImportModal').style.display = 'flex';
+}
+
+function confirmShareImport() {
+    if (!pendingImportData) return;
+    importDeckData(pendingImportData);
+    pendingImportData = null;
+    document.getElementById('shareImportModal').style.display = 'none';
+    if (location.hash.startsWith('#share=')) {
+        history.replaceState(null, '', location.pathname + location.search);
+    }
+    showToast('Deck imported!');
+}
+
+function cancelShareImport() {
+    pendingImportData = null;
+    document.getElementById('shareImportModal').style.display = 'none';
+    if (location.hash.startsWith('#share=')) {
+        history.replaceState(null, '', location.pathname + location.search);
+    }
+}
+
+// ===== TOAST =====
+
+function showToast(msg) {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
+// ===== SHARE LINK =====
+
+async function compressDeck(obj) {
+    const json = JSON.stringify(obj);
+    const stream = new Blob([json]).stream().pipeThrough(new CompressionStream('deflate-raw'));
+    const buf = await new Response(stream).arrayBuffer();
+    const bytes = new Uint8Array(buf);
+    const CHUNK = 0x8000;
+    let binary = '';
+    for (let i = 0; i < bytes.length; i += CHUNK) {
+        binary += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK));
+    }
+    return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+}
+
+async function decompressDeck(b64url) {
+    const b64 = b64url.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = b64 + '='.repeat((4 - b64.length % 4) % 4);
+    const binary = atob(padded);
+    const bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
+    const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+    return JSON.parse(await new Response(stream).text());
+}
+
+async function shareDeckLink(deckId) {
+    if (typeof CompressionStream === 'undefined') {
+        alert('Your browser does not support the compression needed for share links.\nUse ⬇️ Export to share as a file instead.');
+        return;
+    }
+    const decks = loadDecks();
+    const deck = decks.find(d => d.id === deckId);
+    if (!deck) return;
+    const cards = getCardsForDeck(deckId).map(({ front, back, frontImage, backImage, position }) =>
+        ({ front, back, frontImage: frontImage || '', backImage: backImage || '', position }));
+    const data = { deck: { title: deck.title, createdAt: deck.createdAt }, cards };
+    try {
+        const encoded = await compressDeck(data);
+        const url = location.origin + location.pathname + '#share=' + encoded;
+        const SIZE_WARN = 50 * 1024;
+        if (encoded.length > SIZE_WARN) {
+            const proceed = confirm(
+                `This deck has a lot of data (${Math.round(encoded.length / 1024)} KB compressed).\n` +
+                `The share link may be too long for some messaging apps.\n\n` +
+                `Consider using ⬇️ Export to share as a file instead.\n\nCopy the link anyway?`
+            );
+            if (!proceed) return;
+        }
+        try {
+            await navigator.clipboard.writeText(url);
+            showToast('Share link copied!');
+        } catch {
+            prompt('Copy this share link:', url);
+        }
+    } catch (err) {
+        console.error('Share link error:', err);
+        alert('Could not generate the share link. Try exporting as a file instead.');
+    }
+}
+
+async function checkShareHash() {
+    const hash = location.hash;
+    if (!hash.startsWith('#share=')) return;
+    const encoded = hash.slice(7);
+    if (!encoded) return;
+    if (typeof DecompressionStream === 'undefined') {
+        alert('Your browser does not support the decompression needed to read this share link.');
+        history.replaceState(null, '', location.pathname + location.search);
+        return;
+    }
+    try {
+        const data = await decompressDeck(encoded);
+        if (!data || !data.deck || typeof data.deck.title !== 'string' || !Array.isArray(data.cards)) {
+            alert('This share link does not appear to contain a valid deck.');
+            history.replaceState(null, '', location.pathname + location.search);
+            return;
+        }
+        showImportModal(data);
+    } catch (err) {
+        console.error('Share hash decode error:', err);
+        alert('Could not read this share link. It may be corrupted or cut off.');
+        history.replaceState(null, '', location.pathname + location.search);
+    }
+}
+
 // ===== THEME =====
 
 const themeIcons = {
@@ -249,6 +438,11 @@ function openEditor(deckId) {
     renderCardEditors(cardData);
     showScreen('deck-editor');
     document.getElementById('deckTitleInput').focus();
+
+    const exportBtn = document.getElementById('exportDeckBtn');
+    const shareBtn = document.getElementById('shareDeckBtn');
+    if (exportBtn) exportBtn.style.display = deckId ? '' : 'none';
+    if (shareBtn) shareBtn.style.display = deckId ? '' : 'none';
 }
 
 function attachCardEditorPasteListeners() {
@@ -606,6 +800,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initTheme();
     initMenu();
     renderDeckList();
+    checkShareHash();
 
     // Flashcard flip on click
     document.getElementById('flashcard').addEventListener('click', flipCard);
