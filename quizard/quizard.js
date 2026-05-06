@@ -665,6 +665,8 @@ function startStudy(deckId) {
         cards: Object.fromEntries(cards.map(c => [c.id, c])),
         queue: [...queue],
         knownIds: new Set(),
+        firstTimeKnownIds: new Set(),
+        ratedIds: new Set(),
         seenCount: 0,
         totalCards: cards.length,
         isFlipped: false,
@@ -787,6 +789,12 @@ function rateCard(knewIt) {
     const cardId = s.history[s.historyPos];
     const cardQueueIndex = s.queue.indexOf(cardId);
 
+    // Record first-time result (ignore re-ratings of the same card)
+    if (!s.ratedIds.has(cardId)) {
+        s.ratedIds.add(cardId);
+        if (knewIt) s.firstTimeKnownIds.add(cardId);
+    }
+
     if (cardQueueIndex !== -1) {
         s.queue.splice(cardQueueIndex, 1);
         if (knewIt) {
@@ -809,13 +817,15 @@ function showResults() {
     const seconds = elapsed % 60;
     const timeStr = minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
 
+    const firstTimeCorrect = s.firstTimeKnownIds.size;
+    const pct = s.totalCards > 0 ? Math.round((firstTimeCorrect / s.totalCards) * 100) : 0;
+
     document.getElementById('resultsDeckName').textContent = s.deckTitle;
-    document.getElementById('resultsKnown').textContent = s.knownIds.size;
+    document.getElementById('resultsKnown').textContent = firstTimeCorrect;
     document.getElementById('resultsTotal').textContent = s.totalCards;
     document.getElementById('resultsSeen').textContent = s.seenCount;
     document.getElementById('resultsTime').textContent = timeStr;
 
-    const pct = s.totalCards > 0 ? Math.round((s.knownIds.size / s.totalCards) * 100) : 0;
     document.getElementById('resultsPercent').textContent = `${pct}%`;
 
     let trophy = '🎉';
@@ -829,7 +839,7 @@ function showResults() {
         deckId: s.deckId,
         deckTitle: s.deckTitle,
         date: Date.now(),
-        known: s.knownIds.size,
+        known: firstTimeCorrect,
         total: s.totalCards,
         pct,
         elapsed
