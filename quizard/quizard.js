@@ -1096,7 +1096,7 @@ async function generateAiDeck() {
             webllmLoadedModel = modelId;
         }
 
-        setAiStatus('Generating flashcards…', 1);
+        setAiStatus('Generating flashcards… (pass 1 of 2)', 0.8);
 
         const systemPrompt =
             'You are a flashcard creation assistant. ' +
@@ -1126,8 +1126,49 @@ async function generateAiDeck() {
             throw new Error('Could not parse flashcards from the model response. Try again.');
         }
 
+        // Second pass: review each card for accuracy and correct formatting
+        setAiStatus(`Reviewing ${cards.length} cards for accuracy… (pass 2 of 2)`, 0.95);
+
+        const reviewSystemPrompt =
+            'You are a flashcard accuracy reviewer. ' +
+            'You will be given a JSON array of flashcard objects with "front" and "back" string fields. ' +
+            'Review each card for factual accuracy and clarity. Fix any errors or ambiguous wording. ' +
+            'Keep the same number of cards. ' +
+            'Return ONLY a valid JSON array with the corrected cards. ' +
+            'No extra text, no markdown, no code fences — just the raw JSON array.';
+
+        const reviewUserPrompt = (notes && notesOnly)
+            ? `Review these ${cards.length} flashcards about "${topic}" for accuracy. ` +
+              `Only use information from the notes below — correct any card that contains facts not found in the notes.\n\n` +
+              `Notes:\n${notes}\n\nCards to review:\n${JSON.stringify(cards)}`
+            : `Review these ${cards.length} flashcards about "${topic}" for factual accuracy and clarity. ` +
+              `Fix any errors in the content or formatting.\n\n${JSON.stringify(cards)}`;
+
+        let finalCards = cards;
+        try {
+            const reviewResponse = await webllmEngine.chat.completions.create({
+                messages: [
+                    { role: 'system', content: reviewSystemPrompt },
+                    { role: 'user', content: reviewUserPrompt }
+                ],
+                temperature: 0.3,
+                max_tokens: 2048
+            });
+
+            const reviewText = reviewResponse.choices[0].message.content || '';
+            const reviewedCards = parseAiCards(reviewText);
+
+            if (reviewedCards && reviewedCards.length > 0) {
+                finalCards = reviewedCards;
+            } else {
+                console.warn('AI review pass could not be parsed, using original cards:', reviewText);
+            }
+        } catch (reviewErr) {
+            console.warn('AI review pass failed, using original cards:', reviewErr);
+        }
+
         document.getElementById('aiDeckTitleInput').value = topic;
-        renderAiPreview(cards);
+        renderAiPreview(finalCards);
 
         document.getElementById('aiStatusArea').style.display = 'none';
         document.getElementById('aiSetupPanel').style.display = '';
