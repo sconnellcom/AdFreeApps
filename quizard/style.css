@@ -457,6 +457,7 @@ h1 {
     padding: 14px 16px;
     gap: 10px;
     transition: border-color 0.2s;
+    margin-bottom: 10px;
 }
 
 .deck-item:hover {
@@ -569,8 +570,6 @@ h1 {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    max-height: 340px;
-    overflow-y: auto;
     padding-right: 2px;
 }
 
@@ -825,6 +824,7 @@ h1 {
     color: var(--text-secondary);
     cursor: pointer;
     user-select: none;
+    white-space: nowrap;
 }
 
 .shuffle-toggle input[type="checkbox"] {
@@ -931,6 +931,21 @@ h1 {
 
     .results-stats {
         grid-template-columns: repeat(3, 1fr);
+    }
+
+    /* On narrow screens, stack the deck title above the action buttons */
+    .deck-item {
+        flex-wrap: wrap;
+    }
+
+    .deck-info {
+        flex-basis: 100%;
+        min-width: 0;
+    }
+
+    .deck-title {
+        white-space: normal;
+        word-break: break-word;
     }
 }
 
@@ -1135,3 +1150,104 @@ h1 {
     font-size: 0.85em;
     color: var(--text-tertiary);
 }
+
+/* ===== AI DECK CREATOR SCREEN ===== */
+
+.ai-optional {
+    font-weight: 400;
+    text-transform: none;
+    color: var(--text-tertiary);
+    letter-spacing: 0;
+    font-size: 0.95em;
+}
+
+.ai-notes-textarea {
+    resize: vertical;
+    min-height: 110px;
+    font-size: 0.92em;
+    line-height: 1.45;
+}
+
+.ai-options-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.ai-options-row .form-group {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+.ai-model-note {
+    background: var(--surface-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 0.82em;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin-bottom: 16px;
+}
+
+.ai-status-area {
+    padding: 16px 0;
+}
+
+.ai-status-text {
+    font-size: 0.88em;
+    color: var(--text-secondary);
+    font-weight: 500;
+    margin-bottom: 8px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ai-progress-wrap {
+    height: 8px;
+    background: var(--border-color);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 4px;
+}
+
+.ai-progress-fill {
+    height: 100%;
+    background: var(--primary-color);
+    border-radius: 4px;
+    transition: width 0.4s ease;
+    width: 0%;
+}
+
+.ai-notes-only-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    font-size: 0.88em;
+    color: var(--text-secondary);
+    cursor: pointer;
+    user-select: none;
+}
+
+.ai-notes-only-label input[type="checkbox"] {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+    accent-color: var(--primary-color);
+    cursor: pointer;
+}
+
+.ai-accuracy-note {
+    background: var(--surface-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 0.82em;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin-top: 16px;
+    margin-bottom: 4px;
+}
+

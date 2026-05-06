@@ -132,7 +132,7 @@ function appendStudyLog(entry) {
 }
 
 function clearStudyLog() {
-    if (!confirm('Clear all study history? This cannot be undone.')) return;
+    if (!confirm('Clear all Chronicle history? This cannot be undone.')) return;
     localStorage.removeItem(STORAGE_KEYS.STUDY_LOG);
     renderStudyLog();
 }
@@ -154,14 +154,14 @@ function formatStudyLogEntry(entry, showDeckName) {
         ${showDeckName ? `<div class="study-log-deck">${escapeHtml(entry.deckTitle)}</div>` : ''}
         <div class="study-log-score">
             <span class="${pctClass} study-log-pct">${entry.pct}%</span>
-            <span class="study-log-fraction">${entry.known} / ${entry.total} known</span>
+            <span class="study-log-fraction">${entry.known} / ${entry.total} mastered</span>
         </div>
     </div>`;
 }
 
 function renderStudyLog() {
     showScreen('study-log');
-    document.getElementById('studyLogTitle').textContent = 'Study Log';
+    document.getElementById('studyLogTitle').textContent = 'Chronicle';
     document.getElementById('studyLogClearBtn').style.display = '';
     const log = loadStudyLog().reverse(); // newest first
     const container = document.getElementById('studyLogList');
@@ -170,7 +170,7 @@ function renderStudyLog() {
         container.innerHTML = `
             <div class="empty-state">
                 <div class="empty-icon">📊</div>
-                <p>No study sessions yet. Complete a deck to see your history here!</p>
+                <p>No Rehearsal sessions yet. Complete a Spellbook to see your history here!</p>
             </div>`;
         return;
     }
@@ -181,10 +181,10 @@ function renderStudyLog() {
 function renderDeckStudyLog(deckId) {
     const decks = loadDecks();
     const deck = decks.find(d => d.id === deckId);
-    const deckTitle = deck ? deck.title : 'Deck';
+    const deckTitle = deck ? deck.title : 'Spellbook';
 
     showScreen('study-log');
-    document.getElementById('studyLogTitle').textContent = deckTitle;
+    document.getElementById('studyLogTitle').textContent = `Chronicle — ${deckTitle}`;
     document.getElementById('studyLogClearBtn').style.display = 'none';
 
     const log = loadStudyLog().filter(e => e.deckId === deckId).reverse();
@@ -194,7 +194,7 @@ function renderDeckStudyLog(deckId) {
         container.innerHTML = `
             <div class="empty-state">
                 <div class="empty-icon">📊</div>
-                <p>No study sessions yet for this deck. Complete a session to see your history here!</p>
+                <p>No Rehearsal sessions yet for this Spellbook. Complete a session to see your history here!</p>
             </div>`;
         return;
     }
@@ -258,7 +258,7 @@ function handlePasteJsonImport() {
         return;
     }
     if (!data || !data.deck || typeof data.deck.title !== 'string' || !Array.isArray(data.cards)) {
-        alert('This does not look like a Quizard deck export. Expected fields: deck.title (string) and cards (array).');
+        alert('This does not look like a Quizard Spellbook export. Expected fields: deck.title (string) and cards (array).');
         return;
     }
     closeImportPasteModal();
@@ -281,7 +281,7 @@ function handleImportFile(input) {
             return;
         }
         if (!data || !data.deck || typeof data.deck.title !== 'string' || !Array.isArray(data.cards)) {
-            alert('This file does not look like a Quizard deck export.');
+            alert('This file does not look like a Quizard Spellbook export.');
             return;
         }
         showImportModal(data);
@@ -349,17 +349,17 @@ function showImportModal(data) {
 
     if (existing) {
         pendingImportOverwriteId = existing.id;
-        titleEl.textContent = 'Deck Already Exists';
-        bodyEl.innerHTML = `A deck named &ldquo;${escapeHtml(data.deck.title)}&rdquo; already exists. Overwrite it (keeping study stats) or import as a new deck?`;
+        titleEl.textContent = 'Spellbook Already Exists';
+        bodyEl.innerHTML = `A Spellbook named &ldquo;${escapeHtml(data.deck.title)}&rdquo; already exists. Overwrite it (keeping Rehearsal stats) or summon as a new Spellbook?`;
         actionsEl.innerHTML =
             `<button class="btn btn-primary" onclick="confirmShareImport('overwrite')">Overwrite</button>` +
-            `<button class="btn btn-secondary" onclick="confirmShareImport('new')">Import as New</button>` +
+            `<button class="btn btn-secondary" onclick="confirmShareImport('new')">Summon as New</button>` +
             `<button class="btn btn-secondary" onclick="cancelShareImport()">Cancel</button>`;
     } else {
-        titleEl.textContent = 'Import Deck?';
-        bodyEl.innerHTML = `&ldquo;${escapeHtml(data.deck.title)}&rdquo; &mdash; ${cardCount} card${cardCount !== 1 ? 's' : ''}`;
+        titleEl.textContent = 'Summon Spellbook?';
+        bodyEl.innerHTML = `&ldquo;${escapeHtml(data.deck.title)}&rdquo; &mdash; ${cardCount} spell${cardCount !== 1 ? 's' : ''}`;
         actionsEl.innerHTML =
-            `<button class="btn btn-primary" onclick="confirmShareImport('new')">Import</button>` +
+            `<button class="btn btn-primary" onclick="confirmShareImport('new')">Summon</button>` +
             `<button class="btn btn-secondary" onclick="cancelShareImport()">Cancel</button>`;
     }
     document.getElementById('shareImportModal').style.display = 'flex';
@@ -369,10 +369,10 @@ function confirmShareImport(action) {
     if (!pendingImportData) return;
     if (action === 'overwrite' && pendingImportOverwriteId) {
         overwriteDeckData(pendingImportOverwriteId, pendingImportData);
-        showToast('Deck updated!');
+        showToast('Spellbook updated!');
     } else {
         importDeckData(pendingImportData);
-        showToast('Deck imported!');
+        showToast('Spellbook summoned!');
     }
     pendingImportData = null;
     pendingImportOverwriteId = null;
@@ -474,7 +474,7 @@ async function checkShareHash() {
     try {
         const data = await decompressDeck(encoded);
         if (!data || !data.deck || typeof data.deck.title !== 'string' || !Array.isArray(data.cards)) {
-            alert('This share link does not appear to contain a valid deck.');
+            alert('This share link does not appear to contain a valid Spellbook.');
             history.replaceState(null, '', location.pathname + location.search);
             return;
         }
@@ -566,7 +566,7 @@ function renderDeckList() {
         container.innerHTML = `
             <div class="empty-state">
                 <div class="empty-icon">🃏</div>
-                <p>No decks yet. Create your first deck!</p>
+                <p>No Spellbooks yet. Cast your first Spellbook!</p>
             </div>`;
         return;
     }
@@ -577,13 +577,13 @@ function renderDeckList() {
         <div class="deck-item">
             <div class="deck-info">
                 <div class="deck-title">${escapeHtml(deck.title)}</div>
-                <div class="deck-meta">${cardCount} card${cardCount !== 1 ? 's' : ''}</div>
+                <div class="deck-meta">${cardCount} spell${cardCount !== 1 ? 's' : ''}</div>
             </div>
             <div class="deck-actions">
-                <button class="btn btn-primary" onclick="startStudy('${deck.id}')" title="Study" ${cardCount === 0 ? 'disabled' : ''}>Study</button>
-                <button class="btn-icon" onclick="renderDeckStudyLog('${deck.id}')" title="View study stats" aria-label="View study stats for ${escapeHtml(deck.title)}">📊</button>
+                <button class="btn btn-primary" onclick="startStudy('${deck.id}')" title="Rehearse" ${cardCount === 0 ? 'disabled' : ''}>Rehearse</button>
+                <button class="btn-icon" onclick="renderDeckStudyLog('${deck.id}')" title="View Chronicle for this Spellbook" aria-label="View Chronicle for ${escapeHtml(deck.title)}">📊</button>
                 <button class="btn-icon" onclick="openEditor('${deck.id}')" title="Edit">✏️</button>
-                <button class="btn-icon" onclick="exportDeck('${deck.id}')" title="Export deck as file" aria-label="Export ${escapeHtml(deck.title)} as file">⬇️</button>
+                <button class="btn-icon" onclick="exportDeck('${deck.id}')" title="Export Spellbook as file" aria-label="Export ${escapeHtml(deck.title)} as file">⬇️</button>
                 <button class="btn-icon" onclick="shareDeckLink('${deck.id}')" title="Copy share link" aria-label="Copy share link for ${escapeHtml(deck.title)}">🔗</button>
                 <button class="btn-icon" onclick="deleteDeck('${deck.id}')" title="Delete">🗑️</button>
             </div>
@@ -595,7 +595,7 @@ function deleteDeck(deckId) {
     const decks = loadDecks();
     const deck = decks.find(d => d.id === deckId);
     if (!deck) return;
-    if (!confirm(`Delete "${deck.title}"? This will also delete all its cards.`)) return;
+    if (!confirm(`Delete "${deck.title}"? This will also delete all its Spells.`)) return;
 
     saveDecks(decks.filter(d => d.id !== deckId));
     const cards = loadCards();
@@ -613,7 +613,7 @@ function openEditor(deckId) {
     const deck = deckId ? decks.find(d => d.id === deckId) : null;
     const existingCards = deckId ? getCardsForDeck(deckId) : [];
 
-    document.getElementById('editorTitle').textContent = deck ? 'Edit Deck' : 'New Deck';
+    document.getElementById('editorTitle').textContent = deck ? 'Edit Spellbook' : 'New Spellbook';
     document.getElementById('deckTitleInput').value = deck ? deck.title : '';
 
     // Start with existing cards, or two blank cards for new deck
@@ -627,8 +627,24 @@ function openEditor(deckId) {
 
     const exportBtn = document.getElementById('exportDeckBtn');
     const shareBtn = document.getElementById('shareDeckBtn');
+    const deleteBtn = document.getElementById('deleteDeckBtn');
     if (exportBtn) exportBtn.style.display = deckId ? '' : 'none';
     if (shareBtn) shareBtn.style.display = deckId ? '' : 'none';
+    if (deleteBtn) deleteBtn.style.display = deckId ? '' : 'none';
+}
+
+function deleteDeckFromEditor() {
+    if (!editorDeckId) return;
+    const decks = loadDecks();
+    const deck = decks.find(d => d.id === editorDeckId);
+    if (!deck) return;
+    if (!confirm(`Delete "${deck.title}"? This will also delete all its Spells.`)) return;
+
+    saveDecks(decks.filter(d => d.id !== editorDeckId));
+    const cards = loadCards();
+    saveCards(cards.filter(c => c.deckId !== editorDeckId));
+    editorDeckId = null;
+    renderDeckList();
 }
 
 function attachCardEditorPasteListeners() {
@@ -655,8 +671,8 @@ function renderCardEditors(cardData) {
     const list = document.getElementById('cardEditorList');
     list.innerHTML = cardData.map((card, i) => `
         <div class="card-editor-item" data-index="${i}">
-            <div class="card-num">Card ${i + 1}</div>
-            <button class="card-editor-remove" onclick="removeCardEditor(${i})" title="Remove card">✕</button>
+            <div class="card-num">Spell ${i + 1}</div>
+            <button class="card-editor-remove" onclick="removeCardEditor(${i})" title="Remove spell">✕</button>
             <div class="card-fields">
                 <div class="card-field-group">
                     <textarea class="form-input card-front" placeholder="Front (term)" rows="2">${escapeHtml(card.front)}</textarea>
@@ -685,7 +701,7 @@ function removeCardEditor(index) {
     const cards = getEditorCardData();
     if (cards.length <= 1) {
         const msg = document.getElementById('editorMsg');
-        msg.textContent = 'A deck must have at least one card.';
+        msg.textContent = 'A Spellbook must have at least one Spell.';
         setTimeout(() => { msg.textContent = ''; }, 2000);
         return;
     }
@@ -722,7 +738,7 @@ function saveDeck() {
     if (!title) {
         document.getElementById('deckTitleInput').focus();
         document.getElementById('deckTitleInput').style.borderColor = 'var(--danger-color)';
-        msgEl.textContent = 'Please enter a deck title.';
+        msgEl.textContent = 'Please enter a Spellbook title.';
         setTimeout(() => {
             document.getElementById('deckTitleInput').style.borderColor = '';
             msgEl.textContent = '';
@@ -775,16 +791,25 @@ function startStudy(deckId) {
     if (!deck || cards.length === 0) return;
 
     const shuffle = document.getElementById('shuffleToggle') && document.getElementById('shuffleToggle').checked;
+    const backwards = document.getElementById('backwardsToggle') && document.getElementById('backwardsToggle').checked;
 
     let queue = cards.map(c => c.id);
     if (shuffle) {
         queue = shuffleArray(queue);
     }
 
+    // If backwards casting, swap front/back on a copy of the cards
+    const cardMap = Object.fromEntries(cards.map(c => {
+        if (backwards) {
+            return [c.id, { ...c, front: c.back, back: c.front, frontImage: c.backImage || '', backImage: c.frontImage || '' }];
+        }
+        return [c.id, c];
+    }));
+
     studyState = {
         deckId,
         deckTitle: deck.title,
-        cards: Object.fromEntries(cards.map(c => [c.id, c])),
+        cards: cardMap,
         queue: [...queue],
         knownIds: new Set(),
         firstTimeKnownIds: new Set(),
@@ -794,8 +819,15 @@ function startStudy(deckId) {
         isFlipped: false,
         history: [],
         historyPos: -1,
-        startTime: Date.now()
+        startTime: Date.now(),
+        backwards
     };
+
+    // Update card-side labels to reflect mode
+    const frontLabel = document.getElementById('frontLabel');
+    const backLabel = document.getElementById('backLabel');
+    if (frontLabel) frontLabel.textContent = backwards ? 'Definition' : 'Term';
+    if (backLabel) backLabel.textContent = backwards ? 'Term' : 'Definition';
 
     showStudyCard();
 }
@@ -1038,11 +1070,266 @@ function saveEditCardModal() {
     renderStudyCard(cardId);
 
     document.getElementById('editCardModal').style.display = 'none';
-    showToast('Card updated!');
+    showToast('Spell updated!');
 }
 
 function cancelEditCardModal() {
     document.getElementById('editCardModal').style.display = 'none';
+}
+
+// ===== AI DECK CREATOR =====
+
+let webllmEngine = null;
+let webllmLoadedModel = null;
+
+function openAiDeckScreen() {
+    showScreen('ai-deck');
+    document.getElementById('aiSetupPanel').style.display = '';
+    document.getElementById('aiStatusArea').style.display = 'none';
+    document.getElementById('aiPreviewArea').style.display = 'none';
+    document.getElementById('aiSetupMsg').textContent = '';
+}
+
+async function generateAiDeck() {
+    const topic = document.getElementById('aiTopicInput').value.trim();
+    const notes = document.getElementById('aiNotesInput').value.trim();
+    const notesOnly = document.getElementById('aiNotesOnlyCheck').checked;
+    const cardCount = Math.min(50, Math.max(3, parseInt(document.getElementById('aiCardCountInput').value) || 10));
+    const modelId = document.getElementById('aiModelSelect').value;
+    const msgEl = document.getElementById('aiSetupMsg');
+
+    msgEl.textContent = '';
+    if (!topic) {
+        document.getElementById('aiTopicInput').focus();
+        document.getElementById('aiTopicInput').style.borderColor = 'var(--danger-color)';
+        msgEl.textContent = 'Please enter a topic to study.';
+        setTimeout(() => {
+            document.getElementById('aiTopicInput').style.borderColor = '';
+            msgEl.textContent = '';
+        }, 2500);
+        return;
+    }
+
+    document.getElementById('aiSetupPanel').style.display = 'none';
+    document.getElementById('aiPreviewArea').style.display = 'none';
+    document.getElementById('aiStatusArea').style.display = '';
+
+    try {
+        if (!webllmEngine || webllmLoadedModel !== modelId) {
+            webllmEngine = null;
+            webllmLoadedModel = null;
+            setAiStatus('Downloading model… this may take a few minutes on first use.', 0);
+            // WebLLM is loaded via dynamic import from the esm.run CDN (no build system in this project).
+            // The library runs the chosen model entirely in-browser using WebGPU.
+            const { CreateMLCEngine } = await import('https://esm.run/@mlc-ai/web-llm');
+            webllmEngine = await CreateMLCEngine(modelId, {
+                initProgressCallback: (p) => setAiStatus(p.text || 'Loading…', p.progress || 0)
+            });
+            webllmLoadedModel = modelId;
+        }
+
+        setAiStatus('Generating flashcards… (pass 1 of 2)', 0.8);
+
+        const systemPrompt =
+            'You are a flashcard creation assistant. ' +
+            'Output ONLY a valid JSON array of objects, each with exactly two string fields: ' +
+            '"front" (the question or term) and "back" (the answer or definition). ' +
+            'No extra text, no markdown, no code fences — just the raw JSON array.';
+
+        const userPrompt = notes
+            ? `Create ${cardCount} flashcards to study "${topic}" based on the following notes:\n\n${notes}` +
+              (notesOnly ? '\n\nIMPORTANT: Only use information found in the notes above. Do not add any facts or details from outside knowledge.' : '')
+            : `Create ${cardCount} clear and educational flashcards to study "${topic}".`;
+
+        const response = await webllmEngine.chat.completions.create({
+            messages: [
+                { role: 'system', content: systemPrompt },
+                { role: 'user', content: userPrompt }
+            ],
+            temperature: 0.7,
+            max_tokens: 2048
+        });
+
+        const text = response.choices[0].message.content || '';
+        const cards = parseAiCards(text);
+
+        if (!cards || cards.length === 0) {
+            console.error('AI raw response (failed to parse):', text);
+            throw new Error('Could not parse flashcards from the model response. Try again.');
+        }
+
+        // Second pass: review each card for accuracy and correct formatting
+        setAiStatus(`Reviewing ${cards.length} cards for accuracy… (pass 2 of 2)`, 0.95);
+
+        const reviewSystemPrompt =
+            'You are a flashcard accuracy reviewer. ' +
+            'You will be given a JSON array of flashcard objects with "front" and "back" string fields. ' +
+            'Review each card for factual accuracy and clarity. Fix any errors or ambiguous wording. ' +
+            'Keep the same number of cards. ' +
+            'Return ONLY a valid JSON array with the corrected cards. ' +
+            'No extra text, no markdown, no code fences — just the raw JSON array.';
+
+        const reviewUserPrompt = (notes && notesOnly)
+            ? `Review these ${cards.length} flashcards about "${topic}" for accuracy. ` +
+              `Only use information from the notes below — correct any card that contains facts not found in the notes.\n\n` +
+              `Notes:\n${notes}\n\nCards to review:\n${JSON.stringify(cards)}`
+            : `Review these ${cards.length} flashcards about "${topic}" for factual accuracy and clarity. ` +
+              `Fix any errors in the content or formatting.\n\n${JSON.stringify(cards)}`;
+
+        let finalCards = cards;
+        try {
+            const reviewResponse = await webllmEngine.chat.completions.create({
+                messages: [
+                    { role: 'system', content: reviewSystemPrompt },
+                    { role: 'user', content: reviewUserPrompt }
+                ],
+                temperature: 0.3,
+                max_tokens: 2048
+            });
+
+            const reviewText = reviewResponse.choices[0].message.content || '';
+            const reviewedCards = parseAiCards(reviewText);
+
+            if (reviewedCards && reviewedCards.length > 0) {
+                finalCards = reviewedCards;
+            } else {
+                console.warn('AI review pass could not be parsed, using original cards:', reviewText);
+            }
+        } catch (reviewErr) {
+            console.warn('AI review pass failed, using original cards:', reviewErr);
+        }
+
+        document.getElementById('aiDeckTitleInput').value = topic;
+        renderAiPreview(finalCards);
+
+        document.getElementById('aiStatusArea').style.display = 'none';
+        document.getElementById('aiSetupPanel').style.display = '';
+        document.getElementById('aiPreviewArea').style.display = '';
+
+    } catch (err) {
+        console.error('AI deck generation error:', err);
+        webllmEngine = null;
+        webllmLoadedModel = null;
+        document.getElementById('aiStatusArea').style.display = 'none';
+        document.getElementById('aiSetupPanel').style.display = '';
+        const msg = err.message || '';
+        if (msg.toLowerCase().includes('webgpu') || msg.toLowerCase().includes('gpu')) {
+            msgEl.textContent = 'WebGPU is required. Please use Chrome or Edge on a desktop device.';
+        } else {
+            msgEl.textContent = 'Generation failed: ' + (msg.slice(0, 120) || 'Unknown error');
+        }
+    }
+}
+
+function cancelAiGeneration() {
+    webllmEngine = null;
+    webllmLoadedModel = null;
+    document.getElementById('aiStatusArea').style.display = 'none';
+    document.getElementById('aiSetupPanel').style.display = '';
+}
+
+function setAiStatus(text, progress) {
+    document.getElementById('aiStatusText').textContent = text;
+    document.getElementById('aiProgressFill').style.width = `${Math.round((progress || 0) * 100)}%`;
+}
+
+function parseAiCards(text) {
+    const tryParse = (str) => {
+        try {
+            const data = JSON.parse(str);
+            if (Array.isArray(data)) return sanitizeAiCards(data);
+            // Handle { cards: [...] } or { flashcards: [...] } wrappers
+            const arr = data.cards || data.flashcards || data.deck;
+            if (Array.isArray(arr)) return sanitizeAiCards(arr);
+        } catch (e) {
+            console.warn('AI card JSON parse attempt failed:', e);
+        }
+        return null;
+    };
+
+    let result = tryParse(text.trim());
+    if (result) return result;
+
+    // Try extracting a JSON array from surrounding text
+    const match = text.match(/\[[\s\S]*\]/);
+    if (match) {
+        result = tryParse(match[0]);
+        if (result) return result;
+    }
+
+    return null;
+}
+
+function sanitizeAiCards(arr) {
+    return arr
+        .filter(c => c && (typeof c.front === 'string' || typeof c.back === 'string'))
+        .map(c => ({
+            front: String(c.front || c.question || c.term || '').trim(),
+            back: String(c.back || c.answer || c.definition || '').trim()
+        }))
+        .filter(c => c.front || c.back);
+}
+
+function renderAiPreview(cards) {
+    const list = document.getElementById('aiCardPreviewList');
+    list.innerHTML = cards.map((card, i) => `
+        <div class="card-editor-item" data-ai-index="${i}">
+            <div class="card-num">Spell ${i + 1}</div>
+            <button class="card-editor-remove" onclick="removeAiCard(this)" title="Remove Spell">✕</button>
+            <div class="card-fields">
+                <textarea class="form-input card-front" placeholder="Front (term)" rows="2">${escapeHtml(card.front)}</textarea>
+                <textarea class="form-input card-back" placeholder="Back (definition)" rows="2">${escapeHtml(card.back)}</textarea>
+            </div>
+        </div>`).join('');
+}
+
+function removeAiCard(btn) {
+    const list = document.getElementById('aiCardPreviewList');
+    const items = list.querySelectorAll('.card-editor-item');
+    if (items.length <= 1) return;
+    btn.closest('.card-editor-item').remove();
+    list.querySelectorAll('.card-editor-item').forEach((item, i) => {
+        item.dataset.aiIndex = i;
+        item.querySelector('.card-num').textContent = `Spell ${i + 1}`;
+    });
+}
+
+function getAiPreviewCards() {
+    return Array.from(document.querySelectorAll('#aiCardPreviewList .card-editor-item')).map(item => ({
+        front: item.querySelector('.card-front').value.trim(),
+        back: item.querySelector('.card-back').value.trim()
+    })).filter(c => c.front || c.back);
+}
+
+function saveAiDeck() {
+    const title = (document.getElementById('aiDeckTitleInput').value.trim()) ||
+        (document.getElementById('aiTopicInput').value.trim()) || 'AI Generated Spellbook';
+    const cards = getAiPreviewCards();
+
+    if (cards.length === 0) {
+        showToast('No Spells to save!');
+        return;
+    }
+
+    const deckId = generateId();
+    const decks = loadDecks();
+    decks.push({ id: deckId, title, createdAt: Date.now() });
+    saveDecks(decks);
+
+    const allCards = loadCards();
+    const newCards = cards.map((c, i) => ({
+        id: generateId(),
+        deckId,
+        front: c.front,
+        back: c.back,
+        frontImage: '',
+        backImage: '',
+        position: i
+    }));
+    saveCards(allCards.concat(newCards));
+
+    showToast(`"${title}" saved with ${cards.length} Spells!`);
+    renderDeckList();
 }
 
 // ===== INIT =====
@@ -1058,6 +1345,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Shuffle toggle: restart study with new order when changed mid-session
     document.getElementById('shuffleToggle').addEventListener('change', () => {
+        if (studyState) restartStudy();
+    });
+
+    // Backwards Casting toggle: restart study with swapped faces when changed mid-session
+    document.getElementById('backwardsToggle').addEventListener('change', () => {
         if (studyState) restartStudy();
     });
 
