@@ -78,7 +78,7 @@
                 <span class="screen-title">My Decks</span>
                 <div style="display: flex; gap: 8px; align-items: center;">
                     <button class="btn-icon" onclick="renderStudyLog()" title="Study log" aria-label="View study log" style="font-size:1.2em;">📊</button>
-                    <button class="btn btn-secondary" onclick="triggerImport()" title="Import a deck from a file" aria-label="Import a deck from a file">📂 Import</button>
+                    <button class="btn btn-secondary" onclick="openImportOptionsModal()" title="Import a deck" aria-label="Import a deck">📂 Import</button>
                     <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="handleImportFile(this)">
                     <button class="btn btn-primary" onclick="openEditor(null)">＋ New Deck</button>
                 </div>
@@ -215,15 +215,40 @@
         </div>
     </div>
 
+    <!-- Import options modal -->
+    <div id="importOptionsModal" class="share-modal-overlay" style="display:none;">
+        <div class="share-modal">
+            <div class="share-modal-title">Import Deck</div>
+            <div class="import-options-body">
+                <button class="btn btn-primary import-option-btn" onclick="triggerFileImport()">📂 Upload File</button>
+                <button class="btn btn-secondary import-option-btn" onclick="openImportPasteModal()">📋 Paste JSON</button>
+            </div>
+            <div class="share-modal-actions">
+                <button class="btn btn-secondary" style="width:100%" onclick="closeImportOptionsModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Paste JSON modal -->
+    <div id="importPasteModal" class="share-modal-overlay" style="display:none;">
+        <div class="share-modal import-paste-modal">
+            <div class="share-modal-title">Paste JSON</div>
+            <div class="share-modal-body">
+                <textarea id="importPasteTextarea" class="form-input import-paste-textarea" placeholder="Paste Quizard JSON here…"></textarea>
+            </div>
+            <div class="share-modal-actions">
+                <button class="btn btn-primary" onclick="handlePasteJsonImport()">Import</button>
+                <button class="btn btn-secondary" onclick="closeImportPasteModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Import / Share modal -->
     <div id="shareImportModal" class="share-modal-overlay" style="display:none;">
         <div class="share-modal">
-            <div class="share-modal-title">Import Deck?</div>
+            <div class="share-modal-title" id="shareImportTitle">Import Deck?</div>
             <div class="share-modal-body" id="shareImportBody"></div>
-            <div class="share-modal-actions">
-                <button class="btn btn-primary" onclick="confirmShareImport()">Import</button>
-                <button class="btn btn-secondary" onclick="cancelShareImport()">Cancel</button>
-            </div>
+            <div class="share-modal-actions" id="shareImportActions"></div>
         </div>
     </div>
 
