@@ -1137,7 +1137,7 @@ async function generateAiDeck() {
             webllmLoadedModel = modelId;
         }
 
-        setAiStatus('Generating flashcards… (pass 1 of 2)', 0.8);
+        setAiStatus('Generating flashcards…', 0.8);
 
         const systemPrompt =
             'You are a flashcard creation assistant. ' +
@@ -1150,13 +1150,20 @@ async function generateAiDeck() {
               (notesOnly ? '\n\nIMPORTANT: Only use information found in the notes above. Do not add any facts or details from outside knowledge.' : '')
             : `Create ${cardCount} clear and educational flashcards to study "${topic}".`;
 
+        // Allow roughly 60 tokens per card (front + back in JSON), capped at 2048.
+        // The 256-token floor ensures the model always has room to produce at least a few
+        // cards even for the minimum card count (3). Keeping this tight avoids overflowing
+        // the model's context window (SmolLM2-1.7B has a 2048-token total context, so a
+        // generous max_tokens causes OOM errors when combined with the prompt tokens already consumed).
+        const maxTokens = Math.min(2048, Math.max(256, cardCount * 60));
+
         const response = await webllmEngine.chat.completions.create({
             messages: [
                 { role: 'system', content: systemPrompt },
                 { role: 'user', content: userPrompt }
             ],
             temperature: 0.7,
-            max_tokens: 2048
+            max_tokens: maxTokens
         });
 
         const text = response.choices[0].message.content || '';
@@ -1167,49 +1174,8 @@ async function generateAiDeck() {
             throw new Error('Could not parse flashcards from the model response. Try again.');
         }
 
-        // Second pass: review each card for accuracy and correct formatting
-        setAiStatus(`Reviewing ${cards.length} cards for accuracy… (pass 2 of 2)`, 0.95);
-
-        const reviewSystemPrompt =
-            'You are a flashcard accuracy reviewer. ' +
-            'You will be given a JSON array of flashcard objects with "front" and "back" string fields. ' +
-            'Review each card for factual accuracy and clarity. Fix any errors or ambiguous wording. ' +
-            'Keep the same number of cards. ' +
-            'Return ONLY a valid JSON array with the corrected cards. ' +
-            'No extra text, no markdown, no code fences — just the raw JSON array.';
-
-        const reviewUserPrompt = (notes && notesOnly)
-            ? `Review these ${cards.length} flashcards about "${topic}" for accuracy. ` +
-              `Only use information from the notes below — correct any card that contains facts not found in the notes.\n\n` +
-              `Notes:\n${notes}\n\nCards to review:\n${JSON.stringify(cards)}`
-            : `Review these ${cards.length} flashcards about "${topic}" for factual accuracy and clarity. ` +
-              `Fix any errors in the content or formatting.\n\n${JSON.stringify(cards)}`;
-
-        let finalCards = cards;
-        try {
-            const reviewResponse = await webllmEngine.chat.completions.create({
-                messages: [
-                    { role: 'system', content: reviewSystemPrompt },
-                    { role: 'user', content: reviewUserPrompt }
-                ],
-                temperature: 0.3,
-                max_tokens: 2048
-            });
-
-            const reviewText = reviewResponse.choices[0].message.content || '';
-            const reviewedCards = parseAiCards(reviewText);
-
-            if (reviewedCards && reviewedCards.length > 0) {
-                finalCards = reviewedCards;
-            } else {
-                console.warn('AI review pass could not be parsed, using original cards:', reviewText);
-            }
-        } catch (reviewErr) {
-            console.warn('AI review pass failed, using original cards:', reviewErr);
-        }
-
         document.getElementById('aiDeckTitleInput').value = topic;
-        renderAiPreview(finalCards);
+        renderAiPreview(cards);
 
         document.getElementById('aiStatusArea').style.display = 'none';
         document.getElementById('aiSetupPanel').style.display = '';
