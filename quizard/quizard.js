@@ -1401,15 +1401,24 @@ async function startTrialGeneration(deck, cards) {
 
         const selectedCards = cards.slice(0, TRIAL_MAX_QUESTIONS);
 
+        // Plain-text format is far more reliable than JSON for small models.
+        // The parser reads labelled lines, so extra prose / truncation can't break it.
         const systemPrompt =
-            'You are a multiple-choice quiz question generator. ' +
-            'Given a single flashcard with "front" (term/question) and "back" (answer/definition), ' +
-            'create one multiple-choice question that tests whether the user knows the back when shown the front. ' +
-            'Output ONLY a valid JSON object with exactly: ' +
-            '"question" (string), ' +
-            '"answers" (array of exactly 5 strings, correct answer placed at a random position among the 5), ' +
-            '"correctIndex" (integer 0-4, index of correct answer in the answers array). ' +
-            'Make the 4 distractors plausible but distinct. No markdown, no code fences — just the raw JSON object.';
+            'You are a quiz question generator. ' +
+            'Given a flashcard FRONT (term) and BACK (answer), write ONE multiple-choice question. ' +
+            'Output ONLY these 7 lines — no extra text before or after:\n' +
+            'QUESTION: [question text]\n' +
+            'A: [option]\n' +
+            'B: [option]\n' +
+            'C: [option]\n' +
+            'D: [option]\n' +
+            'E: [option]\n' +
+            'CORRECT: [A, B, C, D, or E]\n\n' +
+            'Rules: ' +
+            'One of A-E must be the flashcard BACK verbatim or a close paraphrase. ' +
+            'The other four must be plausible distractors. ' +
+            'CORRECT must be the letter of the right answer. ' +
+            'Do not add any explanation.';
 
         for (let i = 0; i < selectedCards.length; i++) {
             const card = selectedCards[i];
@@ -1423,7 +1432,8 @@ async function startTrialGeneration(deck, cards) {
                 );
             }
 
-            const userPrompt = `Create a multiple-choice question for this flashcard:\n\n${JSON.stringify({ front: card.front, back: card.back })}`;
+            const userPrompt =
+                `FRONT: ${card.front}\nBACK: ${card.back}`;
 
             let questionObj = null;
             try {
@@ -1432,14 +1442,18 @@ async function startTrialGeneration(deck, cards) {
                         { role: 'system', content: systemPrompt },
                         { role: 'user', content: userPrompt }
                     ],
-                    temperature: 0.7,
+                    temperature: 0.5,
                     max_tokens: 512
                 });
 
                 const text = response.choices[0].message.content || '';
+                console.log(`[Trial] Raw LLM output for card ${card.id} (${i + 1}/${selectedCards.length}):`, text);
                 questionObj = parseSingleTrialQuestion(text, card.id);
+                if (!questionObj) {
+                    console.error(`[Trial] Failed to parse question for card ${card.id}. Raw output was logged above.`);
+                }
             } catch (cardErr) {
-                console.warn(`Failed to generate question for card ${card.id}:`, cardErr);
+                console.error(`[Trial] LLM call failed for card ${card.id} (${i + 1}/${selectedCards.length}):`, cardErr);
             }
 
             if (questionObj) {
@@ -1528,48 +1542,77 @@ function cancelTrialGeneration() {
 }
 
 function parseSingleTrialQuestion(text, cardId) {
-    const tryParse = (str) => {
-        try {
-            const data = JSON.parse(str);
-            // Accept a plain object or the first element of an array
-            const obj = Array.isArray(data) ? data[0] : data;
-            if (obj && typeof obj.question === 'string' && Array.isArray(obj.answers)) {
-                return sanitizeSingleTrialQuestion(obj, cardId);
+    // Parse the labelled-line plain-text format produced by the LLM prompt.
+    // Example expected output:
+    //   QUESTION: What does photosynthesis produce?
+    //   A: Oxygen and glucose
+    //   B: Carbon dioxide
+    //   C: Water
+    //   D: Nitrogen
+    //   E: Methane
+    //   CORRECT: A
+    const LETTER_TO_INDEX = { A: 0, B: 1, C: 2, D: 3, E: 4 };
+
+    let question = '';
+    const answers = {};   // keyed by index so any output order works
+    let correctLetter = '';
+
+    for (const raw of text.split('\n')) {
+        const line = raw.trim();
+        if (!line) continue;
+
+        if (line.toUpperCase().startsWith('QUESTION:')) {
+            if (question) {
+                console.warn('[Trial] parseSingleTrialQuestion: extra QUESTION line ignored:', line);
+            } else {
+                question = line.slice(line.indexOf(':') + 1).trim();
             }
-        } catch (e) {
-            console.warn('Trial question JSON parse attempt failed:', e);
+        } else if (/^[A-E]\s*:/i.test(line)) {
+            const letter = line[0].toUpperCase();
+            const idx = LETTER_TO_INDEX[letter];
+            if (!(idx in answers)) {               // take first occurrence of each letter
+                answers[idx] = line.slice(line.indexOf(':') + 1).trim();
+            }
+        } else if (line.toUpperCase().startsWith('CORRECT:')) {
+            correctLetter = line.slice(line.indexOf(':') + 1).trim().toUpperCase().charAt(0);
         }
-        return null;
-    };
-
-    let result = tryParse(text.trim());
-    if (result) return result;
-
-    // Try extracting a JSON object from surrounding text
-    const objMatch = text.match(/\{[\s\S]*\}/);
-    if (objMatch) {
-        result = tryParse(objMatch[0]);
-        if (result) return result;
     }
 
-    return null;
-}
+    // Rebuild as a dense array in A-B-C-D-E order, skipping gaps
+    const answersArray = Object.keys(answers)
+        .map(Number)
+        .sort((a, b) => a - b)
+        .map(k => answers[k]);
 
-function sanitizeSingleTrialQuestion(obj, cardId) {
-    const answers = (obj.answers || [])
-        .slice(0, 5)
-        .map(a => String(a || '').trim())
-        .filter(a => a);
-    if (answers.length < 3) return null;
-    const correctIndex = Math.max(0, Math.min(answers.length - 1, parseInt(obj.correctIndex) || 0));
-    const question = String(obj.question || '').trim();
-    if (!question) return null;
+    if (!question) {
+        console.warn('[Trial] parseSingleTrialQuestion: missing QUESTION line.');
+        return null;
+    }
+    if (answersArray.length < 3) {
+        console.warn(`[Trial] parseSingleTrialQuestion: only ${answersArray.length} answer(s) found (need ≥3).`);
+        return null;
+    }
+    const correctIndex = LETTER_TO_INDEX[correctLetter];
+    if (correctIndex === undefined) {
+        console.warn(`[Trial] parseSingleTrialQuestion: invalid or missing CORRECT letter "${correctLetter}".`);
+        return null;
+    }
+    // Map the original letter index to its position in the dense array
+    const denseCorrectIndex = Object.keys(answers)
+        .map(Number)
+        .sort((a, b) => a - b)
+        .indexOf(correctIndex);
+    if (denseCorrectIndex === -1) {
+        console.warn(`[Trial] parseSingleTrialQuestion: CORRECT letter "${correctLetter}" has no matching answer option.`);
+        return null;
+    }
+
     return {
         id: generateId(),
         cardId,
         question,
-        answers,
-        correctIndex
+        answers: answersArray,
+        correctIndex: denseCorrectIndex
     };
 }
 
