@@ -1087,7 +1087,15 @@ function openAiDeckScreen() {
     document.getElementById('aiSetupPanel').style.display = '';
     document.getElementById('aiStatusArea').style.display = 'none';
     document.getElementById('aiPreviewArea').style.display = 'none';
-    document.getElementById('aiSetupMsg').textContent = '';
+    const msgEl = document.getElementById('aiSetupMsg');
+    const generateBtn = document.getElementById('aiGenerateBtn');
+    if (!navigator.gpu) {
+        msgEl.textContent = 'WebGPU is not available in this browser. Please use a browser that supports WebGPU (e.g. Chrome or Edge on a desktop device).';
+        generateBtn.disabled = true;
+    } else {
+        msgEl.textContent = '';
+        generateBtn.disabled = false;
+    }
 }
 
 async function generateAiDeck() {
@@ -1214,7 +1222,7 @@ async function generateAiDeck() {
         document.getElementById('aiSetupPanel').style.display = '';
         const msg = err.message || '';
         if (msg.toLowerCase().includes('webgpu') || msg.toLowerCase().includes('gpu')) {
-            msgEl.textContent = 'WebGPU is required. Please use Chrome or Edge on a desktop device.';
+            msgEl.textContent = 'WebGPU is not available in this browser. Please use a browser that supports WebGPU (e.g. Chrome or Edge on a desktop device).';
         } else {
             msgEl.textContent = 'Generation failed: ' + (msg.slice(0, 120) || 'Unknown error');
         }
