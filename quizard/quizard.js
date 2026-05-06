@@ -1440,7 +1440,7 @@ async function startTrialGeneration(deck, cards) {
         document.getElementById('trialLoadingPanel').style.display = 'none';
         const msg = err.message || '';
         if (msg.toLowerCase().includes('webgpu') || msg.toLowerCase().includes('gpu')) {
-            alert('WebGPU is required for AI Trial. Please use Chrome or Edge on a desktop device.');
+            alert('WebGPU is required for AI Trial. Please use a WebGPU-compatible browser such as Chrome or Edge.');
         } else {
             alert('Trial generation failed: ' + (msg.slice(0, 140) || 'Unknown error'));
         }
@@ -1492,17 +1492,21 @@ function sanitizeTrialQuestions(arr, cards) {
             const cardId = cardIds.includes(String(q.cardId || ''))
                 ? String(q.cardId)
                 : (cardIds[i] || '');
-            const answers = (q.answers || []).slice(0, 5).map(a => String(a || '').trim());
-            while (answers.length < 5) answers.push('');
+            // Keep only non-empty answers (up to 5)
+            const answers = (q.answers || [])
+                .slice(0, 5)
+                .map(a => String(a || '').trim())
+                .filter(a => a);
+            const correctIndex = Math.max(0, Math.min(answers.length - 1, parseInt(q.correctIndex) || 0));
             return {
                 id: generateId(),
                 cardId,
                 question: String(q.question || '').trim(),
                 answers,
-                correctIndex: Math.max(0, Math.min(4, parseInt(q.correctIndex) || 0))
+                correctIndex
             };
         })
-        .filter(q => q.question && q.answers.filter(a => a).length >= 2);
+        .filter(q => q.question && q.answers.length >= 3);
 }
 
 function startTrialWithQuestions(deck, questions) {
