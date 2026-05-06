@@ -222,9 +222,50 @@ function exportDeck(deckId) {
     URL.revokeObjectURL(url);
 }
 
-function triggerImport() {
+// ===== IMPORT OPTIONS MODAL =====
+
+function openImportOptionsModal() {
+    document.getElementById('importOptionsModal').style.display = 'flex';
+}
+
+function closeImportOptionsModal() {
+    document.getElementById('importOptionsModal').style.display = 'none';
+}
+
+function triggerFileImport() {
+    closeImportOptionsModal();
     document.getElementById('importFileInput').click();
 }
+
+function openImportPasteModal() {
+    closeImportOptionsModal();
+    document.getElementById('importPasteTextarea').value = '';
+    document.getElementById('importPasteModal').style.display = 'flex';
+}
+
+function closeImportPasteModal() {
+    document.getElementById('importPasteModal').style.display = 'none';
+}
+
+function handlePasteJsonImport() {
+    const text = document.getElementById('importPasteTextarea').value.trim();
+    if (!text) return;
+    let data;
+    try {
+        data = JSON.parse(text);
+    } catch (err) {
+        alert('Could not parse the JSON: ' + err.message + '\n\nMake sure it is a valid Quizard JSON export.');
+        return;
+    }
+    if (!data || !data.deck || typeof data.deck.title !== 'string' || !Array.isArray(data.cards)) {
+        alert('This does not look like a Quizard deck export. Expected fields: deck.title (string) and cards (array).');
+        return;
+    }
+    closeImportPasteModal();
+    showImportModal(data);
+}
+
+// ===== IMPORT FILE =====
 
 function handleImportFile(input) {
     const file = input.files[0];
@@ -267,31 +308,83 @@ function importDeckData(data) {
     renderDeckList();
 }
 
+function overwriteDeckData(deckId, data) {
+    const decks = loadDecks();
+    const deckIdx = decks.findIndex(d => d.id === deckId);
+    if (deckIdx === -1) {
+        importDeckData(data);
+        return;
+    }
+    decks[deckIdx].title = data.deck.title;
+    saveDecks(decks);
+    const allCards = loadCards();
+    const otherCards = allCards.filter(c => c.deckId !== deckId);
+    const newCards = data.cards.map((c, i) => ({
+        id: generateId(),
+        deckId,
+        front: String(c.front || ''),
+        back: String(c.back || ''),
+        frontImage: String(c.frontImage || ''),
+        backImage: String(c.backImage || ''),
+        position: typeof c.position === 'number' ? c.position : i
+    }));
+    saveCards(otherCards.concat(newCards));
+    renderDeckList();
+}
+
 // ===== IMPORT MODAL =====
 
 let pendingImportData = null;
+let pendingImportOverwriteId = null;
 
 function showImportModal(data) {
     pendingImportData = data;
+    pendingImportOverwriteId = null;
     const cardCount = data.cards.length;
-    document.getElementById('shareImportBody').innerHTML =
-        `&ldquo;${escapeHtml(data.deck.title)}&rdquo; &mdash; ${cardCount} card${cardCount !== 1 ? 's' : ''}`;
+    const decks = loadDecks();
+    const existing = decks.find(d => d.title === data.deck.title);
+    const titleEl = document.getElementById('shareImportTitle');
+    const bodyEl = document.getElementById('shareImportBody');
+    const actionsEl = document.getElementById('shareImportActions');
+
+    if (existing) {
+        pendingImportOverwriteId = existing.id;
+        titleEl.textContent = 'Deck Already Exists';
+        bodyEl.innerHTML = `A deck named &ldquo;${escapeHtml(data.deck.title)}&rdquo; already exists. Overwrite it (keeping study stats) or import as a new deck?`;
+        actionsEl.innerHTML =
+            `<button class="btn btn-primary" onclick="confirmShareImport('overwrite')">Overwrite</button>` +
+            `<button class="btn btn-secondary" onclick="confirmShareImport('new')">Import as New</button>` +
+            `<button class="btn btn-secondary" onclick="cancelShareImport()">Cancel</button>`;
+    } else {
+        titleEl.textContent = 'Import Deck?';
+        bodyEl.innerHTML = `&ldquo;${escapeHtml(data.deck.title)}&rdquo; &mdash; ${cardCount} card${cardCount !== 1 ? 's' : ''}`;
+        actionsEl.innerHTML =
+            `<button class="btn btn-primary" onclick="confirmShareImport('new')">Import</button>` +
+            `<button class="btn btn-secondary" onclick="cancelShareImport()">Cancel</button>`;
+    }
     document.getElementById('shareImportModal').style.display = 'flex';
 }
 
-function confirmShareImport() {
+function confirmShareImport(action) {
     if (!pendingImportData) return;
-    importDeckData(pendingImportData);
+    if (action === 'overwrite' && pendingImportOverwriteId) {
+        overwriteDeckData(pendingImportOverwriteId, pendingImportData);
+        showToast('Deck updated!');
+    } else {
+        importDeckData(pendingImportData);
+        showToast('Deck imported!');
+    }
     pendingImportData = null;
+    pendingImportOverwriteId = null;
     document.getElementById('shareImportModal').style.display = 'none';
     if (location.hash.startsWith('#share=')) {
         history.replaceState(null, '', location.pathname + location.search);
     }
-    showToast('Deck imported!');
 }
 
 function cancelShareImport() {
     pendingImportData = null;
+    pendingImportOverwriteId = null;
     document.getElementById('shareImportModal').style.display = 'none';
     if (location.hash.startsWith('#share=')) {
         history.replaceState(null, '', location.pathname + location.search);
