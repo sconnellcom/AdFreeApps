@@ -1397,37 +1397,52 @@ async function startTrialGeneration(deck, cards) {
         }
 
         const selectedCards = cards.slice(0, TRIAL_MAX_QUESTIONS);
-        setTrialLoadingStatus('The Quizard AI is conjuring your trial…', 0.85);
+        const questions = [];
 
         const systemPrompt =
             'You are a multiple-choice quiz question generator. ' +
-            'Given flashcards (each with id, front, back), create one multiple-choice question per card. ' +
-            'Each question should test whether the user knows the back (answer/definition) when shown the front (term/question). ' +
-            'Output ONLY a valid JSON array. Each element must have exactly: ' +
-            '"cardId" (string, the card id from the input), ' +
+            'Given a single flashcard with "front" (term/question) and "back" (answer/definition), ' +
+            'create one multiple-choice question that tests whether the user knows the back when shown the front. ' +
+            'Output ONLY a valid JSON object with exactly: ' +
             '"question" (string), ' +
-            '"answers" (array of exactly 5 strings, with the correct answer placed at a random position), ' +
+            '"answers" (array of exactly 5 strings, correct answer placed at a random position among the 5), ' +
             '"correctIndex" (integer 0-4, index of correct answer in the answers array). ' +
-            'Make the 4 distractors plausible. No markdown, no code fences — just the raw JSON array.';
+            'Make the 4 distractors plausible but distinct. No markdown, no code fences — just the raw JSON object.';
 
-        const userPrompt =
-            'Create one multiple-choice question for each flashcard below:\n\n' +
-            JSON.stringify(selectedCards.map(c => ({ id: c.id, front: c.front, back: c.back })));
+        for (let i = 0; i < selectedCards.length; i++) {
+            const card = selectedCards[i];
+            const progress = 0.1 + (i / selectedCards.length) * 0.85;
+            setTrialLoadingStatus(
+                `Conjuring question ${i + 1} of ${selectedCards.length}…`,
+                progress
+            );
 
-        const response = await webllmEngine.chat.completions.create({
-            messages: [
-                { role: 'system', content: systemPrompt },
-                { role: 'user', content: userPrompt }
-            ],
-            temperature: 0.7,
-            max_tokens: 4096
-        });
+            const userPrompt = `Create a multiple-choice question for this flashcard:\n\n${JSON.stringify({ front: card.front, back: card.back })}`;
 
-        const text = response.choices[0].message.content || '';
-        const questions = parseTrialQuestions(text, selectedCards);
+            let questionObj = null;
+            try {
+                const response = await webllmEngine.chat.completions.create({
+                    messages: [
+                        { role: 'system', content: systemPrompt },
+                        { role: 'user', content: userPrompt }
+                    ],
+                    temperature: 0.7,
+                    max_tokens: 512
+                });
 
-        if (!questions || questions.length === 0) {
-            throw new Error('Could not parse quiz questions from the model response. Try again.');
+                const text = response.choices[0].message.content || '';
+                questionObj = parseSingleTrialQuestion(text, card.id);
+            } catch (cardErr) {
+                console.warn(`Failed to generate question for card ${card.id}:`, cardErr);
+            }
+
+            if (questionObj) {
+                questions.push(questionObj);
+            }
+        }
+
+        if (questions.length === 0) {
+            throw new Error('Could not generate any quiz questions. Try again.');
         }
 
         saveTrialQuestionsForDeck(trialDeckId, questions);
@@ -1459,13 +1474,15 @@ function cancelTrialGeneration() {
     renderDeckList();
 }
 
-function parseTrialQuestions(text, cards) {
+function parseSingleTrialQuestion(text, cardId) {
     const tryParse = (str) => {
         try {
             const data = JSON.parse(str);
-            if (Array.isArray(data)) return sanitizeTrialQuestions(data, cards);
-            const arr = data.questions || data.quiz || data.items;
-            if (Array.isArray(arr)) return sanitizeTrialQuestions(arr, cards);
+            // Accept a plain object or the first element of an array
+            const obj = Array.isArray(data) ? data[0] : data;
+            if (obj && typeof obj.question === 'string' && Array.isArray(obj.answers)) {
+                return sanitizeSingleTrialQuestion(obj, cardId);
+            }
         } catch (e) {
             console.warn('Trial question JSON parse attempt failed:', e);
         }
@@ -1475,38 +1492,32 @@ function parseTrialQuestions(text, cards) {
     let result = tryParse(text.trim());
     if (result) return result;
 
-    const match = text.match(/\[[\s\S]*\]/);
-    if (match) {
-        result = tryParse(match[0]);
+    // Try extracting a JSON object from surrounding text
+    const objMatch = text.match(/\{[\s\S]*\}/);
+    if (objMatch) {
+        result = tryParse(objMatch[0]);
         if (result) return result;
     }
 
     return null;
 }
 
-function sanitizeTrialQuestions(arr, cards) {
-    const cardIds = cards.map(c => c.id);
-    return arr
-        .filter(q => q && typeof q.question === 'string' && Array.isArray(q.answers))
-        .map((q, i) => {
-            const cardId = cardIds.includes(String(q.cardId || ''))
-                ? String(q.cardId)
-                : (cardIds[i] || '');
-            // Keep only non-empty answers (up to 5)
-            const answers = (q.answers || [])
-                .slice(0, 5)
-                .map(a => String(a || '').trim())
-                .filter(a => a);
-            const correctIndex = Math.max(0, Math.min(answers.length - 1, parseInt(q.correctIndex) || 0));
-            return {
-                id: generateId(),
-                cardId,
-                question: String(q.question || '').trim(),
-                answers,
-                correctIndex
-            };
-        })
-        .filter(q => q.question && q.answers.length >= 3);
+function sanitizeSingleTrialQuestion(obj, cardId) {
+    const answers = (obj.answers || [])
+        .slice(0, 5)
+        .map(a => String(a || '').trim())
+        .filter(a => a);
+    if (answers.length < 3) return null;
+    const correctIndex = Math.max(0, Math.min(answers.length - 1, parseInt(obj.correctIndex) || 0));
+    const question = String(obj.question || '').trim();
+    if (!question) return null;
+    return {
+        id: generateId(),
+        cardId,
+        question,
+        answers,
+        correctIndex
+    };
 }
 
 function startTrialWithQuestions(deck, questions) {
