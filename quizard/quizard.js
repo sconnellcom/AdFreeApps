@@ -583,7 +583,7 @@ function renderDeckList() {
                 <button class="btn btn-primary" onclick="startStudy('${deck.id}')" title="Rehearse" ${cardCount === 0 ? 'disabled' : ''}>Rehearse</button>
                 <button class="btn-icon" onclick="renderDeckStudyLog('${deck.id}')" title="View Chronicle for this Spellbook" aria-label="View Chronicle for ${escapeHtml(deck.title)}">📊</button>
                 <button class="btn-icon" onclick="openEditor('${deck.id}')" title="Edit">✏️</button>
-                <button class="btn-icon" onclick="exportDeck('${deck.id}')" title="Export deck as file" aria-label="Export ${escapeHtml(deck.title)} as file">⬇️</button>
+                <button class="btn-icon" onclick="exportDeck('${deck.id}')" title="Export Spellbook as file" aria-label="Export ${escapeHtml(deck.title)} as file">⬇️</button>
                 <button class="btn-icon" onclick="shareDeckLink('${deck.id}')" title="Copy share link" aria-label="Copy share link for ${escapeHtml(deck.title)}">🔗</button>
                 <button class="btn-icon" onclick="deleteDeck('${deck.id}')" title="Delete">🗑️</button>
             </div>
