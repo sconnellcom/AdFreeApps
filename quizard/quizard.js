@@ -1382,6 +1382,9 @@ async function startTrialGeneration(deck, cards) {
     document.getElementById('trialLoadingTitle').textContent = deck.title;
     setTrialLoadingStatus('The Quizard AI is conjuring your trial…', 0);
 
+    // Reset trialState so we can detect "first question" below
+    trialState = null;
+
     const modelId = 'SmolLM2-1.7B-Instruct-q4f16_1-MLC';
 
     try {
@@ -1397,7 +1400,6 @@ async function startTrialGeneration(deck, cards) {
         }
 
         const selectedCards = cards.slice(0, TRIAL_MAX_QUESTIONS);
-        const questions = [];
 
         const systemPrompt =
             'You are a multiple-choice quiz question generator. ' +
@@ -1411,11 +1413,15 @@ async function startTrialGeneration(deck, cards) {
 
         for (let i = 0; i < selectedCards.length; i++) {
             const card = selectedCards[i];
-            const progress = 0.1 + (i / selectedCards.length) * 0.85;
-            setTrialLoadingStatus(
-                `Conjuring question ${i + 1} of ${selectedCards.length}…`,
-                progress
-            );
+
+            // Update loading status while the loading panel is still shown
+            if (!trialState) {
+                const progress = 0.1 + (i / selectedCards.length) * 0.85;
+                setTrialLoadingStatus(
+                    `Conjuring question ${i + 1} of ${selectedCards.length}…`,
+                    progress
+                );
+            }
 
             const userPrompt = `Create a multiple-choice question for this flashcard:\n\n${JSON.stringify({ front: card.front, back: card.back })}`;
 
@@ -1437,16 +1443,53 @@ async function startTrialGeneration(deck, cards) {
             }
 
             if (questionObj) {
-                questions.push(questionObj);
+                if (!trialState) {
+                    // First question ready — start the quiz immediately
+                    trialState = {
+                        deckId: deck.id,
+                        deckTitle: deck.title,
+                        questions: [questionObj],
+                        currentIndex: 0,
+                        score: 0,
+                        answered: false,
+                        generating: true,
+                        waitingForNext: false
+                    };
+                    document.getElementById('trialLoadingPanel').style.display = 'none';
+                    document.getElementById('trialResultsPanel').style.display = 'none';
+                    document.getElementById('trialQuestionPanel').style.display = '';
+                    document.getElementById('trialDeckName').textContent = deck.title;
+                    renderTrialQuestion();
+                } else {
+                    // Subsequent questions — append and update counter
+                    trialState.questions.push(questionObj);
+                    updateTrialProgressCounter();
+                    // If user is waiting for the next question, advance now
+                    if (trialState.waitingForNext) {
+                        trialState.waitingForNext = false;
+                        renderTrialQuestion();
+                    }
+                }
             }
         }
 
-        if (questions.length === 0) {
+        if (!trialState) {
             throw new Error('Could not generate any quiz questions. Try again.');
         }
 
-        saveTrialQuestionsForDeck(trialDeckId, questions);
-        startTrialWithQuestions(deck, questions);
+        trialState.generating = false;
+        saveTrialQuestionsForDeck(trialDeckId, trialState.questions);
+        updateTrialProgressCounter();
+
+        // If the user reached the end and was waiting for generation to finish
+        if (trialState.waitingForNext) {
+            trialState.waitingForNext = false;
+            if (trialState.currentIndex < trialState.questions.length) {
+                renderTrialQuestion();
+            } else {
+                showTrialResults();
+            }
+        }
 
     } catch (err) {
         console.error('Trial generation error:', err);
@@ -1459,7 +1502,17 @@ async function startTrialGeneration(deck, cards) {
         } else {
             alert('Trial generation failed: ' + (msg.slice(0, 140) || 'Unknown error'));
         }
-        renderDeckList();
+        // If we already started the quiz, stay on it; otherwise go back to deck list
+        if (!trialState || trialState.questions.length === 0) {
+            renderDeckList();
+        } else {
+            trialState.generating = false;
+            updateTrialProgressCounter();
+            if (trialState.waitingForNext) {
+                trialState.waitingForNext = false;
+                showTrialResults();
+            }
+        }
     }
 }
 
@@ -1564,6 +1617,21 @@ function renderTrialQuestion() {
     document.getElementById('trialNextBtn').style.display = 'none';
 }
 
+function updateTrialProgressCounter() {
+    if (!trialState) return;
+    const s = trialState;
+    const total = s.questions.length;
+    const current = s.currentIndex + 1;
+    document.getElementById('trialProgressText').textContent = `Question ${current} of ${total}`;
+    document.getElementById('trialQuestionProgressFill').style.width = `${((current - 1) / total) * 100}%`;
+    // Re-evaluate the Next button label in case we're now on the last question
+    const nextBtn = document.getElementById('trialNextBtn');
+    if (nextBtn.style.display !== 'none' && s.answered) {
+        const isLast = !s.generating && s.currentIndex >= s.questions.length - 1;
+        nextBtn.textContent = isLast ? 'See Results →' : 'Next Question →';
+    }
+}
+
 function selectTrialAnswer(selectedIndex) {
     const s = trialState;
     if (s.answered) return;
@@ -1596,17 +1664,31 @@ function selectTrialAnswer(selectedIndex) {
 
     const nextBtn = document.getElementById('trialNextBtn');
     nextBtn.style.display = '';
-    nextBtn.textContent = s.currentIndex >= s.questions.length - 1 ? 'See Results →' : 'Next Question →';
+    // Only label "See Results" when we know this is genuinely the last question
+    const isLast = !s.generating && s.currentIndex >= s.questions.length - 1;
+    nextBtn.textContent = isLast ? 'See Results →' : 'Next Question →';
 }
 
 function trialNextQuestion() {
     const s = trialState;
     s.currentIndex++;
-    if (s.currentIndex >= s.questions.length) {
-        showTrialResults();
-    } else {
+    if (s.currentIndex < s.questions.length) {
         renderTrialQuestion();
+    } else if (s.generating) {
+        // More questions are coming — wait for the next one
+        s.waitingForNext = true;
+        showTrialGeneratingNext();
+    } else {
+        showTrialResults();
     }
+}
+
+function showTrialGeneratingNext() {
+    // Show a brief wait state in the question panel while the next question is generated
+    document.getElementById('trialQuestionText').textContent = '✨ Generating next question…';
+    document.getElementById('trialAnswers').innerHTML = '';
+    document.getElementById('trialQuestionFeedback').style.display = 'none';
+    document.getElementById('trialNextBtn').style.display = 'none';
 }
 
 function showTrialResults() {
