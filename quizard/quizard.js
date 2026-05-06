@@ -132,7 +132,7 @@ function appendStudyLog(entry) {
 }
 
 function clearStudyLog() {
-    if (!confirm('Clear all Rehearsal history? This cannot be undone.')) return;
+    if (!confirm('Clear all Chronicle history? This cannot be undone.')) return;
     localStorage.removeItem(STORAGE_KEYS.STUDY_LOG);
     renderStudyLog();
 }
@@ -161,7 +161,7 @@ function formatStudyLogEntry(entry, showDeckName) {
 
 function renderStudyLog() {
     showScreen('study-log');
-    document.getElementById('studyLogTitle').textContent = 'Rehearsal Log';
+    document.getElementById('studyLogTitle').textContent = 'Chronicle';
     document.getElementById('studyLogClearBtn').style.display = '';
     const log = loadStudyLog().reverse(); // newest first
     const container = document.getElementById('studyLogList');
@@ -181,10 +181,10 @@ function renderStudyLog() {
 function renderDeckStudyLog(deckId) {
     const decks = loadDecks();
     const deck = decks.find(d => d.id === deckId);
-    const deckTitle = deck ? deck.title : 'Deck';
+    const deckTitle = deck ? deck.title : 'Spellbook';
 
     showScreen('study-log');
-    document.getElementById('studyLogTitle').textContent = deckTitle;
+    document.getElementById('studyLogTitle').textContent = `Chronicle — ${deckTitle}`;
     document.getElementById('studyLogClearBtn').style.display = 'none';
 
     const log = loadStudyLog().filter(e => e.deckId === deckId).reverse();
@@ -350,16 +350,16 @@ function showImportModal(data) {
     if (existing) {
         pendingImportOverwriteId = existing.id;
         titleEl.textContent = 'Spellbook Already Exists';
-        bodyEl.innerHTML = `A Spellbook named &ldquo;${escapeHtml(data.deck.title)}&rdquo; already exists. Overwrite it (keeping Rehearsal stats) or import as a new Spellbook?`;
+        bodyEl.innerHTML = `A Spellbook named &ldquo;${escapeHtml(data.deck.title)}&rdquo; already exists. Overwrite it (keeping Rehearsal stats) or summon as a new Spellbook?`;
         actionsEl.innerHTML =
             `<button class="btn btn-primary" onclick="confirmShareImport('overwrite')">Overwrite</button>` +
-            `<button class="btn btn-secondary" onclick="confirmShareImport('new')">Import as New</button>` +
+            `<button class="btn btn-secondary" onclick="confirmShareImport('new')">Summon as New</button>` +
             `<button class="btn btn-secondary" onclick="cancelShareImport()">Cancel</button>`;
     } else {
-        titleEl.textContent = 'Import Spellbook?';
+        titleEl.textContent = 'Summon Spellbook?';
         bodyEl.innerHTML = `&ldquo;${escapeHtml(data.deck.title)}&rdquo; &mdash; ${cardCount} spell${cardCount !== 1 ? 's' : ''}`;
         actionsEl.innerHTML =
-            `<button class="btn btn-primary" onclick="confirmShareImport('new')">Import</button>` +
+            `<button class="btn btn-primary" onclick="confirmShareImport('new')">Summon</button>` +
             `<button class="btn btn-secondary" onclick="cancelShareImport()">Cancel</button>`;
     }
     document.getElementById('shareImportModal').style.display = 'flex';
@@ -369,10 +369,10 @@ function confirmShareImport(action) {
     if (!pendingImportData) return;
     if (action === 'overwrite' && pendingImportOverwriteId) {
         overwriteDeckData(pendingImportOverwriteId, pendingImportData);
-        showToast('Deck updated!');
+        showToast('Spellbook updated!');
     } else {
         importDeckData(pendingImportData);
-        showToast('Deck imported!');
+        showToast('Spellbook summoned!');
     }
     pendingImportData = null;
     pendingImportOverwriteId = null;
@@ -581,7 +581,7 @@ function renderDeckList() {
             </div>
             <div class="deck-actions">
                 <button class="btn btn-primary" onclick="startStudy('${deck.id}')" title="Rehearse" ${cardCount === 0 ? 'disabled' : ''}>Rehearse</button>
-                <button class="btn-icon" onclick="renderDeckStudyLog('${deck.id}')" title="View study stats" aria-label="View study stats for ${escapeHtml(deck.title)}">📊</button>
+                <button class="btn-icon" onclick="renderDeckStudyLog('${deck.id}')" title="View Chronicle for this Spellbook" aria-label="View Chronicle for ${escapeHtml(deck.title)}">📊</button>
                 <button class="btn-icon" onclick="openEditor('${deck.id}')" title="Edit">✏️</button>
                 <button class="btn-icon" onclick="exportDeck('${deck.id}')" title="Export deck as file" aria-label="Export ${escapeHtml(deck.title)} as file">⬇️</button>
                 <button class="btn-icon" onclick="shareDeckLink('${deck.id}')" title="Copy share link" aria-label="Copy share link for ${escapeHtml(deck.title)}">🔗</button>
@@ -627,8 +627,24 @@ function openEditor(deckId) {
 
     const exportBtn = document.getElementById('exportDeckBtn');
     const shareBtn = document.getElementById('shareDeckBtn');
+    const deleteBtn = document.getElementById('deleteDeckBtn');
     if (exportBtn) exportBtn.style.display = deckId ? '' : 'none';
     if (shareBtn) shareBtn.style.display = deckId ? '' : 'none';
+    if (deleteBtn) deleteBtn.style.display = deckId ? '' : 'none';
+}
+
+function deleteDeckFromEditor() {
+    if (!editorDeckId) return;
+    const decks = loadDecks();
+    const deck = decks.find(d => d.id === editorDeckId);
+    if (!deck) return;
+    if (!confirm(`Delete "${deck.title}"? This will also delete all its Spells.`)) return;
+
+    saveDecks(decks.filter(d => d.id !== editorDeckId));
+    const cards = loadCards();
+    saveCards(cards.filter(c => c.deckId !== editorDeckId));
+    editorDeckId = null;
+    renderDeckList();
 }
 
 function attachCardEditorPasteListeners() {

@@ -62,11 +62,11 @@
             </a>
         </div>
 
-        <!-- ===== SCREEN: STUDY LOG ===== -->
+        <!-- ===== SCREEN: CHRONICLE (STUDY LOG) ===== -->
         <div id="screen-study-log" class="screen">
             <div class="editor-header">
-                <button class="btn-icon" onclick="renderDeckList()" title="Back" aria-label="Back to deck list">◀</button>
-                <h2 id="studyLogTitle">Rehearsal Log</h2>
+                <button class="btn-icon" onclick="renderDeckList()" title="Back" aria-label="Back to Spellbooks">◀</button>
+                <h2 id="studyLogTitle">Chronicle</h2>
                 <button id="studyLogClearBtn" class="btn btn-secondary" onclick="clearStudyLog()" style="font-size:0.8em; padding:5px 10px;">Clear</button>
             </div>
             <div id="studyLogList"></div>
@@ -77,8 +77,8 @@
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                 <span class="screen-title">My Spellbooks</span>
                 <div style="display: flex; gap: 8px; align-items: center;">
-                    <button class="btn-icon" onclick="renderStudyLog()" title="Rehearsal log" aria-label="View Rehearsal log" style="font-size:1.2em;">📊</button>
-                    <button class="btn btn-secondary" onclick="openImportOptionsModal()" title="Import a Spellbook" aria-label="Import a Spellbook">📂 Import</button>
+                    <button class="btn-icon" onclick="renderStudyLog()" title="Chronicle — view your Rehearsal history" aria-label="View Chronicle" style="font-size:1.2em;">📊</button>
+                    <button class="btn btn-secondary" onclick="openImportOptionsModal()" title="Summon a Spellbook from a file" aria-label="Summon a Spellbook">📂 Summon</button>
                     <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="handleImportFile(this)">
                     <button class="btn btn-secondary" onclick="openAiDeckScreen()" title="Create a Spellbook with Quizard AI" aria-label="Create Spellbook with Quizard AI">🧙 Quizard AI</button>
                     <button class="btn btn-primary" onclick="openEditor(null)">＋ New Spellbook</button>
@@ -91,9 +91,10 @@
         <div id="screen-deck-editor" class="screen">
             <div class="editor-header">
                 <button class="btn-icon" onclick="renderDeckList()" title="Back">◀</button>
-                <h2 id="editorTitle">New Deck</h2>
-                <button class="btn-icon" id="exportDeckBtn" onclick="exportDeck(editorDeckId)" title="Export deck as file" aria-label="Export deck as file" style="display:none">⬇️</button>
+                <h2 id="editorTitle">New Spellbook</h2>
+                <button class="btn-icon" id="exportDeckBtn" onclick="exportDeck(editorDeckId)" title="Export Spellbook as file" aria-label="Export Spellbook as file" style="display:none">⬇️</button>
                 <button class="btn-icon" id="shareDeckBtn" onclick="shareDeckLink(editorDeckId)" title="Copy share link" aria-label="Copy share link" style="display:none">🔗</button>
+                <button class="btn-icon" id="deleteDeckBtn" onclick="deleteDeckFromEditor()" title="Delete this Spellbook" aria-label="Delete this Spellbook" style="display:none">🗑️</button>
             </div>
 
             <div class="form-group">
@@ -294,10 +295,10 @@
         </div>
     </div>
 
-    <!-- Import options modal -->
+    <!-- Summon (import) options modal -->
     <div id="importOptionsModal" class="share-modal-overlay" style="display:none;">
         <div class="share-modal">
-            <div class="share-modal-title">Import Spellbook</div>
+            <div class="share-modal-title">Summon Spellbook</div>
             <div class="import-options-body">
                 <button class="btn btn-primary import-option-btn" onclick="triggerFileImport()">📂 Upload File</button>
                 <button class="btn btn-secondary import-option-btn" onclick="openImportPasteModal()">📋 Paste JSON</button>
@@ -311,21 +312,21 @@
     <!-- Paste JSON modal -->
     <div id="importPasteModal" class="share-modal-overlay" style="display:none;">
         <div class="share-modal import-paste-modal">
-            <div class="share-modal-title">Paste JSON</div>
+            <div class="share-modal-title">Summon from JSON</div>
             <div class="share-modal-body">
                 <textarea id="importPasteTextarea" class="form-input import-paste-textarea" placeholder="Paste Quizard JSON here…"></textarea>
             </div>
             <div class="share-modal-actions">
-                <button class="btn btn-primary" onclick="handlePasteJsonImport()">Import</button>
+                <button class="btn btn-primary" onclick="handlePasteJsonImport()">Summon</button>
                 <button class="btn btn-secondary" onclick="closeImportPasteModal()">Cancel</button>
             </div>
         </div>
     </div>
 
-    <!-- Import / Share modal -->
+    <!-- Summon / Share modal -->
     <div id="shareImportModal" class="share-modal-overlay" style="display:none;">
         <div class="share-modal">
-            <div class="share-modal-title" id="shareImportTitle">Import Spellbook?</div>
+            <div class="share-modal-title" id="shareImportTitle">Summon Spellbook?</div>
             <div class="share-modal-body" id="shareImportBody"></div>
             <div class="share-modal-actions" id="shareImportActions"></div>
         </div>

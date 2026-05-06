@@ -457,6 +457,7 @@ h1 {
     padding: 14px 16px;
     gap: 10px;
     transition: border-color 0.2s;
+    margin-bottom: 10px;
 }
 
 .deck-item:hover {
@@ -569,8 +570,6 @@ h1 {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    max-height: 340px;
-    overflow-y: auto;
     padding-right: 2px;
 }
 
@@ -932,6 +931,21 @@ h1 {
 
     .results-stats {
         grid-template-columns: repeat(3, 1fr);
+    }
+
+    /* On narrow screens, stack the deck title above the action buttons */
+    .deck-item {
+        flex-wrap: wrap;
+    }
+
+    .deck-info {
+        flex-basis: 100%;
+        min-width: 0;
+    }
+
+    .deck-title {
+        white-space: normal;
+        word-break: break-word;
     }
 }
 
