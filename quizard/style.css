@@ -984,6 +984,36 @@ h1 {
     gap: 10px;
 }
 
+/* ===== EDIT CARD MODAL ===== */
+
+.edit-card-modal {
+    max-width: 420px;
+}
+
+.edit-card-modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.edit-card-label {
+    display: block;
+    font-size: 0.82em;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
+}
+
+.edit-card-textarea {
+    resize: vertical;
+    min-height: 70px;
+    font-size: 0.92em;
+    line-height: 1.45;
+}
+
 /* ===== TOAST ===== */
 
 .toast {

@@ -879,6 +879,50 @@ function updateFlashcardHeight() {
     flashcard.style.minHeight = maxH + 'px';
 }
 
+// ===== STUDY: EDIT CARD =====
+
+function openEditCardModal() {
+    if (!studyState) return;
+    const cardId = studyState.history[studyState.historyPos];
+    if (!cardId) return;
+    const card = studyState.cards[cardId];
+    document.getElementById('editCardFront').value = card.front;
+    document.getElementById('editCardBack').value = card.back;
+    document.getElementById('editCardModal').style.display = 'flex';
+    document.getElementById('editCardFront').focus();
+}
+
+function saveEditCardModal() {
+    if (!studyState) return;
+    const cardId = studyState.history[studyState.historyPos];
+    if (!cardId) return;
+    const newFront = document.getElementById('editCardFront').value;
+    const newBack = document.getElementById('editCardBack').value;
+
+    // Update in-memory study state
+    studyState.cards[cardId].front = newFront;
+    studyState.cards[cardId].back = newBack;
+
+    // Persist to localStorage
+    const allCards = loadCards();
+    const idx = allCards.findIndex(c => c.id === cardId);
+    if (idx !== -1) {
+        allCards[idx].front = newFront;
+        allCards[idx].back = newBack;
+        saveCards(allCards);
+    }
+
+    // Re-render the current card without changing queue order
+    renderStudyCard(cardId);
+
+    document.getElementById('editCardModal').style.display = 'none';
+    showToast('Card updated!');
+}
+
+function cancelEditCardModal() {
+    document.getElementById('editCardModal').style.display = 'none';
+}
+
 // ===== INIT =====
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -897,6 +941,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Keyboard shortcut: space to flip, 1 for know, 2 for still learning, arrows to navigate
     document.addEventListener('keydown', (e) => {
+        // Don't intercept keys while the edit card modal is open
+        if (document.getElementById('editCardModal').style.display !== 'none') {
+            if (e.key === 'Escape') cancelEditCardModal();
+            return;
+        }
         if (document.getElementById('screen-study').classList.contains('active')) {
             if (e.key === ' ' || e.key === 'Enter') {
                 e.preventDefault();

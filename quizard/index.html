@@ -122,6 +122,7 @@
                 <label class="shuffle-toggle" for="shuffleToggle">
                     <input type="checkbox" id="shuffleToggle"> Shuffle
                 </label>
+                <button class="btn-icon" id="editCardBtn" onclick="openEditCardModal()" title="Edit this card" aria-label="Edit this card">✏️</button>
             </div>
 
             <div class="study-progress">
@@ -196,6 +197,23 @@
         </div>
 
     </div><!-- .container -->
+
+    <!-- Edit Card modal -->
+    <div id="editCardModal" class="share-modal-overlay" style="display:none;">
+        <div class="share-modal edit-card-modal">
+            <div class="share-modal-title">Edit Card</div>
+            <div class="edit-card-modal-body">
+                <label class="edit-card-label" for="editCardFront">Front (Term)</label>
+                <textarea id="editCardFront" class="form-input edit-card-textarea" rows="3"></textarea>
+                <label class="edit-card-label" for="editCardBack">Back (Definition)</label>
+                <textarea id="editCardBack" class="form-input edit-card-textarea" rows="3"></textarea>
+            </div>
+            <div class="share-modal-actions">
+                <button class="btn btn-primary" onclick="saveEditCardModal()">💾 Save</button>
+                <button class="btn btn-secondary" onclick="cancelEditCardModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Import / Share modal -->
     <div id="shareImportModal" class="share-modal-overlay" style="display:none;">
