@@ -77,7 +77,8 @@ function updateCardImagePreview(item, side, dataUrl) {
 
 const STORAGE_KEYS = {
     DECKS: 'quizard_decks',
-    CARDS: 'quizard_cards'
+    CARDS: 'quizard_cards',
+    STUDY_LOG: 'quizard_study_log'
 };
 
 function loadDecks() {
@@ -112,6 +113,65 @@ function getCardsForDeck(deckId) {
 
 function generateId() {
     return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+
+// ===== STUDY LOG =====
+
+function loadStudyLog() {
+    try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEYS.STUDY_LOG)) || [];
+    } catch (e) {
+        return [];
+    }
+}
+
+function appendStudyLog(entry) {
+    const log = loadStudyLog();
+    log.push(entry);
+    localStorage.setItem(STORAGE_KEYS.STUDY_LOG, JSON.stringify(log));
+}
+
+function clearStudyLog() {
+    if (!confirm('Clear all study history? This cannot be undone.')) return;
+    localStorage.removeItem(STORAGE_KEYS.STUDY_LOG);
+    renderStudyLog();
+}
+
+function renderStudyLog() {
+    showScreen('study-log');
+    const log = loadStudyLog().slice().reverse(); // newest first
+    const container = document.getElementById('studyLogList');
+
+    if (log.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-icon">📊</div>
+                <p>No study sessions yet. Complete a deck to see your history here!</p>
+            </div>`;
+        return;
+    }
+
+    container.innerHTML = log.map(entry => {
+        const d = new Date(entry.date);
+        const dateStr = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+        const timeStr = d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+        const mins = Math.floor(entry.elapsed / 60);
+        const secs = entry.elapsed % 60;
+        const elapsedStr = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+        const pctClass = entry.pct === 100 ? 'log-pct-perfect' : entry.pct >= 80 ? 'log-pct-great' : entry.pct >= 50 ? 'log-pct-ok' : 'log-pct-low';
+        return `
+        <div class="study-log-item">
+            <div class="study-log-meta">
+                <span class="study-log-date">${dateStr} · ${timeStr}</span>
+                <span class="study-log-elapsed">⏱ ${elapsedStr}</span>
+            </div>
+            <div class="study-log-deck">${escapeHtml(entry.deckTitle)}</div>
+            <div class="study-log-score">
+                <span class="${pctClass} study-log-pct">${entry.pct}%</span>
+                <span class="study-log-fraction">${entry.known} / ${entry.total} known</span>
+            </div>
+        </div>`;
+    }).join('');
 }
 
 // ===== EXPORT / IMPORT =====
@@ -763,6 +823,17 @@ function showResults() {
     else if (pct >= 80) trophy = '🌟';
     else if (pct >= 50) trophy = '👍';
     document.getElementById('resultsTrophy').textContent = trophy;
+
+    appendStudyLog({
+        id: generateId(),
+        deckId: s.deckId,
+        deckTitle: s.deckTitle,
+        date: Date.now(),
+        known: s.knownIds.size,
+        total: s.totalCards,
+        pct,
+        elapsed
+    });
 }
 
 function restartStudy() {

@@ -998,3 +998,68 @@ h1 {
     opacity: 1;
     transform: translateX(-50%) translateY(0);
 }
+
+/* ===== STUDY LOG SCREEN ===== */
+
+.study-log-item {
+    background: var(--surface-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    transition: border-color 0.2s;
+}
+
+.study-log-item:hover {
+    border-color: var(--primary-color);
+}
+
+.study-log-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.study-log-date {
+    font-size: 0.78em;
+    color: var(--text-tertiary);
+    font-weight: 500;
+}
+
+.study-log-elapsed {
+    font-size: 0.78em;
+    color: var(--text-tertiary);
+}
+
+.study-log-deck {
+    font-size: 0.97em;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.study-log-score {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+}
+
+.study-log-pct {
+    font-size: 1.35em;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.log-pct-perfect { color: var(--know-color); }
+.log-pct-great   { color: var(--primary-color); }
+.log-pct-ok      { color: var(--learning-color); }
+.log-pct-low     { color: var(--danger-color); }
+
+.study-log-fraction {
+    font-size: 0.85em;
+    color: var(--text-tertiary);
+}

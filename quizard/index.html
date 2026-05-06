@@ -62,11 +62,22 @@
             </a>
         </div>
 
+        <!-- ===== SCREEN: STUDY LOG ===== -->
+        <div id="screen-study-log" class="screen">
+            <div class="editor-header">
+                <button class="btn-icon" onclick="renderDeckList()" title="Back" aria-label="Back to deck list">◀</button>
+                <h2>Study Log</h2>
+                <button class="btn btn-secondary" onclick="clearStudyLog()" style="font-size:0.8em; padding:5px 10px;">Clear</button>
+            </div>
+            <div id="studyLogList"></div>
+        </div>
+
         <!-- ===== SCREEN: DECK LIST ===== -->
         <div id="screen-deck-list" class="screen active">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                 <span class="screen-title">My Decks</span>
                 <div style="display: flex; gap: 8px; align-items: center;">
+                    <button class="btn-icon" onclick="renderStudyLog()" title="Study log" aria-label="View study log" style="font-size:1.2em;">📊</button>
                     <button class="btn btn-secondary" onclick="triggerImport()" title="Import a deck from a file" aria-label="Import a deck from a file">📂 Import</button>
                     <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="handleImportFile(this)">
                     <button class="btn btn-primary" onclick="openEditor(null)">＋ New Deck</button>
