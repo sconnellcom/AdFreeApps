@@ -127,7 +127,7 @@ function exportDeck(deckId) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = deck.title.replace(/[^a-z0-9_\-]/gi, '_') + '.json';
+    a.download = (deck.title.replace(/[^a-z0-9_\-]/gi, '_') || 'deck') + '.json';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -148,7 +148,7 @@ function handleImportFile(input) {
         try {
             data = JSON.parse(e.target.result);
         } catch {
-            alert('Could not read the file. Make sure it is a valid deck export.');
+            alert('Could not read the file. Make sure it is a JSON file exported from Quizard.');
             return;
         }
         if (!data || !data.deck || typeof data.deck.title !== 'string' || !Array.isArray(data.cards)) {
@@ -221,6 +221,8 @@ function showToast(msg) {
 
 // ===== SHARE LINK =====
 
+const SHARE_LINK_SIZE_WARN = 50 * 1024; // 50 KB — warn if compressed payload exceeds this
+
 async function compressDeck(obj) {
     const json = JSON.stringify(obj);
     const stream = new Blob([json]).stream().pipeThrough(new CompressionStream('deflate-raw'));
@@ -245,7 +247,7 @@ async function decompressDeck(b64url) {
 
 async function shareDeckLink(deckId) {
     if (typeof CompressionStream === 'undefined') {
-        alert('Your browser does not support the compression needed for share links.\nUse ⬇️ Export to share as a file instead.');
+        alert('Your browser does not support the compression needed for share links.\nUse the Export button to share as a file instead.');
         return;
     }
     const decks = loadDecks();
@@ -257,12 +259,12 @@ async function shareDeckLink(deckId) {
     try {
         const encoded = await compressDeck(data);
         const url = location.origin + location.pathname + '#share=' + encoded;
-        const SIZE_WARN = 50 * 1024;
+        const SIZE_WARN = SHARE_LINK_SIZE_WARN;
         if (encoded.length > SIZE_WARN) {
             const proceed = confirm(
                 `This deck has a lot of data (${Math.round(encoded.length / 1024)} KB compressed).\n` +
                 `The share link may be too long for some messaging apps.\n\n` +
-                `Consider using ⬇️ Export to share as a file instead.\n\nCopy the link anyway?`
+                `Consider using the Export button to share as a file instead.\n\nCopy the link anyway?`
             );
             if (!proceed) return;
         }

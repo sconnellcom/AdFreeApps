@@ -67,7 +67,7 @@
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                 <span class="screen-title">My Decks</span>
                 <div style="display: flex; gap: 8px; align-items: center;">
-                    <button class="btn btn-secondary" onclick="triggerImport()" title="Import a deck from a file">📂 Import</button>
+                    <button class="btn btn-secondary" onclick="triggerImport()" title="Import a deck from a file" aria-label="Import a deck from a file">📂 Import</button>
                     <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="handleImportFile(this)">
                     <button class="btn btn-primary" onclick="openEditor(null)">＋ New Deck</button>
                 </div>
@@ -80,8 +80,8 @@
             <div class="editor-header">
                 <button class="btn-icon" onclick="renderDeckList()" title="Back">◀</button>
                 <h2 id="editorTitle">New Deck</h2>
-                <button class="btn-icon" id="exportDeckBtn" onclick="exportDeck(editorDeckId)" title="Export deck as file" style="display:none">⬇️</button>
-                <button class="btn-icon" id="shareDeckBtn" onclick="shareDeckLink(editorDeckId)" title="Copy share link" style="display:none">🔗</button>
+                <button class="btn-icon" id="exportDeckBtn" onclick="exportDeck(editorDeckId)" title="Export deck as file" aria-label="Export deck as file" style="display:none">⬇️</button>
+                <button class="btn-icon" id="shareDeckBtn" onclick="shareDeckLink(editorDeckId)" title="Copy share link" aria-label="Copy share link" style="display:none">🔗</button>
             </div>
 
             <div class="form-group">
