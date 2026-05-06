@@ -80,6 +80,7 @@
                     <button class="btn-icon" onclick="renderStudyLog()" title="Study log" aria-label="View study log" style="font-size:1.2em;">📊</button>
                     <button class="btn btn-secondary" onclick="openImportOptionsModal()" title="Import a deck" aria-label="Import a deck">📂 Import</button>
                     <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="handleImportFile(this)">
+                    <button class="btn btn-secondary" onclick="openAiDeckScreen()" title="Create a deck with AI" aria-label="Create deck with AI">🤖 AI</button>
                     <button class="btn btn-primary" onclick="openEditor(null)">＋ New Deck</button>
                 </div>
             </div>
@@ -192,6 +193,74 @@
                 <div class="results-actions">
                     <button class="btn btn-primary" style="width:100%" onclick="restartStudy()">🔄 Study Again</button>
                     <button class="btn btn-secondary" style="width:100%" onclick="renderDeckList()">Back to Decks</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== SCREEN: AI DECK CREATOR ===== -->
+        <div id="screen-ai-deck" class="screen">
+            <div class="editor-header">
+                <button class="btn-icon" onclick="renderDeckList()" title="Back">◀</button>
+                <h2>AI Deck Creator</h2>
+            </div>
+
+            <!-- Setup panel -->
+            <div id="aiSetupPanel">
+                <div class="form-group">
+                    <label for="aiTopicInput">What do you want to study?</label>
+                    <input id="aiTopicInput" class="form-input" type="text" placeholder="e.g. Spanish irregular verbs, Photosynthesis, World War II">
+                </div>
+
+                <div class="form-group">
+                    <label for="aiNotesInput">Your notes or content <span class="ai-optional">(optional)</span></label>
+                    <textarea id="aiNotesInput" class="form-input ai-notes-textarea" placeholder="Paste your notes, textbook excerpts, or any content to base the flashcards on…"></textarea>
+                </div>
+
+                <div class="ai-options-row">
+                    <div class="form-group">
+                        <label for="aiCardCountInput">Cards</label>
+                        <input id="aiCardCountInput" class="form-input" type="number" min="3" max="50" value="10">
+                    </div>
+                    <div class="form-group" style="flex:2">
+                        <label for="aiModelSelect">Model</label>
+                        <select id="aiModelSelect" class="form-input">
+                            <option value="SmolLM2-1.7B-Instruct-q4f16_1-MLC">SmolLM2-1.7B (~1 GB)</option>
+                            <option value="Phi-3.5-mini-instruct-q4f16_1-MLC" selected>Phi-3.5-mini (~2.2 GB)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="ai-model-note">
+                    ⚠️ The AI model runs entirely in your browser using WebGPU (Chrome/Edge on desktop recommended). The first use downloads the model — this can take a few minutes. Subsequent uses load instantly from cache.
+                </div>
+
+                <div id="aiSetupMsg" style="font-size:0.85em; color:var(--danger-color); min-height:1.2em; margin-bottom:8px;"></div>
+                <button class="btn btn-primary" style="width:100%" id="aiGenerateBtn" onclick="generateAiDeck()">🤖 Generate Deck</button>
+            </div>
+
+            <!-- Status area (shown during loading/generation) -->
+            <div id="aiStatusArea" style="display:none" class="ai-status-area">
+                <div class="ai-status-text" id="aiStatusText">Loading model…</div>
+                <div class="ai-progress-wrap">
+                    <div class="ai-progress-fill" id="aiProgressFill" style="width:0%"></div>
+                </div>
+                <button class="btn btn-secondary" style="width:100%; margin-top:10px" onclick="cancelAiGeneration()">Cancel</button>
+            </div>
+
+            <!-- Preview area (shown after generation) -->
+            <div id="aiPreviewArea" style="display:none">
+                <div class="form-group" style="margin-top:16px">
+                    <label for="aiDeckTitleInput">Deck Title</label>
+                    <input id="aiDeckTitleInput" class="form-input" type="text" placeholder="Deck title">
+                </div>
+                <div class="cards-section-header">
+                    <span class="cards-section-label">Generated Cards</span>
+                    <button class="btn btn-secondary" style="font-size:0.85em; padding:6px 12px" onclick="generateAiDeck()">🔄 Regenerate</button>
+                </div>
+                <div id="aiCardPreviewList" class="card-editor-list"></div>
+                <div class="editor-actions">
+                    <button class="btn btn-primary" style="flex:1" onclick="saveAiDeck()">💾 Save as Deck</button>
+                    <button class="btn btn-secondary" onclick="renderDeckList()">Cancel</button>
                 </div>
             </div>
         </div>

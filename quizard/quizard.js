@@ -1045,6 +1045,217 @@ function cancelEditCardModal() {
     document.getElementById('editCardModal').style.display = 'none';
 }
 
+// ===== AI DECK CREATOR =====
+
+let webllmEngine = null;
+let webllmLoadedModel = null;
+
+function openAiDeckScreen() {
+    showScreen('ai-deck');
+    document.getElementById('aiSetupPanel').style.display = '';
+    document.getElementById('aiStatusArea').style.display = 'none';
+    document.getElementById('aiPreviewArea').style.display = 'none';
+    document.getElementById('aiSetupMsg').textContent = '';
+}
+
+async function generateAiDeck() {
+    const topic = document.getElementById('aiTopicInput').value.trim();
+    const notes = document.getElementById('aiNotesInput').value.trim();
+    const cardCount = Math.min(50, Math.max(3, parseInt(document.getElementById('aiCardCountInput').value) || 10));
+    const modelId = document.getElementById('aiModelSelect').value;
+    const msgEl = document.getElementById('aiSetupMsg');
+
+    msgEl.textContent = '';
+    if (!topic) {
+        document.getElementById('aiTopicInput').focus();
+        document.getElementById('aiTopicInput').style.borderColor = 'var(--danger-color)';
+        msgEl.textContent = 'Please enter a topic to study.';
+        setTimeout(() => {
+            document.getElementById('aiTopicInput').style.borderColor = '';
+            msgEl.textContent = '';
+        }, 2500);
+        return;
+    }
+
+    document.getElementById('aiSetupPanel').style.display = 'none';
+    document.getElementById('aiPreviewArea').style.display = 'none';
+    document.getElementById('aiStatusArea').style.display = '';
+
+    try {
+        if (!webllmEngine || webllmLoadedModel !== modelId) {
+            webllmEngine = null;
+            webllmLoadedModel = null;
+            setAiStatus('Downloading model… this may take a few minutes on first use.', 0);
+            // WebLLM is loaded via dynamic import from the esm.run CDN (no build system in this project).
+            // The library runs the chosen model entirely in-browser using WebGPU.
+            const { CreateMLCEngine } = await import('https://esm.run/@mlc-ai/web-llm');
+            webllmEngine = await CreateMLCEngine(modelId, {
+                initProgressCallback: (p) => setAiStatus(p.text || 'Loading…', p.progress || 0)
+            });
+            webllmLoadedModel = modelId;
+        }
+
+        setAiStatus('Generating flashcards…', 1);
+
+        const systemPrompt =
+            'You are a flashcard creation assistant. ' +
+            'Output ONLY a valid JSON array of objects, each with exactly two string fields: ' +
+            '"front" (the question or term) and "back" (the answer or definition). ' +
+            'No extra text, no markdown, no code fences — just the raw JSON array.';
+
+        const userPrompt = notes
+            ? `Create ${cardCount} flashcards to study "${topic}" based on the following notes:\n\n${notes}`
+            : `Create ${cardCount} clear and educational flashcards to study "${topic}".`;
+
+        const response = await webllmEngine.chat.completions.create({
+            messages: [
+                { role: 'system', content: systemPrompt },
+                { role: 'user', content: userPrompt }
+            ],
+            temperature: 0.7,
+            max_tokens: 2048
+        });
+
+        const text = response.choices[0].message.content || '';
+        const cards = parseAiCards(text);
+
+        if (!cards || cards.length === 0) {
+            throw new Error('Could not parse flashcards from the model response. Try again.');
+        }
+
+        document.getElementById('aiDeckTitleInput').value = topic;
+        renderAiPreview(cards);
+
+        document.getElementById('aiStatusArea').style.display = 'none';
+        document.getElementById('aiSetupPanel').style.display = '';
+        document.getElementById('aiPreviewArea').style.display = '';
+
+    } catch (err) {
+        console.error('AI deck generation error:', err);
+        webllmEngine = null;
+        webllmLoadedModel = null;
+        document.getElementById('aiStatusArea').style.display = 'none';
+        document.getElementById('aiSetupPanel').style.display = '';
+        const msg = err.message || '';
+        if (msg.toLowerCase().includes('webgpu') || msg.toLowerCase().includes('gpu')) {
+            msgEl.textContent = 'WebGPU is required. Please use Chrome or Edge on a desktop device.';
+        } else {
+            msgEl.textContent = 'Generation failed: ' + (msg.slice(0, 120) || 'Unknown error');
+        }
+    }
+}
+
+function cancelAiGeneration() {
+    webllmEngine = null;
+    webllmLoadedModel = null;
+    document.getElementById('aiStatusArea').style.display = 'none';
+    document.getElementById('aiSetupPanel').style.display = '';
+}
+
+function setAiStatus(text, progress) {
+    document.getElementById('aiStatusText').textContent = text;
+    document.getElementById('aiProgressFill').style.width = `${Math.round((progress || 0) * 100)}%`;
+}
+
+function parseAiCards(text) {
+    const tryParse = (str) => {
+        try {
+            const data = JSON.parse(str);
+            if (Array.isArray(data)) return sanitizeAiCards(data);
+            // Handle { cards: [...] } or { flashcards: [...] } wrappers
+            const arr = data.cards || data.flashcards || data.deck;
+            if (Array.isArray(arr)) return sanitizeAiCards(arr);
+        } catch (e) {
+            console.warn('AI card JSON parse attempt failed:', e);
+        }
+        return null;
+    };
+
+    let result = tryParse(text.trim());
+    if (result) return result;
+
+    // Try extracting a JSON array from surrounding text
+    const match = text.match(/\[[\s\S]*\]/);
+    if (match) {
+        result = tryParse(match[0]);
+        if (result) return result;
+    }
+
+    return null;
+}
+
+function sanitizeAiCards(arr) {
+    return arr
+        .filter(c => c && (typeof c.front === 'string' || typeof c.back === 'string'))
+        .map(c => ({
+            front: String(c.front || c.question || c.term || '').trim(),
+            back: String(c.back || c.answer || c.definition || '').trim()
+        }))
+        .filter(c => c.front || c.back);
+}
+
+function renderAiPreview(cards) {
+    const list = document.getElementById('aiCardPreviewList');
+    list.innerHTML = cards.map((card, i) => `
+        <div class="card-editor-item" data-ai-index="${i}">
+            <div class="card-num">Card ${i + 1}</div>
+            <button class="card-editor-remove" onclick="removeAiCard(this)" title="Remove card">✕</button>
+            <div class="card-fields">
+                <textarea class="form-input card-front" placeholder="Front (term)" rows="2">${escapeHtml(card.front)}</textarea>
+                <textarea class="form-input card-back" placeholder="Back (definition)" rows="2">${escapeHtml(card.back)}</textarea>
+            </div>
+        </div>`).join('');
+}
+
+function removeAiCard(btn) {
+    const list = document.getElementById('aiCardPreviewList');
+    const items = list.querySelectorAll('.card-editor-item');
+    if (items.length <= 1) return;
+    btn.closest('.card-editor-item').remove();
+    list.querySelectorAll('.card-editor-item').forEach((item, i) => {
+        item.dataset.aiIndex = i;
+        item.querySelector('.card-num').textContent = `Card ${i + 1}`;
+    });
+}
+
+function getAiPreviewCards() {
+    return Array.from(document.querySelectorAll('#aiCardPreviewList .card-editor-item')).map(item => ({
+        front: item.querySelector('.card-front').value.trim(),
+        back: item.querySelector('.card-back').value.trim()
+    })).filter(c => c.front || c.back);
+}
+
+function saveAiDeck() {
+    const title = (document.getElementById('aiDeckTitleInput').value.trim()) ||
+        (document.getElementById('aiTopicInput').value.trim()) || 'AI Generated Deck';
+    const cards = getAiPreviewCards();
+
+    if (cards.length === 0) {
+        showToast('No cards to save!');
+        return;
+    }
+
+    const deckId = generateId();
+    const decks = loadDecks();
+    decks.push({ id: deckId, title, createdAt: Date.now() });
+    saveDecks(decks);
+
+    const allCards = loadCards();
+    const newCards = cards.map((c, i) => ({
+        id: generateId(),
+        deckId,
+        front: c.front,
+        back: c.back,
+        frontImage: '',
+        backImage: '',
+        position: i
+    }));
+    saveCards(allCards.concat(newCards));
+
+    showToast(`"${title}" saved with ${cards.length} cards!`);
+    renderDeckList();
+}
+
 // ===== INIT =====
 
 document.addEventListener('DOMContentLoaded', () => {
