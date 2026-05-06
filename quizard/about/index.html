@@ -52,18 +52,12 @@
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
         }
 
-        .back-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            color: var(--primary-color);
-            text-decoration: none;
-            font-size: 0.9em;
-            font-weight: 600;
-            margin-bottom: 20px;
+        .home-btn {
+            display: inline-block; font-size: 2em; text-decoration: none;
+            background: rgba(255, 255, 255, 0.2); padding: 10px 15px;
+            border-radius: 12px; transition: all 0.3s ease; margin-bottom: 20px;
         }
-
-        .back-link:hover { text-decoration: underline; }
+        .home-btn:hover { background: rgba(255, 255, 255, 0.3); transform: scale(1.05); }
 
         .hero {
             text-align: center;
@@ -116,7 +110,7 @@
 
 <body>
     <div class="container">
-        <a href="../" class="back-link">◀ Back to Quizard</a>
+        <a href="../../" class="home-btn" title="Back to Home">🏠</a>
 
         <div class="hero">
             <div class="hero-icon">🧙</div>

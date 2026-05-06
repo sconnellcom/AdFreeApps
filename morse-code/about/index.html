@@ -209,19 +209,20 @@
             color: var(--text-secondary);
         }
 
-        .back-btn {
+        .home-btn {
             display: inline-block;
-            padding: 10px 20px;
-            background: var(--primary-color);
-            color: white;
+            font-size: 2em;
             text-decoration: none;
-            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px 15px;
+            border-radius: 12px;
+            transition: all 0.3s ease;
             margin-bottom: 20px;
-            transition: background 0.3s ease;
         }
 
-        .back-btn:hover {
-            background: var(--primary-hover);
+        .home-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
         }
 
         .section {
@@ -469,7 +470,7 @@
     </div>
 
     <div class="container">
-        <a href="../../" class="back-btn">← Back to Apps</a>
+        <a href="../../" class="home-btn" title="Back to Home">🏠</a>
 
         <div class="header">
             <h1>⚡ Morse Code</h1>
