@@ -132,7 +132,7 @@ function appendStudyLog(entry) {
 }
 
 function clearStudyLog() {
-    if (!confirm('Clear all study history? This cannot be undone.')) return;
+    if (!confirm('Clear all Rehearsal history? This cannot be undone.')) return;
     localStorage.removeItem(STORAGE_KEYS.STUDY_LOG);
     renderStudyLog();
 }
@@ -154,14 +154,14 @@ function formatStudyLogEntry(entry, showDeckName) {
         ${showDeckName ? `<div class="study-log-deck">${escapeHtml(entry.deckTitle)}</div>` : ''}
         <div class="study-log-score">
             <span class="${pctClass} study-log-pct">${entry.pct}%</span>
-            <span class="study-log-fraction">${entry.known} / ${entry.total} known</span>
+            <span class="study-log-fraction">${entry.known} / ${entry.total} mastered</span>
         </div>
     </div>`;
 }
 
 function renderStudyLog() {
     showScreen('study-log');
-    document.getElementById('studyLogTitle').textContent = 'Study Log';
+    document.getElementById('studyLogTitle').textContent = 'Rehearsal Log';
     document.getElementById('studyLogClearBtn').style.display = '';
     const log = loadStudyLog().reverse(); // newest first
     const container = document.getElementById('studyLogList');
@@ -170,7 +170,7 @@ function renderStudyLog() {
         container.innerHTML = `
             <div class="empty-state">
                 <div class="empty-icon">📊</div>
-                <p>No study sessions yet. Complete a deck to see your history here!</p>
+                <p>No Rehearsal sessions yet. Complete a Spellbook to see your history here!</p>
             </div>`;
         return;
     }
@@ -194,7 +194,7 @@ function renderDeckStudyLog(deckId) {
         container.innerHTML = `
             <div class="empty-state">
                 <div class="empty-icon">📊</div>
-                <p>No study sessions yet for this deck. Complete a session to see your history here!</p>
+                <p>No Rehearsal sessions yet for this Spellbook. Complete a session to see your history here!</p>
             </div>`;
         return;
     }
@@ -258,7 +258,7 @@ function handlePasteJsonImport() {
         return;
     }
     if (!data || !data.deck || typeof data.deck.title !== 'string' || !Array.isArray(data.cards)) {
-        alert('This does not look like a Quizard deck export. Expected fields: deck.title (string) and cards (array).');
+        alert('This does not look like a Quizard Spellbook export. Expected fields: deck.title (string) and cards (array).');
         return;
     }
     closeImportPasteModal();
@@ -281,7 +281,7 @@ function handleImportFile(input) {
             return;
         }
         if (!data || !data.deck || typeof data.deck.title !== 'string' || !Array.isArray(data.cards)) {
-            alert('This file does not look like a Quizard deck export.');
+            alert('This file does not look like a Quizard Spellbook export.');
             return;
         }
         showImportModal(data);
@@ -349,15 +349,15 @@ function showImportModal(data) {
 
     if (existing) {
         pendingImportOverwriteId = existing.id;
-        titleEl.textContent = 'Deck Already Exists';
-        bodyEl.innerHTML = `A deck named &ldquo;${escapeHtml(data.deck.title)}&rdquo; already exists. Overwrite it (keeping study stats) or import as a new deck?`;
+        titleEl.textContent = 'Spellbook Already Exists';
+        bodyEl.innerHTML = `A Spellbook named &ldquo;${escapeHtml(data.deck.title)}&rdquo; already exists. Overwrite it (keeping Rehearsal stats) or import as a new Spellbook?`;
         actionsEl.innerHTML =
             `<button class="btn btn-primary" onclick="confirmShareImport('overwrite')">Overwrite</button>` +
             `<button class="btn btn-secondary" onclick="confirmShareImport('new')">Import as New</button>` +
             `<button class="btn btn-secondary" onclick="cancelShareImport()">Cancel</button>`;
     } else {
-        titleEl.textContent = 'Import Deck?';
-        bodyEl.innerHTML = `&ldquo;${escapeHtml(data.deck.title)}&rdquo; &mdash; ${cardCount} card${cardCount !== 1 ? 's' : ''}`;
+        titleEl.textContent = 'Import Spellbook?';
+        bodyEl.innerHTML = `&ldquo;${escapeHtml(data.deck.title)}&rdquo; &mdash; ${cardCount} spell${cardCount !== 1 ? 's' : ''}`;
         actionsEl.innerHTML =
             `<button class="btn btn-primary" onclick="confirmShareImport('new')">Import</button>` +
             `<button class="btn btn-secondary" onclick="cancelShareImport()">Cancel</button>`;
@@ -474,7 +474,7 @@ async function checkShareHash() {
     try {
         const data = await decompressDeck(encoded);
         if (!data || !data.deck || typeof data.deck.title !== 'string' || !Array.isArray(data.cards)) {
-            alert('This share link does not appear to contain a valid deck.');
+            alert('This share link does not appear to contain a valid Spellbook.');
             history.replaceState(null, '', location.pathname + location.search);
             return;
         }
@@ -566,7 +566,7 @@ function renderDeckList() {
         container.innerHTML = `
             <div class="empty-state">
                 <div class="empty-icon">🃏</div>
-                <p>No decks yet. Create your first deck!</p>
+                <p>No Spellbooks yet. Cast your first Spellbook!</p>
             </div>`;
         return;
     }
@@ -577,10 +577,10 @@ function renderDeckList() {
         <div class="deck-item">
             <div class="deck-info">
                 <div class="deck-title">${escapeHtml(deck.title)}</div>
-                <div class="deck-meta">${cardCount} card${cardCount !== 1 ? 's' : ''}</div>
+                <div class="deck-meta">${cardCount} spell${cardCount !== 1 ? 's' : ''}</div>
             </div>
             <div class="deck-actions">
-                <button class="btn btn-primary" onclick="startStudy('${deck.id}')" title="Study" ${cardCount === 0 ? 'disabled' : ''}>Study</button>
+                <button class="btn btn-primary" onclick="startStudy('${deck.id}')" title="Rehearse" ${cardCount === 0 ? 'disabled' : ''}>Rehearse</button>
                 <button class="btn-icon" onclick="renderDeckStudyLog('${deck.id}')" title="View study stats" aria-label="View study stats for ${escapeHtml(deck.title)}">📊</button>
                 <button class="btn-icon" onclick="openEditor('${deck.id}')" title="Edit">✏️</button>
                 <button class="btn-icon" onclick="exportDeck('${deck.id}')" title="Export deck as file" aria-label="Export ${escapeHtml(deck.title)} as file">⬇️</button>
@@ -595,7 +595,7 @@ function deleteDeck(deckId) {
     const decks = loadDecks();
     const deck = decks.find(d => d.id === deckId);
     if (!deck) return;
-    if (!confirm(`Delete "${deck.title}"? This will also delete all its cards.`)) return;
+    if (!confirm(`Delete "${deck.title}"? This will also delete all its Spells.`)) return;
 
     saveDecks(decks.filter(d => d.id !== deckId));
     const cards = loadCards();
@@ -613,7 +613,7 @@ function openEditor(deckId) {
     const deck = deckId ? decks.find(d => d.id === deckId) : null;
     const existingCards = deckId ? getCardsForDeck(deckId) : [];
 
-    document.getElementById('editorTitle').textContent = deck ? 'Edit Deck' : 'New Deck';
+    document.getElementById('editorTitle').textContent = deck ? 'Edit Spellbook' : 'New Spellbook';
     document.getElementById('deckTitleInput').value = deck ? deck.title : '';
 
     // Start with existing cards, or two blank cards for new deck
@@ -655,8 +655,8 @@ function renderCardEditors(cardData) {
     const list = document.getElementById('cardEditorList');
     list.innerHTML = cardData.map((card, i) => `
         <div class="card-editor-item" data-index="${i}">
-            <div class="card-num">Card ${i + 1}</div>
-            <button class="card-editor-remove" onclick="removeCardEditor(${i})" title="Remove card">✕</button>
+            <div class="card-num">Spell ${i + 1}</div>
+            <button class="card-editor-remove" onclick="removeCardEditor(${i})" title="Remove spell">✕</button>
             <div class="card-fields">
                 <div class="card-field-group">
                     <textarea class="form-input card-front" placeholder="Front (term)" rows="2">${escapeHtml(card.front)}</textarea>
@@ -685,7 +685,7 @@ function removeCardEditor(index) {
     const cards = getEditorCardData();
     if (cards.length <= 1) {
         const msg = document.getElementById('editorMsg');
-        msg.textContent = 'A deck must have at least one card.';
+        msg.textContent = 'A Spellbook must have at least one Spell.';
         setTimeout(() => { msg.textContent = ''; }, 2000);
         return;
     }
@@ -722,7 +722,7 @@ function saveDeck() {
     if (!title) {
         document.getElementById('deckTitleInput').focus();
         document.getElementById('deckTitleInput').style.borderColor = 'var(--danger-color)';
-        msgEl.textContent = 'Please enter a deck title.';
+        msgEl.textContent = 'Please enter a Spellbook title.';
         setTimeout(() => {
             document.getElementById('deckTitleInput').style.borderColor = '';
             msgEl.textContent = '';
@@ -775,16 +775,25 @@ function startStudy(deckId) {
     if (!deck || cards.length === 0) return;
 
     const shuffle = document.getElementById('shuffleToggle') && document.getElementById('shuffleToggle').checked;
+    const backwards = document.getElementById('backwardsToggle') && document.getElementById('backwardsToggle').checked;
 
     let queue = cards.map(c => c.id);
     if (shuffle) {
         queue = shuffleArray(queue);
     }
 
+    // If backwards casting, swap front/back on a copy of the cards
+    const cardMap = Object.fromEntries(cards.map(c => {
+        if (backwards) {
+            return [c.id, { ...c, front: c.back, back: c.front, frontImage: c.backImage || '', backImage: c.frontImage || '' }];
+        }
+        return [c.id, c];
+    }));
+
     studyState = {
         deckId,
         deckTitle: deck.title,
-        cards: Object.fromEntries(cards.map(c => [c.id, c])),
+        cards: cardMap,
         queue: [...queue],
         knownIds: new Set(),
         firstTimeKnownIds: new Set(),
@@ -794,8 +803,15 @@ function startStudy(deckId) {
         isFlipped: false,
         history: [],
         historyPos: -1,
-        startTime: Date.now()
+        startTime: Date.now(),
+        backwards
     };
+
+    // Update card-side labels to reflect mode
+    const frontLabel = document.getElementById('frontLabel');
+    const backLabel = document.getElementById('backLabel');
+    if (frontLabel) frontLabel.textContent = backwards ? 'Definition' : 'Term';
+    if (backLabel) backLabel.textContent = backwards ? 'Term' : 'Definition';
 
     showStudyCard();
 }
@@ -1038,7 +1054,7 @@ function saveEditCardModal() {
     renderStudyCard(cardId);
 
     document.getElementById('editCardModal').style.display = 'none';
-    showToast('Card updated!');
+    showToast('Spell updated!');
 }
 
 function cancelEditCardModal() {
@@ -1242,8 +1258,8 @@ function renderAiPreview(cards) {
     const list = document.getElementById('aiCardPreviewList');
     list.innerHTML = cards.map((card, i) => `
         <div class="card-editor-item" data-ai-index="${i}">
-            <div class="card-num">Card ${i + 1}</div>
-            <button class="card-editor-remove" onclick="removeAiCard(this)" title="Remove card">✕</button>
+            <div class="card-num">Spell ${i + 1}</div>
+            <button class="card-editor-remove" onclick="removeAiCard(this)" title="Remove Spell">✕</button>
             <div class="card-fields">
                 <textarea class="form-input card-front" placeholder="Front (term)" rows="2">${escapeHtml(card.front)}</textarea>
                 <textarea class="form-input card-back" placeholder="Back (definition)" rows="2">${escapeHtml(card.back)}</textarea>
@@ -1258,7 +1274,7 @@ function removeAiCard(btn) {
     btn.closest('.card-editor-item').remove();
     list.querySelectorAll('.card-editor-item').forEach((item, i) => {
         item.dataset.aiIndex = i;
-        item.querySelector('.card-num').textContent = `Card ${i + 1}`;
+        item.querySelector('.card-num').textContent = `Spell ${i + 1}`;
     });
 }
 
@@ -1271,11 +1287,11 @@ function getAiPreviewCards() {
 
 function saveAiDeck() {
     const title = (document.getElementById('aiDeckTitleInput').value.trim()) ||
-        (document.getElementById('aiTopicInput').value.trim()) || 'AI Generated Deck';
+        (document.getElementById('aiTopicInput').value.trim()) || 'AI Generated Spellbook';
     const cards = getAiPreviewCards();
 
     if (cards.length === 0) {
-        showToast('No cards to save!');
+        showToast('No Spells to save!');
         return;
     }
 
@@ -1296,7 +1312,7 @@ function saveAiDeck() {
     }));
     saveCards(allCards.concat(newCards));
 
-    showToast(`"${title}" saved with ${cards.length} cards!`);
+    showToast(`"${title}" saved with ${cards.length} Spells!`);
     renderDeckList();
 }
 
@@ -1313,6 +1329,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Shuffle toggle: restart study with new order when changed mid-session
     document.getElementById('shuffleToggle').addEventListener('change', () => {
+        if (studyState) restartStudy();
+    });
+
+    // Backwards Casting toggle: restart study with swapped faces when changed mid-session
+    document.getElementById('backwardsToggle').addEventListener('change', () => {
         if (studyState) restartStudy();
     });
 

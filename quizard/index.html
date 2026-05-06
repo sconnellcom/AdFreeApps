@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Quizard - Free flashcard study app with no ads. Create decks, flip cards, and track your progress.">
+    <meta name="description" content="Quizard - Free flashcard study app with no ads. Create Spellbooks, flip Spells, and Rehearse your way to mastery.">
     <meta name="theme-color" content="#667eea">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <link rel="manifest" href="../manifest.json">
@@ -66,7 +66,7 @@
         <div id="screen-study-log" class="screen">
             <div class="editor-header">
                 <button class="btn-icon" onclick="renderDeckList()" title="Back" aria-label="Back to deck list">◀</button>
-                <h2 id="studyLogTitle">Study Log</h2>
+                <h2 id="studyLogTitle">Rehearsal Log</h2>
                 <button id="studyLogClearBtn" class="btn btn-secondary" onclick="clearStudyLog()" style="font-size:0.8em; padding:5px 10px;">Clear</button>
             </div>
             <div id="studyLogList"></div>
@@ -75,13 +75,13 @@
         <!-- ===== SCREEN: DECK LIST ===== -->
         <div id="screen-deck-list" class="screen active">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                <span class="screen-title">My Decks</span>
+                <span class="screen-title">My Spellbooks</span>
                 <div style="display: flex; gap: 8px; align-items: center;">
-                    <button class="btn-icon" onclick="renderStudyLog()" title="Study log" aria-label="View study log" style="font-size:1.2em;">📊</button>
-                    <button class="btn btn-secondary" onclick="openImportOptionsModal()" title="Import a deck" aria-label="Import a deck">📂 Import</button>
+                    <button class="btn-icon" onclick="renderStudyLog()" title="Rehearsal log" aria-label="View Rehearsal log" style="font-size:1.2em;">📊</button>
+                    <button class="btn btn-secondary" onclick="openImportOptionsModal()" title="Import a Spellbook" aria-label="Import a Spellbook">📂 Import</button>
                     <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="handleImportFile(this)">
-                    <button class="btn btn-secondary" onclick="openAiDeckScreen()" title="Create a deck with AI" aria-label="Create deck with AI">🤖 AI</button>
-                    <button class="btn btn-primary" onclick="openEditor(null)">＋ New Deck</button>
+                    <button class="btn btn-secondary" onclick="openAiDeckScreen()" title="Create a Spellbook with Quizard AI" aria-label="Create Spellbook with Quizard AI">🧙 Quizard AI</button>
+                    <button class="btn btn-primary" onclick="openEditor(null)">＋ New Spellbook</button>
                 </div>
             </div>
             <div id="deckList"></div>
@@ -97,20 +97,20 @@
             </div>
 
             <div class="form-group">
-                <label for="deckTitleInput">Deck Title</label>
+                <label for="deckTitleInput">Spellbook Title</label>
                 <input id="deckTitleInput" class="form-input" type="text" placeholder="e.g. Spanish Vocabulary">
             </div>
             <div id="editorMsg" aria-live="polite" style="font-size:0.85em; color:var(--danger-color); min-height:1.2em; margin-bottom:4px;"></div>
 
             <div class="cards-section-header">
-                <span class="cards-section-label">Cards</span>
-                <button class="btn btn-secondary" onclick="addCardEditor()" style="font-size:0.85em; padding: 6px 12px;">＋ Add Card</button>
+                <span class="cards-section-label">Spells</span>
+                <button class="btn btn-secondary" onclick="addCardEditor()" style="font-size:0.85em; padding: 6px 12px;">＋ Add Spell</button>
             </div>
 
             <div id="cardEditorList" class="card-editor-list"></div>
 
             <div class="editor-actions">
-                <button class="btn btn-primary" style="flex:1" onclick="saveDeck()">💾 Save Deck</button>
+                <button class="btn btn-primary" style="flex:1" onclick="saveDeck()">💾 Save Spellbook</button>
                 <button class="btn btn-secondary" onclick="renderDeckList()">Cancel</button>
             </div>
         </div>
@@ -118,12 +118,15 @@
         <!-- ===== SCREEN: STUDY ===== -->
         <div id="screen-study" class="screen">
             <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
-                <button class="btn-icon" onclick="renderDeckList()" title="Exit study">◀</button>
+                <button class="btn-icon" onclick="renderDeckList()" title="Exit Rehearsal">◀</button>
                 <span style="font-size:0.9em; font-weight:600; color:var(--text-secondary); flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" id="studyDeckName"></span>
-                <label class="shuffle-toggle" for="shuffleToggle">
-                    <input type="checkbox" id="shuffleToggle"> Shuffle
+                <label class="shuffle-toggle" for="shuffleToggle" title="Randomly shuffle your Spells before each Rehearsal">
+                    <input type="checkbox" id="shuffleToggle"> Mystic Shuffle
                 </label>
-                <button class="btn-icon" id="editCardBtn" onclick="openEditCardModal()" title="Edit this card" aria-label="Edit this card">✏️</button>
+                <label class="shuffle-toggle" for="backwardsToggle" title="Show the definition first and the term second">
+                    <input type="checkbox" id="backwardsToggle"> Backwards Casting
+                </label>
+                <button class="btn-icon" id="editCardBtn" onclick="openEditCardModal()" title="Edit this Spell" aria-label="Edit this Spell">✏️</button>
             </div>
 
             <div class="study-progress">
@@ -137,13 +140,13 @@
             <div class="flashcard-wrap">
                 <div class="flashcard" id="flashcard">
                     <div class="card-face card-face-front">
-                        <div class="card-side-label">Term</div>
+                        <div class="card-side-label" id="frontLabel">Term</div>
                         <img class="card-image" id="cardFrontImage" src="" alt="Front card image" style="display:none">
                         <div class="card-text" id="cardFrontText"></div>
-                        <div class="card-tap-hint" id="cardTapHint">Tap card to reveal answer</div>
+                        <div class="card-tap-hint" id="cardTapHint">Tap Spell to reveal answer</div>
                     </div>
                     <div class="card-face card-face-back">
-                        <div class="card-side-label">Definition</div>
+                        <div class="card-side-label" id="backLabel">Definition</div>
                         <img class="card-image" id="cardBackImage" src="" alt="Back card image" style="display:none">
                         <div class="card-text" id="cardBackText"></div>
                     </div>
@@ -159,7 +162,7 @@
             <!-- Nav row -->
             <div class="study-nav-row">
                 <button class="btn btn-secondary" id="prevCardBtn" onclick="prevCard()">← Prev</button>
-                <button class="btn btn-secondary" onclick="flipCard()">Flip Card</button>
+                <button class="btn btn-secondary" onclick="flipCard()">Flip Spell</button>
                 <button class="btn btn-secondary" id="nextCardBtn" onclick="nextCard()">Next →</button>
             </div>
         </div>
@@ -187,12 +190,12 @@
                 </div>
 
                 <div style="font-size:0.85em; color:var(--text-tertiary); margin-bottom:20px;">
-                    <span id="resultsTotal">0</span> cards total · <span id="resultsTime">0s</span>
+                    <span id="resultsTotal">0</span> spells total · <span id="resultsTime">0s</span>
                 </div>
 
                 <div class="results-actions">
-                    <button class="btn btn-primary" style="width:100%" onclick="restartStudy()">🔄 Study Again</button>
-                    <button class="btn btn-secondary" style="width:100%" onclick="renderDeckList()">Back to Decks</button>
+                    <button class="btn btn-primary" style="width:100%" onclick="restartStudy()">🔄 Rehearse Again</button>
+                    <button class="btn btn-secondary" style="width:100%" onclick="renderDeckList()">Back to Spellbooks</button>
                 </div>
             </div>
         </div>
@@ -201,13 +204,13 @@
         <div id="screen-ai-deck" class="screen">
             <div class="editor-header">
                 <button class="btn-icon" onclick="renderDeckList()" title="Back">◀</button>
-                <h2>AI Deck Creator</h2>
+                <h2>🧙 Quizard AI</h2>
             </div>
 
             <!-- Setup panel -->
             <div id="aiSetupPanel">
                 <div class="form-group">
-                    <label for="aiTopicInput">What do you want to study?</label>
+                    <label for="aiTopicInput">What do you want to Rehearse?</label>
                     <input id="aiTopicInput" class="form-input" type="text" placeholder="e.g. Spanish irregular verbs, Photosynthesis, World War II">
                 </div>
 
@@ -222,7 +225,7 @@
 
                 <div class="ai-options-row">
                     <div class="form-group">
-                        <label for="aiCardCountInput">Cards</label>
+                        <label for="aiCardCountInput">Spells</label>
                         <input id="aiCardCountInput" class="form-input" type="number" min="3" max="50" value="10">
                     </div>
                     <div class="form-group" style="flex:2">
@@ -239,7 +242,7 @@
                 </div>
 
                 <div id="aiSetupMsg" style="font-size:0.85em; color:var(--danger-color); min-height:1.2em; margin-bottom:8px;"></div>
-                <button class="btn btn-primary" style="width:100%" id="aiGenerateBtn" onclick="generateAiDeck()">🤖 Generate Deck</button>
+                <button class="btn btn-primary" style="width:100%" id="aiGenerateBtn" onclick="generateAiDeck()">🧙 Generate Spellbook</button>
             </div>
 
             <!-- Status area (shown during loading/generation) -->
@@ -254,19 +257,19 @@
             <!-- Preview area (shown after generation) -->
             <div id="aiPreviewArea" style="display:none">
                 <div class="ai-accuracy-note">
-                    ⚠️ AI-generated content can contain mistakes. Please verify cards for accuracy before studying.
+                    ⚠️ AI-generated content can contain mistakes. Please verify Spells for accuracy before Rehearsing.
                 </div>
                 <div class="form-group" style="margin-top:16px">
-                    <label for="aiDeckTitleInput">Deck Title</label>
-                    <input id="aiDeckTitleInput" class="form-input" type="text" placeholder="Deck title">
+                    <label for="aiDeckTitleInput">Spellbook Title</label>
+                    <input id="aiDeckTitleInput" class="form-input" type="text" placeholder="Spellbook title">
                 </div>
                 <div class="cards-section-header">
-                    <span class="cards-section-label">Generated Cards</span>
+                    <span class="cards-section-label">Generated Spells</span>
                     <button class="btn btn-secondary" style="font-size:0.85em; padding:6px 12px" onclick="generateAiDeck()">🔄 Regenerate</button>
                 </div>
                 <div id="aiCardPreviewList" class="card-editor-list"></div>
                 <div class="editor-actions">
-                    <button class="btn btn-primary" style="flex:1" onclick="saveAiDeck()">💾 Save as Deck</button>
+                    <button class="btn btn-primary" style="flex:1" onclick="saveAiDeck()">💾 Save as Spellbook</button>
                     <button class="btn btn-secondary" onclick="renderDeckList()">Cancel</button>
                 </div>
             </div>
@@ -274,10 +277,10 @@
 
     </div><!-- .container -->
 
-    <!-- Edit Card modal -->
+    <!-- Edit Spell modal -->
     <div id="editCardModal" class="share-modal-overlay" style="display:none;">
         <div class="share-modal edit-card-modal">
-            <div class="share-modal-title">Edit Card</div>
+            <div class="share-modal-title">Edit Spell</div>
             <div class="edit-card-modal-body">
                 <label class="edit-card-label" for="editCardFront">Front (Term)</label>
                 <textarea id="editCardFront" class="form-input edit-card-textarea" rows="3"></textarea>
@@ -294,7 +297,7 @@
     <!-- Import options modal -->
     <div id="importOptionsModal" class="share-modal-overlay" style="display:none;">
         <div class="share-modal">
-            <div class="share-modal-title">Import Deck</div>
+            <div class="share-modal-title">Import Spellbook</div>
             <div class="import-options-body">
                 <button class="btn btn-primary import-option-btn" onclick="triggerFileImport()">📂 Upload File</button>
                 <button class="btn btn-secondary import-option-btn" onclick="openImportPasteModal()">📋 Paste JSON</button>
@@ -322,7 +325,7 @@
     <!-- Import / Share modal -->
     <div id="shareImportModal" class="share-modal-overlay" style="display:none;">
         <div class="share-modal">
-            <div class="share-modal-title" id="shareImportTitle">Import Deck?</div>
+            <div class="share-modal-title" id="shareImportTitle">Import Spellbook?</div>
             <div class="share-modal-body" id="shareImportBody"></div>
             <div class="share-modal-actions" id="shareImportActions"></div>
         </div>
