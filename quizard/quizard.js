@@ -1081,6 +1081,7 @@ function cancelEditCardModal() {
 
 let webllmEngine = null;
 let webllmLoadedModel = null;
+const WEBGPU_UNAVAILABLE_MSG = 'WebGPU is not available in this browser. Please use a browser that supports WebGPU (e.g. Chrome or Edge on a desktop device).';
 
 function openAiDeckScreen() {
     showScreen('ai-deck');
@@ -1090,7 +1091,7 @@ function openAiDeckScreen() {
     const msgEl = document.getElementById('aiSetupMsg');
     const generateBtn = document.getElementById('aiGenerateBtn');
     if (!navigator.gpu) {
-        msgEl.textContent = 'WebGPU is not available in this browser. Please use a browser that supports WebGPU (e.g. Chrome or Edge on a desktop device).';
+        msgEl.textContent = WEBGPU_UNAVAILABLE_MSG;
         generateBtn.disabled = true;
     } else {
         msgEl.textContent = '';
@@ -1221,8 +1222,11 @@ async function generateAiDeck() {
         document.getElementById('aiStatusArea').style.display = 'none';
         document.getElementById('aiSetupPanel').style.display = '';
         const msg = err.message || '';
-        if (msg.toLowerCase().includes('webgpu') || msg.toLowerCase().includes('gpu')) {
-            msgEl.textContent = 'WebGPU is not available in this browser. Please use a browser that supports WebGPU (e.g. Chrome or Edge on a desktop device).';
+        const isGpuRelated = msg.toLowerCase().includes('webgpu') || msg.toLowerCase().includes('gpu');
+        if (isGpuRelated && !navigator.gpu) {
+            msgEl.textContent = WEBGPU_UNAVAILABLE_MSG;
+        } else if (isGpuRelated) {
+            msgEl.textContent = 'A GPU error occurred. Try refreshing the page, closing other tabs, or switching to a smaller model.';
         } else {
             msgEl.textContent = 'Generation failed: ' + (msg.slice(0, 120) || 'Unknown error');
         }
