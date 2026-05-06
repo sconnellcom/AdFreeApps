@@ -137,9 +137,33 @@ function clearStudyLog() {
     renderStudyLog();
 }
 
+function formatStudyLogEntry(entry, showDeckName) {
+    const d = new Date(entry.date);
+    const dateStr = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+    const timeStr = d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+    const mins = Math.floor(entry.elapsed / 60);
+    const secs = entry.elapsed % 60;
+    const elapsedStr = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+    const pctClass = entry.pct === 100 ? 'log-pct-perfect' : entry.pct >= 80 ? 'log-pct-great' : entry.pct >= 50 ? 'log-pct-ok' : 'log-pct-low';
+    return `
+    <div class="study-log-item">
+        <div class="study-log-meta">
+            <span class="study-log-date">${dateStr} · ${timeStr}</span>
+            <span class="study-log-elapsed">⏱ ${elapsedStr}</span>
+        </div>
+        ${showDeckName ? `<div class="study-log-deck">${escapeHtml(entry.deckTitle)}</div>` : ''}
+        <div class="study-log-score">
+            <span class="${pctClass} study-log-pct">${entry.pct}%</span>
+            <span class="study-log-fraction">${entry.known} / ${entry.total} known</span>
+        </div>
+    </div>`;
+}
+
 function renderStudyLog() {
     showScreen('study-log');
-    const log = loadStudyLog().slice().reverse(); // newest first
+    document.getElementById('studyLogTitle').textContent = 'Study Log';
+    document.getElementById('studyLogClearBtn').style.display = '';
+    const log = loadStudyLog().reverse(); // newest first
     const container = document.getElementById('studyLogList');
 
     if (log.length === 0) {
@@ -151,27 +175,31 @@ function renderStudyLog() {
         return;
     }
 
-    container.innerHTML = log.map(entry => {
-        const d = new Date(entry.date);
-        const dateStr = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-        const timeStr = d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
-        const mins = Math.floor(entry.elapsed / 60);
-        const secs = entry.elapsed % 60;
-        const elapsedStr = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
-        const pctClass = entry.pct === 100 ? 'log-pct-perfect' : entry.pct >= 80 ? 'log-pct-great' : entry.pct >= 50 ? 'log-pct-ok' : 'log-pct-low';
-        return `
-        <div class="study-log-item">
-            <div class="study-log-meta">
-                <span class="study-log-date">${dateStr} · ${timeStr}</span>
-                <span class="study-log-elapsed">⏱ ${elapsedStr}</span>
-            </div>
-            <div class="study-log-deck">${escapeHtml(entry.deckTitle)}</div>
-            <div class="study-log-score">
-                <span class="${pctClass} study-log-pct">${entry.pct}%</span>
-                <span class="study-log-fraction">${entry.known} / ${entry.total} known</span>
-            </div>
-        </div>`;
-    }).join('');
+    container.innerHTML = log.map(entry => formatStudyLogEntry(entry, true)).join('');
+}
+
+function renderDeckStudyLog(deckId) {
+    const decks = loadDecks();
+    const deck = decks.find(d => d.id === deckId);
+    const deckTitle = deck ? deck.title : 'Deck';
+
+    showScreen('study-log');
+    document.getElementById('studyLogTitle').textContent = deckTitle;
+    document.getElementById('studyLogClearBtn').style.display = 'none';
+
+    const log = loadStudyLog().filter(e => e.deckId === deckId).reverse();
+    const container = document.getElementById('studyLogList');
+
+    if (log.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-icon">📊</div>
+                <p>No study sessions yet for this deck. Complete a session to see your history here!</p>
+            </div>`;
+        return;
+    }
+
+    container.innerHTML = log.map(entry => formatStudyLogEntry(entry, false)).join('');
 }
 
 // ===== EXPORT / IMPORT =====
@@ -460,6 +488,7 @@ function renderDeckList() {
             </div>
             <div class="deck-actions">
                 <button class="btn btn-primary" onclick="startStudy('${deck.id}')" title="Study" ${cardCount === 0 ? 'disabled' : ''}>Study</button>
+                <button class="btn-icon" onclick="renderDeckStudyLog('${deck.id}')" title="View study stats" aria-label="View study stats for ${escapeHtml(deck.title)}">📊</button>
                 <button class="btn-icon" onclick="openEditor('${deck.id}')" title="Edit">✏️</button>
                 <button class="btn-icon" onclick="exportDeck('${deck.id}')" title="Export deck as file" aria-label="Export ${escapeHtml(deck.title)} as file">⬇️</button>
                 <button class="btn-icon" onclick="shareDeckLink('${deck.id}')" title="Copy share link" aria-label="Copy share link for ${escapeHtml(deck.title)}">🔗</button>
