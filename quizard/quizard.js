@@ -1061,6 +1061,7 @@ function openAiDeckScreen() {
 async function generateAiDeck() {
     const topic = document.getElementById('aiTopicInput').value.trim();
     const notes = document.getElementById('aiNotesInput').value.trim();
+    const notesOnly = document.getElementById('aiNotesOnlyCheck').checked;
     const cardCount = Math.min(50, Math.max(3, parseInt(document.getElementById('aiCardCountInput').value) || 10));
     const modelId = document.getElementById('aiModelSelect').value;
     const msgEl = document.getElementById('aiSetupMsg');
@@ -1104,7 +1105,8 @@ async function generateAiDeck() {
             'No extra text, no markdown, no code fences — just the raw JSON array.';
 
         const userPrompt = notes
-            ? `Create ${cardCount} flashcards to study "${topic}" based on the following notes:\n\n${notes}`
+            ? `Create ${cardCount} flashcards to study "${topic}" based on the following notes:\n\n${notes}` +
+              (notesOnly ? '\n\nIMPORTANT: Only use information found in the notes above. Do not add any facts or details from outside knowledge.' : '')
             : `Create ${cardCount} clear and educational flashcards to study "${topic}".`;
 
         const response = await webllmEngine.chat.completions.create({
