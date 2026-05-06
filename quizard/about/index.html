@@ -100,6 +100,17 @@
 
         .footer a { color: var(--primary-color); text-decoration: none; }
         .footer a:hover { text-decoration: underline; }
+
+        .cta-button {
+            display: inline-block; background: var(--primary-color); color: white;
+            padding: 15px 40px; border-radius: 12px; text-decoration: none;
+            font-size: 1.2em; font-weight: 600; transition: all 0.3s ease;
+            margin-top: 12px;
+        }
+        .cta-button:hover {
+            opacity: 0.9; transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
     </style>
 </head>
 
@@ -111,6 +122,7 @@
             <div class="hero-icon">🧙</div>
             <h1>Quizard</h1>
             <p class="tagline">The ad-free flashcard study app</p>
+            <a href="../" class="cta-button">Launch Quizard →</a>
         </div>
 
         <h2>What is Quizard?</h2>
