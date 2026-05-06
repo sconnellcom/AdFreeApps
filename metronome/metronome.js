@@ -447,7 +447,7 @@ class Metronome {
         this.logMenuItem.addEventListener('click', () => {
             this.logModal.style.display = 'flex';
             this.menuDropdown.style.display = 'none';
-            this.displayLog();
+            this.displayActivityLog();
         });
 
         // Close menu dropdown when clicking outside
