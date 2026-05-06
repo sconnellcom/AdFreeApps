@@ -746,7 +746,7 @@ function renderStudyCard(cardId) {
     flashcard.classList.remove('no-transition');
 
     // Show/hide rating buttons
-    document.getElementById('studyRatingRow').style.display = 'none';
+    document.getElementById('studyRatingRow').style.visibility = 'hidden';
     document.getElementById('cardTapHint').style.display = 'block';
 
     // Update prev/next button states
@@ -763,10 +763,10 @@ function flipCard() {
     flashcard.classList.toggle('flipped', studyState.isFlipped);
 
     if (studyState.isFlipped) {
-        document.getElementById('studyRatingRow').style.display = 'flex';
+        document.getElementById('studyRatingRow').style.visibility = 'visible';
         document.getElementById('cardTapHint').style.display = 'none';
     } else {
-        document.getElementById('studyRatingRow').style.display = 'none';
+        document.getElementById('studyRatingRow').style.visibility = 'hidden';
         document.getElementById('cardTapHint').style.display = 'block';
     }
 }

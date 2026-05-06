@@ -725,6 +725,7 @@ h1 {
     text-align: center;
     line-height: 1.4;
     word-break: break-word;
+    white-space: pre-wrap;
 }
 
 .card-tap-hint {
@@ -737,6 +738,7 @@ h1 {
     display: flex;
     gap: 12px;
     margin-bottom: 14px;
+    visibility: hidden;
 }
 
 .study-nav-row {
@@ -929,6 +931,14 @@ h1 {
 
     .results-stats {
         grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* Desktop: flashcard centered at 80% width */
+@media (min-width: 600px) {
+    .flashcard-wrap {
+        width: 80%;
+        margin: 50px auto;
     }
 }
 
