@@ -46,7 +46,8 @@ function renderHeader($title) {
                 margin-bottom: 25px;
                 text-align: center;
             }
-            input[type="password"] {
+            input[type="password"],
+            input[type="text"] {
                 width: 100%;
                 padding: 15px;
                 border: 2px solid #e2e8f0;
@@ -56,7 +57,8 @@ function renderHeader($title) {
                 margin-bottom: 15px;
                 transition: border-color 0.3s ease;
             }
-            input[type="password"]:focus {
+            input[type="password"]:focus,
+            input[type="text"]:focus {
                 outline: none;
                 border-color: #667eea;
             }
@@ -141,6 +143,17 @@ function renderFooter() {
     <?php
 }
 
+// Validate a git branch name - only allow safe characters; never accept external URLs
+function validateBranch($branch) {
+    if (!is_string($branch) || $branch === '' || strlen($branch) > 255) return false;
+    // Allow letters, digits, hyphens, underscores, dots, forward slashes
+    if (!preg_match('/^[a-zA-Z0-9][a-zA-Z0-9\/_.-]*$/', $branch)) return false;
+    if (strpos($branch, '..') !== false) return false;  // no path traversal sequences
+    if (strpos($branch, '//') !== false) return false;  // no consecutive slashes
+    if (substr($branch, -1) === '/') return false; // no trailing slash
+    return true;
+}
+
 // Check if update was triggered
 $runUpdate = false;
 if (isset($_SESSION['authenticated']) && $_SESSION['authenticated'] === true && isset($_POST['run_update'])) {
@@ -181,9 +194,11 @@ if (!$runUpdate) {
     renderHeader('Update App');
     ?>
     <h2>🚀 Ready to Update</h2>
-    <p>Click the button below to update the app</p>
+    <p>Enter a branch name and click the button below to update the app</p>
     <form method="POST">
         <input type="hidden" name="run_update" value="1">
+        <input type="text" name="branch" value="main" placeholder="Branch name (e.g. main)"
+               autocomplete="off" required>
         <button type="submit">Update Now</button>
     </form>
     <?php
@@ -192,9 +207,22 @@ if (!$runUpdate) {
 }
 
 // If we get here, authenticated and update triggered - show output in styled wrapper
+$branch = 'main';
+if (isset($_POST['branch'])) {
+    $rawBranch = trim($_POST['branch']);
+    if (!validateBranch($rawBranch)) {
+        renderHeader('Invalid Branch');
+        echo '<h2>❌ Invalid Branch Name</h2>';
+        echo '<p>Branch names must start with a letter or digit and may only contain letters, digits, hyphens, underscores, dots, and forward slashes. Path traversal sequences (..), consecutive slashes (//), and trailing slashes are not allowed.</p>';
+        renderFooter();
+        exit;
+    }
+    $branch = $rawBranch;
+}
+
 renderHeader('Updating App');
 ?>
-<h2>⚙️ Updating App</h2>
+<h2>⚙️ Updating from branch: <?php echo htmlspecialchars($branch); ?></h2>
 <div class="output">
 <?php
 flush();
@@ -206,7 +234,7 @@ ignore_user_abort(false);   // Stop on disconnect
 
 // CONFIGURATION
 $repoName = 'AdFreeApps';
-$zipUrl = 'https://github.com/sconnellcom/' . $repoName . '/archive/refs/heads/main.zip';
+$zipUrl = 'https://github.com/sconnellcom/' . $repoName . '/archive/refs/heads/' . $branch . '.zip';
 $zipFile = 'update.zip';
 $lockFile = 'update.lock';
 $selfScript = basename(__FILE__);
