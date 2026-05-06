@@ -1120,6 +1120,7 @@ async function generateAiDeck() {
         const cards = parseAiCards(text);
 
         if (!cards || cards.length === 0) {
+            console.error('AI raw response (failed to parse):', text);
             throw new Error('Could not parse flashcards from the model response. Try again.');
         }
 
