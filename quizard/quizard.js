@@ -77,7 +77,8 @@ function updateCardImagePreview(item, side, dataUrl) {
 
 const STORAGE_KEYS = {
     DECKS: 'quizard_decks',
-    CARDS: 'quizard_cards'
+    CARDS: 'quizard_cards',
+    STUDY_LOG: 'quizard_study_log'
 };
 
 function loadDecks() {
@@ -112,6 +113,256 @@ function getCardsForDeck(deckId) {
 
 function generateId() {
     return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+
+// ===== STUDY LOG =====
+
+function loadStudyLog() {
+    try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEYS.STUDY_LOG)) || [];
+    } catch (e) {
+        return [];
+    }
+}
+
+function appendStudyLog(entry) {
+    const log = loadStudyLog();
+    log.push(entry);
+    localStorage.setItem(STORAGE_KEYS.STUDY_LOG, JSON.stringify(log));
+}
+
+function clearStudyLog() {
+    if (!confirm('Clear all study history? This cannot be undone.')) return;
+    localStorage.removeItem(STORAGE_KEYS.STUDY_LOG);
+    renderStudyLog();
+}
+
+function renderStudyLog() {
+    showScreen('study-log');
+    const log = loadStudyLog().slice().reverse(); // newest first
+    const container = document.getElementById('studyLogList');
+
+    if (log.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-icon">📊</div>
+                <p>No study sessions yet. Complete a deck to see your history here!</p>
+            </div>`;
+        return;
+    }
+
+    container.innerHTML = log.map(entry => {
+        const d = new Date(entry.date);
+        const dateStr = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+        const timeStr = d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+        const mins = Math.floor(entry.elapsed / 60);
+        const secs = entry.elapsed % 60;
+        const elapsedStr = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+        const pctClass = entry.pct === 100 ? 'log-pct-perfect' : entry.pct >= 80 ? 'log-pct-great' : entry.pct >= 50 ? 'log-pct-ok' : 'log-pct-low';
+        return `
+        <div class="study-log-item">
+            <div class="study-log-meta">
+                <span class="study-log-date">${dateStr} · ${timeStr}</span>
+                <span class="study-log-elapsed">⏱ ${elapsedStr}</span>
+            </div>
+            <div class="study-log-deck">${escapeHtml(entry.deckTitle)}</div>
+            <div class="study-log-score">
+                <span class="${pctClass} study-log-pct">${entry.pct}%</span>
+                <span class="study-log-fraction">${entry.known} / ${entry.total} known</span>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+// ===== EXPORT / IMPORT =====
+
+function exportDeck(deckId) {
+    const decks = loadDecks();
+    const deck = decks.find(d => d.id === deckId);
+    if (!deck) return;
+    const cards = getCardsForDeck(deckId).map(({ front, back, frontImage, backImage, position }) =>
+        ({ front, back, frontImage: frontImage || '', backImage: backImage || '', position }));
+    const data = { deck: { title: deck.title, createdAt: deck.createdAt }, cards };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = (deck.title.replace(/[^a-z0-9_\-]/gi, '_') || 'deck') + '.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+function triggerImport() {
+    document.getElementById('importFileInput').click();
+}
+
+function handleImportFile(input) {
+    const file = input.files[0];
+    if (!file) return;
+    input.value = '';
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        let data;
+        try {
+            data = JSON.parse(e.target.result);
+        } catch {
+            alert('Could not read the file. Make sure it is a JSON file exported from Quizard.');
+            return;
+        }
+        if (!data || !data.deck || typeof data.deck.title !== 'string' || !Array.isArray(data.cards)) {
+            alert('This file does not look like a Quizard deck export.');
+            return;
+        }
+        showImportModal(data);
+    };
+    reader.readAsText(file);
+}
+
+function importDeckData(data) {
+    const deckId = generateId();
+    const decks = loadDecks();
+    decks.push({ id: deckId, title: data.deck.title, createdAt: data.deck.createdAt || Date.now() });
+    saveDecks(decks);
+    const allCards = loadCards();
+    const newCards = data.cards.map((c, i) => ({
+        id: generateId(),
+        deckId,
+        front: String(c.front || ''),
+        back: String(c.back || ''),
+        frontImage: String(c.frontImage || ''),
+        backImage: String(c.backImage || ''),
+        position: typeof c.position === 'number' ? c.position : i
+    }));
+    saveCards(allCards.concat(newCards));
+    renderDeckList();
+}
+
+// ===== IMPORT MODAL =====
+
+let pendingImportData = null;
+
+function showImportModal(data) {
+    pendingImportData = data;
+    const cardCount = data.cards.length;
+    document.getElementById('shareImportBody').innerHTML =
+        `&ldquo;${escapeHtml(data.deck.title)}&rdquo; &mdash; ${cardCount} card${cardCount !== 1 ? 's' : ''}`;
+    document.getElementById('shareImportModal').style.display = 'flex';
+}
+
+function confirmShareImport() {
+    if (!pendingImportData) return;
+    importDeckData(pendingImportData);
+    pendingImportData = null;
+    document.getElementById('shareImportModal').style.display = 'none';
+    if (location.hash.startsWith('#share=')) {
+        history.replaceState(null, '', location.pathname + location.search);
+    }
+    showToast('Deck imported!');
+}
+
+function cancelShareImport() {
+    pendingImportData = null;
+    document.getElementById('shareImportModal').style.display = 'none';
+    if (location.hash.startsWith('#share=')) {
+        history.replaceState(null, '', location.pathname + location.search);
+    }
+}
+
+// ===== TOAST =====
+
+function showToast(msg) {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
+// ===== SHARE LINK =====
+
+const SHARE_LINK_SIZE_WARN = 50 * 1024; // 50 KB — warn if compressed payload exceeds this
+
+async function compressDeck(obj) {
+    const json = JSON.stringify(obj);
+    const stream = new Blob([json]).stream().pipeThrough(new CompressionStream('deflate-raw'));
+    const buf = await new Response(stream).arrayBuffer();
+    const bytes = new Uint8Array(buf);
+    const CHUNK = 0x8000;
+    let binary = '';
+    for (let i = 0; i < bytes.length; i += CHUNK) {
+        binary += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK));
+    }
+    return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+}
+
+async function decompressDeck(b64url) {
+    const b64 = b64url.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = b64 + '='.repeat((4 - b64.length % 4) % 4);
+    const binary = atob(padded);
+    const bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
+    const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+    return JSON.parse(await new Response(stream).text());
+}
+
+async function shareDeckLink(deckId) {
+    if (typeof CompressionStream === 'undefined') {
+        alert('Your browser does not support the compression needed for share links.\nUse the Export button to share as a file instead.');
+        return;
+    }
+    const decks = loadDecks();
+    const deck = decks.find(d => d.id === deckId);
+    if (!deck) return;
+    const cards = getCardsForDeck(deckId).map(({ front, back, frontImage, backImage, position }) =>
+        ({ front, back, frontImage: frontImage || '', backImage: backImage || '', position }));
+    const data = { deck: { title: deck.title, createdAt: deck.createdAt }, cards };
+    try {
+        const encoded = await compressDeck(data);
+        const url = location.origin + location.pathname + '#share=' + encoded;
+        const SIZE_WARN = SHARE_LINK_SIZE_WARN;
+        if (encoded.length > SIZE_WARN) {
+            const proceed = confirm(
+                `This deck has a lot of data (${Math.round(encoded.length / 1024)} KB compressed).\n` +
+                `The share link may be too long for some messaging apps.\n\n` +
+                `Consider using the Export button to share as a file instead.\n\nCopy the link anyway?`
+            );
+            if (!proceed) return;
+        }
+        try {
+            await navigator.clipboard.writeText(url);
+            showToast('Share link copied!');
+        } catch {
+            prompt('Copy this share link:', url);
+        }
+    } catch (err) {
+        console.error('Share link error:', err);
+        alert('Could not generate the share link. Try exporting as a file instead.');
+    }
+}
+
+async function checkShareHash() {
+    const hash = location.hash;
+    if (!hash.startsWith('#share=')) return;
+    const encoded = hash.slice(7);
+    if (!encoded) return;
+    if (typeof DecompressionStream === 'undefined') {
+        alert('Your browser does not support the decompression needed to read this share link.');
+        history.replaceState(null, '', location.pathname + location.search);
+        return;
+    }
+    try {
+        const data = await decompressDeck(encoded);
+        if (!data || !data.deck || typeof data.deck.title !== 'string' || !Array.isArray(data.cards)) {
+            alert('This share link does not appear to contain a valid deck.');
+            history.replaceState(null, '', location.pathname + location.search);
+            return;
+        }
+        showImportModal(data);
+    } catch (err) {
+        console.error('Share hash decode error:', err);
+        alert('Could not read this share link. It may be corrupted or cut off.');
+        history.replaceState(null, '', location.pathname + location.search);
+    }
 }
 
 // ===== THEME =====
@@ -210,6 +461,8 @@ function renderDeckList() {
             <div class="deck-actions">
                 <button class="btn btn-primary" onclick="startStudy('${deck.id}')" title="Study" ${cardCount === 0 ? 'disabled' : ''}>Study</button>
                 <button class="btn-icon" onclick="openEditor('${deck.id}')" title="Edit">✏️</button>
+                <button class="btn-icon" onclick="exportDeck('${deck.id}')" title="Export deck as file" aria-label="Export ${escapeHtml(deck.title)} as file">⬇️</button>
+                <button class="btn-icon" onclick="shareDeckLink('${deck.id}')" title="Copy share link" aria-label="Copy share link for ${escapeHtml(deck.title)}">🔗</button>
                 <button class="btn-icon" onclick="deleteDeck('${deck.id}')" title="Delete">🗑️</button>
             </div>
         </div>`;
@@ -249,6 +502,11 @@ function openEditor(deckId) {
     renderCardEditors(cardData);
     showScreen('deck-editor');
     document.getElementById('deckTitleInput').focus();
+
+    const exportBtn = document.getElementById('exportDeckBtn');
+    const shareBtn = document.getElementById('shareDeckBtn');
+    if (exportBtn) exportBtn.style.display = deckId ? '' : 'none';
+    if (shareBtn) shareBtn.style.display = deckId ? '' : 'none';
 }
 
 function attachCardEditorPasteListeners() {
@@ -407,6 +665,8 @@ function startStudy(deckId) {
         cards: Object.fromEntries(cards.map(c => [c.id, c])),
         queue: [...queue],
         knownIds: new Set(),
+        firstTimeKnownIds: new Set(),
+        ratedIds: new Set(),
         seenCount: 0,
         totalCards: cards.length,
         isFlipped: false,
@@ -529,6 +789,12 @@ function rateCard(knewIt) {
     const cardId = s.history[s.historyPos];
     const cardQueueIndex = s.queue.indexOf(cardId);
 
+    // Record first-time result (ignore re-ratings of the same card)
+    if (!s.ratedIds.has(cardId)) {
+        s.ratedIds.add(cardId);
+        if (knewIt) s.firstTimeKnownIds.add(cardId);
+    }
+
     if (cardQueueIndex !== -1) {
         s.queue.splice(cardQueueIndex, 1);
         if (knewIt) {
@@ -551,13 +817,15 @@ function showResults() {
     const seconds = elapsed % 60;
     const timeStr = minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
 
+    const firstTimeCorrect = s.firstTimeKnownIds.size;
+    const pct = s.totalCards > 0 ? Math.round((firstTimeCorrect / s.totalCards) * 100) : 0;
+
     document.getElementById('resultsDeckName').textContent = s.deckTitle;
-    document.getElementById('resultsKnown').textContent = s.knownIds.size;
+    document.getElementById('resultsKnown').textContent = firstTimeCorrect;
     document.getElementById('resultsTotal').textContent = s.totalCards;
     document.getElementById('resultsSeen').textContent = s.seenCount;
     document.getElementById('resultsTime').textContent = timeStr;
 
-    const pct = s.totalCards > 0 ? Math.round((s.knownIds.size / s.totalCards) * 100) : 0;
     document.getElementById('resultsPercent').textContent = `${pct}%`;
 
     let trophy = '🎉';
@@ -565,6 +833,17 @@ function showResults() {
     else if (pct >= 80) trophy = '🌟';
     else if (pct >= 50) trophy = '👍';
     document.getElementById('resultsTrophy').textContent = trophy;
+
+    appendStudyLog({
+        id: generateId(),
+        deckId: s.deckId,
+        deckTitle: s.deckTitle,
+        date: Date.now(),
+        known: firstTimeCorrect,
+        total: s.totalCards,
+        pct,
+        elapsed
+    });
 }
 
 function restartStudy() {
@@ -606,6 +885,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initTheme();
     initMenu();
     renderDeckList();
+    checkShareHash();
 
     // Flashcard flip on click
     document.getElementById('flashcard').addEventListener('click', flipCard);

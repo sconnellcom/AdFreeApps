@@ -62,11 +62,26 @@
             </a>
         </div>
 
+        <!-- ===== SCREEN: STUDY LOG ===== -->
+        <div id="screen-study-log" class="screen">
+            <div class="editor-header">
+                <button class="btn-icon" onclick="renderDeckList()" title="Back" aria-label="Back to deck list">◀</button>
+                <h2>Study Log</h2>
+                <button class="btn btn-secondary" onclick="clearStudyLog()" style="font-size:0.8em; padding:5px 10px;">Clear</button>
+            </div>
+            <div id="studyLogList"></div>
+        </div>
+
         <!-- ===== SCREEN: DECK LIST ===== -->
         <div id="screen-deck-list" class="screen active">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                 <span class="screen-title">My Decks</span>
-                <button class="btn btn-primary" onclick="openEditor(null)">＋ New Deck</button>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <button class="btn-icon" onclick="renderStudyLog()" title="Study log" aria-label="View study log" style="font-size:1.2em;">📊</button>
+                    <button class="btn btn-secondary" onclick="triggerImport()" title="Import a deck from a file" aria-label="Import a deck from a file">📂 Import</button>
+                    <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="handleImportFile(this)">
+                    <button class="btn btn-primary" onclick="openEditor(null)">＋ New Deck</button>
+                </div>
             </div>
             <div id="deckList"></div>
         </div>
@@ -76,6 +91,8 @@
             <div class="editor-header">
                 <button class="btn-icon" onclick="renderDeckList()" title="Back">◀</button>
                 <h2 id="editorTitle">New Deck</h2>
+                <button class="btn-icon" id="exportDeckBtn" onclick="exportDeck(editorDeckId)" title="Export deck as file" aria-label="Export deck as file" style="display:none">⬇️</button>
+                <button class="btn-icon" id="shareDeckBtn" onclick="shareDeckLink(editorDeckId)" title="Copy share link" aria-label="Copy share link" style="display:none">🔗</button>
             </div>
 
             <div class="form-group">
@@ -155,11 +172,11 @@
                 <div class="results-stats">
                     <div class="stat-box">
                         <div class="stat-value" id="resultsKnown">0</div>
-                        <div class="stat-label">Known</div>
+                        <div class="stat-label">1st Try ✓</div>
                     </div>
                     <div class="stat-box">
                         <div class="stat-value" id="resultsPercent">0%</div>
-                        <div class="stat-label">Mastery</div>
+                        <div class="stat-label">Score</div>
                     </div>
                     <div class="stat-box">
                         <div class="stat-value" id="resultsSeen">0</div>
@@ -179,6 +196,21 @@
         </div>
 
     </div><!-- .container -->
+
+    <!-- Import / Share modal -->
+    <div id="shareImportModal" class="share-modal-overlay" style="display:none;">
+        <div class="share-modal">
+            <div class="share-modal-title">Import Deck?</div>
+            <div class="share-modal-body" id="shareImportBody"></div>
+            <div class="share-modal-actions">
+                <button class="btn btn-primary" onclick="confirmShareImport()">Import</button>
+                <button class="btn btn-secondary" onclick="cancelShareImport()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast notification -->
+    <div id="toast" class="toast"></div>
 
     <script src="quizard.js"></script>
 </body>

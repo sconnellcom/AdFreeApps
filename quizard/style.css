@@ -931,3 +931,135 @@ h1 {
         grid-template-columns: repeat(3, 1fr);
     }
 }
+
+/* ===== IMPORT MODAL ===== */
+
+.share-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    padding: 20px;
+}
+
+.share-modal {
+    background: var(--container-bg);
+    border: 2px solid var(--border-color);
+    border-radius: 16px;
+    padding: 24px;
+    max-width: 340px;
+    width: 100%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.share-modal-title {
+    font-size: 1.1em;
+    font-weight: 700;
+    color: var(--text-color);
+    margin-bottom: 10px;
+}
+
+.share-modal-body {
+    font-size: 0.95em;
+    color: var(--text-secondary);
+    margin-bottom: 20px;
+    line-height: 1.4;
+}
+
+.share-modal-actions {
+    display: flex;
+    gap: 10px;
+}
+
+/* ===== TOAST ===== */
+
+.toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(12px);
+    background: var(--text-color);
+    color: var(--container-bg);
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 0.9em;
+    font-weight: 500;
+    opacity: 0;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    pointer-events: none;
+    z-index: 3000;
+    white-space: nowrap;
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* ===== STUDY LOG SCREEN ===== */
+
+.study-log-item {
+    background: var(--surface-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    transition: border-color 0.2s;
+}
+
+.study-log-item:hover {
+    border-color: var(--primary-color);
+}
+
+.study-log-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.study-log-date {
+    font-size: 0.78em;
+    color: var(--text-tertiary);
+    font-weight: 500;
+}
+
+.study-log-elapsed {
+    font-size: 0.78em;
+    color: var(--text-tertiary);
+}
+
+.study-log-deck {
+    font-size: 0.97em;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.study-log-score {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+}
+
+.study-log-pct {
+    font-size: 1.35em;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.log-pct-perfect { color: var(--know-color); }
+.log-pct-great   { color: var(--primary-color); }
+.log-pct-ok      { color: var(--learning-color); }
+.log-pct-low     { color: var(--danger-color); }
+
+.study-log-fraction {
+    font-size: 0.85em;
+    color: var(--text-tertiary);
+}
