@@ -1197,6 +1197,14 @@ h1 {
     margin-bottom: 4px;
 }
 
+.ai-progress-fill {
+    height: 100%;
+    background: var(--primary-color);
+    border-radius: 4px;
+    transition: width 0.4s ease;
+    width: 0%;
+}
+
 .ai-notes-only-label {
     display: flex;
     align-items: center;
