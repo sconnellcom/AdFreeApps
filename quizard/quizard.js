@@ -1084,6 +1084,12 @@ function cancelEditCardModal() {
 let webllmEngine = null;
 let webllmLoadedModel = null;
 const WEBGPU_UNAVAILABLE_MSG = 'WebGPU is not available in this browser. Please use a browser that supports WebGPU (e.g. Chrome or Edge on a desktop device).';
+const AI_MAX_TOKENS = 2048;
+const AI_MIN_TOKENS = 256;
+const AI_TOKENS_PER_CARD = 60;
+const AI_PARSE_MAX_DEPTH = 3;
+// Some model outputs are accidentally wrapped as a JSON string array, e.g. ["[{...}]"].
+const AI_MALFORMED_JSON_PREFIX = '["[{';
 
 function openAiDeckScreen() {
     showScreen('ai-deck');
@@ -1157,7 +1163,7 @@ async function generateAiDeck() {
         // cards even for the minimum card count (3). Keeping this tight avoids overflowing
         // the model's context window (SmolLM2-1.7B has a 2048-token total context, so a
         // generous max_tokens causes OOM errors when combined with the prompt tokens already consumed).
-        const maxTokens = Math.min(2048, Math.max(256, cardCount * 60));
+        const maxTokens = Math.min(AI_MAX_TOKENS, Math.max(AI_MIN_TOKENS, cardCount * AI_TOKENS_PER_CARD));
 
         const response = await webllmEngine.chat.completions.create({
             messages: [
@@ -1222,7 +1228,7 @@ function setAiStatus(text, progress) {
 
 function parseAiCards(text) {
     const tryParse = (str, depth = 0) => {
-        if (!str || depth > 3) return null;
+        if (!str || depth > AI_PARSE_MAX_DEPTH) return null;
         try {
             const data = JSON.parse(str);
             if (typeof data === 'string') {
@@ -1269,7 +1275,7 @@ function sanitizeAiCards(arr) {
 
 function normalizeAiRepairInput(text) {
     const trimmed = (text || '').trim();
-    if (trimmed.startsWith('["[{') && trimmed.endsWith('"]')) {
+    if (trimmed.startsWith(AI_MALFORMED_JSON_PREFIX) && trimmed.endsWith('"]')) {
         return trimmed
             .slice(2, -2)
             .replace(/\\"/g, '"')
@@ -1298,7 +1304,7 @@ async function requestAiJsonRepair(rawText, cardCount) {
             { role: 'user', content: repairUserPrompt }
         ],
         temperature: 0.2,
-        max_tokens: Math.min(2048, Math.max(256, cardCount * 60))
+        max_tokens: Math.min(AI_MAX_TOKENS, Math.max(AI_MIN_TOKENS, cardCount * AI_TOKENS_PER_CARD))
     });
 
     return repairResponse.choices[0].message.content || '';
