@@ -53,7 +53,7 @@ if (!file_exists($credentialsFile)) {
 require $credentialsFile;
 
 define('AWS_REGION',   'us-west-1');
-define('AWS_MODEL_ID', 'anthropic.claude-sonnet-4-6');
+define('AWS_MODEL_ID', 'us.anthropic.claude-sonnet-4-6');
 define('ALLOWED_ORIGIN',    'https://adfreeapps.com');
 define('MAX_CALLS_PER_DAY', 200);
 define('MAX_INPUT_CHARS',   12000);  // max combined input characters

@@ -1108,6 +1108,11 @@ const WEBGPU_UNAVAILABLE_MSG = 'WebGPU is not available in this browser. Please 
 const AI_MAX_TOKENS = 2048;
 const AI_MIN_TOKENS = 256;
 const AI_TOKENS_PER_CARD = 60;
+// Cloud (Bedrock) can support much larger outputs; use a generous per-card budget
+// so Claude's verbose JSON doesn't get truncated.
+const CLOUD_MAX_TOKENS = 4096;
+const CLOUD_MIN_TOKENS = 512;
+const CLOUD_TOKENS_PER_CARD = 200;
 const AI_PARSE_MAX_DEPTH = 3;
 // Some model outputs are accidentally wrapped as a JSON string array, e.g. ["[{...}]"].
 const AI_DOUBLE_WRAPPED_ARRAY_PREFIX = '["[{';
@@ -1182,12 +1187,14 @@ async function generateAiDeck() {
           (notesOnly ? '\n\nIMPORTANT: Only use information found in the notes above. Do not add any facts or details from outside knowledge.' : '')
         : `Create ${cardCount} clear and educational flashcards to study "${topic}".`;
 
-    // Allow roughly 60 tokens per card (front + back in JSON), capped at 2048.
-    // The 256-token floor ensures the model always has room to produce at least a few
-    // cards even for the minimum card count (3). Keeping this tight avoids overflowing
-    // the model's context window (SmolLM2-1.7B has a 2048-token total context, so a
-    // generous max_tokens causes OOM errors when combined with the prompt tokens already consumed).
-    const maxTokens = Math.min(AI_MAX_TOKENS, Math.max(AI_MIN_TOKENS, cardCount * AI_TOKENS_PER_CARD));
+    // For WebLLM: ~60 tokens per card, capped at 2048. Keep this tight to avoid overflowing
+    // SmolLM2-1.7B's 2048-token total context window (prompt + output must fit).
+    // For cloud (Bedrock/Claude): use a larger budget — Claude produces verbose JSON and
+    // 60 tokens/card causes truncated, un-parseable responses.
+    const tokensPerCard  = modelId === CLOUD_MODEL_ID ? CLOUD_TOKENS_PER_CARD  : AI_TOKENS_PER_CARD;
+    const maxTokensLimit = modelId === CLOUD_MODEL_ID ? CLOUD_MAX_TOKENS        : AI_MAX_TOKENS;
+    const minTokensLimit = modelId === CLOUD_MODEL_ID ? CLOUD_MIN_TOKENS        : AI_MIN_TOKENS;
+    const maxTokens = Math.min(maxTokensLimit, Math.max(minTokensLimit, cardCount * tokensPerCard));
 
     try {
         let text;
