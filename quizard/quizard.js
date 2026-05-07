@@ -1169,7 +1169,14 @@ async function generateAiDeck() {
         });
 
         const text = response.choices[0].message.content || '';
-        const cards = parseAiCards(text);
+        let cards = parseAiCards(text);
+
+        if (!cards || cards.length === 0) {
+            const repairedText = await requestAiJsonRepair(text, cardCount);
+            if (repairedText) {
+                cards = parseAiCards(repairedText);
+            }
+        }
 
         if (!cards || cards.length === 0) {
             console.error('AI raw response (failed to parse):', text);
@@ -1214,10 +1221,20 @@ function setAiStatus(text, progress) {
 }
 
 function parseAiCards(text) {
-    const tryParse = (str) => {
+    const tryParse = (str, depth = 0) => {
+        if (!str || depth > 3) return null;
         try {
             const data = JSON.parse(str);
-            if (Array.isArray(data)) return sanitizeAiCards(data);
+            if (typeof data === 'string') {
+                return tryParse(data.trim(), depth + 1);
+            }
+            if (Array.isArray(data)) {
+                if (data.length === 1 && typeof data[0] === 'string') {
+                    const nested = tryParse(data[0].trim(), depth + 1);
+                    if (nested && nested.length > 0) return nested;
+                }
+                return sanitizeAiCards(data);
+            }
             // Handle { cards: [...] } or { flashcards: [...] } wrappers
             const arr = data.cards || data.flashcards || data.deck;
             if (Array.isArray(arr)) return sanitizeAiCards(arr);
@@ -1248,6 +1265,43 @@ function sanitizeAiCards(arr) {
             back: String(c.back || c.answer || c.definition || '').trim()
         }))
         .filter(c => c.front || c.back);
+}
+
+function normalizeAiRepairInput(text) {
+    const trimmed = (text || '').trim();
+    if (trimmed.startsWith('["[{') && trimmed.endsWith('"]')) {
+        return trimmed
+            .slice(2, -2)
+            .replace(/\\"/g, '"')
+            .replace(/\\n/g, '\n');
+    }
+    return trimmed;
+}
+
+async function requestAiJsonRepair(rawText, cardCount) {
+    const malformed = normalizeAiRepairInput(rawText);
+    if (!malformed || !webllmEngine) return '';
+
+    setAiStatus('Fixing malformed JSON…', 0.9);
+
+    const repairSystemPrompt =
+        'You repair malformed JSON for flashcards. ' +
+        'Output ONLY valid JSON. No markdown, no code fences, no explanation.';
+    const repairUserPrompt =
+        'Fix this text so it becomes valid JSON for flashcards. ' +
+        'Return only a JSON array of objects with string "front" and "back" fields.\n\n' +
+        malformed;
+
+    const repairResponse = await webllmEngine.chat.completions.create({
+        messages: [
+            { role: 'system', content: repairSystemPrompt },
+            { role: 'user', content: repairUserPrompt }
+        ],
+        temperature: 0.2,
+        max_tokens: Math.min(2048, Math.max(256, cardCount * 60))
+    });
+
+    return repairResponse.choices[0].message.content || '';
 }
 
 function renderAiPreview(cards) {
