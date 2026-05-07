@@ -165,8 +165,9 @@ if ($system) {
 }
 
 $bodyJson   = json_encode($bedrockBody);
-$modelPath  = rawurlencode(AWS_MODEL_ID);
-$endpoint   = 'https://bedrock-runtime.' . AWS_REGION . '.amazonaws.com/model/' . $modelPath . '/invoke';
+// Keep model ID unencoded in the URL: ':' is a valid RFC 3986 path character.
+// SigV4 canonical URI encoding is applied separately inside awsBedrockPost().
+$endpoint   = 'https://bedrock-runtime.' . AWS_REGION . '.amazonaws.com/model/' . AWS_MODEL_ID . '/invoke';
 
 $bedrockHttpCode = 0;
 $responseBody = awsBedrockPost($endpoint, $bodyJson, $bedrockHttpCode);
@@ -207,8 +208,7 @@ if ($bedrockHttpCode >= 200 && $bedrockHttpCode < 300 &&
     http_response_code(502);
     header('Content-Type: application/json');
     echo json_encode(['error' => $errMsg]);
-    $keyDiag = 'key_id=' . substr(AWS_ACCESS_KEY_ID, 0, 4) . '*** key_secret_len=' . strlen(AWS_SECRET_ACCESS_KEY);
-    aiLog('BEDROCK_ERROR', 'HTTP ' . $bedrockHttpCode . ' | ' . $errMsg . ' | ' . $keyDiag, $totalChars);
+    aiLog('BEDROCK_ERROR', 'HTTP ' . $bedrockHttpCode . ' | ' . $errMsg, $totalChars);
     exit;
 }
 
@@ -246,7 +246,17 @@ function awsBedrockPost($url, $body, &$httpCode = 0) {
 
     $parsedUrl = parse_url($url);
     $host      = $parsedUrl['host'];
-    $path      = $parsedUrl['path'];
+    $rawPath   = $parsedUrl['path'];
+
+    // SigV4 canonical URI: encode every character that is not an RFC 3986 unreserved
+    // character (A-Z, a-z, 0-9, -, _, ., ~) or a path separator ('/').
+    // This converts ':' -> '%3A', '%' -> '%25', etc., matching exactly what AWS
+    // computes from the raw path it receives in the HTTP request.
+    $canonicalPath = preg_replace_callback(
+        '/[^A-Za-z0-9\-_.~\/]/',
+        function ($m) { return rawurlencode($m[0]); },
+        $rawPath
+    );
 
     $amzDate   = gmdate('Ymd\THis\Z');
     $dateStamp = gmdate('Ymd');
@@ -263,7 +273,7 @@ function awsBedrockPost($url, $body, &$httpCode = 0) {
 
     $canonicalRequest = implode("\n", [
         'POST',
-        $path,
+        $canonicalPath,
         '',  // no query string
         $canonicalHeaders,
         $signedHeaders,
