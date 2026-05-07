@@ -1230,7 +1230,11 @@ function setAiStatus(text, progress) {
 
 function parseAiCards(text) {
     const tryParse = (str, depth = 0) => {
-        if (!str || depth >= AI_PARSE_MAX_DEPTH) return null;
+        if (!str) return null;
+        if (depth >= AI_PARSE_MAX_DEPTH) {
+            console.warn('AI card JSON parse depth limit reached.');
+            return null;
+        }
         try {
             const data = JSON.parse(str);
             if (typeof data === 'string') {
@@ -1239,7 +1243,7 @@ function parseAiCards(text) {
             if (Array.isArray(data)) {
                 if (data.length === 1 && typeof data[0] === 'string') {
                     const nested = tryParse(data[0].trim(), depth + 1);
-                    if (nested && nested.length > 0) return nested;
+                    if (nested) return nested;
                 }
                 return sanitizeAiCards(data);
             }
@@ -1277,7 +1281,7 @@ function sanitizeAiCards(arr) {
 
 function normalizeAiRepairInput(text) {
     const trimmed = (text || '').trim();
-    if (!trimmed) return null;
+    if (!trimmed) return '';
     if (trimmed.startsWith(AI_MALFORMED_JSON_PREFIX) && trimmed.endsWith(AI_WRAPPED_JSON_SUFFIX)) {
         return trimmed
             .slice(AI_WRAPPED_JSON_PREFIX.length, -AI_WRAPPED_JSON_SUFFIX.length)
