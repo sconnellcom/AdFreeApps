@@ -1084,6 +1084,14 @@ function cancelEditCardModal() {
 let webllmEngine = null;
 let webllmLoadedModel = null;
 const WEBGPU_UNAVAILABLE_MSG = 'WebGPU is not available in this browser. Please use a browser that supports WebGPU (e.g. Chrome or Edge on a desktop device).';
+const AI_MAX_TOKENS = 2048;
+const AI_MIN_TOKENS = 256;
+const AI_TOKENS_PER_CARD = 60;
+const AI_PARSE_MAX_DEPTH = 3;
+// Some model outputs are accidentally wrapped as a JSON string array, e.g. ["[{...}]"].
+const AI_DOUBLE_WRAPPED_ARRAY_PREFIX = '["[{';
+const AI_WRAPPED_JSON_PREFIX = '["';
+const AI_WRAPPED_JSON_SUFFIX = '"]';
 
 function openAiDeckScreen() {
     showScreen('ai-deck');
@@ -1157,7 +1165,7 @@ async function generateAiDeck() {
         // cards even for the minimum card count (3). Keeping this tight avoids overflowing
         // the model's context window (SmolLM2-1.7B has a 2048-token total context, so a
         // generous max_tokens causes OOM errors when combined with the prompt tokens already consumed).
-        const maxTokens = Math.min(2048, Math.max(256, cardCount * 60));
+        const maxTokens = Math.min(AI_MAX_TOKENS, Math.max(AI_MIN_TOKENS, cardCount * AI_TOKENS_PER_CARD));
 
         const response = await webllmEngine.chat.completions.create({
             messages: [
@@ -1169,7 +1177,14 @@ async function generateAiDeck() {
         });
 
         const text = response.choices[0].message.content || '';
-        const cards = parseAiCards(text);
+        let cards = parseAiCards(text);
+
+        if (!cards || cards.length === 0) {
+            const repairedText = await requestAiJsonRepair(text, cardCount);
+            if (repairedText) {
+                cards = parseAiCards(repairedText);
+            }
+        }
 
         if (!cards || cards.length === 0) {
             console.error('AI raw response (failed to parse):', text);
@@ -1214,10 +1229,27 @@ function setAiStatus(text, progress) {
 }
 
 function parseAiCards(text) {
-    const tryParse = (str) => {
+    const tryParse = (str, depth = 0) => {
+        if (!str) return null;
+        if (depth >= AI_PARSE_MAX_DEPTH) {
+            console.warn('AI card JSON parse depth limit reached.');
+            return null;
+        }
         try {
             const data = JSON.parse(str);
-            if (Array.isArray(data)) return sanitizeAiCards(data);
+            if (typeof data === 'string') {
+                return tryParse(data.trim(), depth + 1);
+            }
+            if (Array.isArray(data)) {
+                if (data.some(item => typeof item === 'string')) {
+                    for (const item of data) {
+                        if (typeof item !== 'string') continue;
+                        const nested = tryParse(item.trim(), depth + 1);
+                        if (nested) return nested;
+                    }
+                }
+                return sanitizeAiCards(data);
+            }
             // Handle { cards: [...] } or { flashcards: [...] } wrappers
             const arr = data.cards || data.flashcards || data.deck;
             if (Array.isArray(arr)) return sanitizeAiCards(arr);
@@ -1248,6 +1280,48 @@ function sanitizeAiCards(arr) {
             back: String(c.back || c.answer || c.definition || '').trim()
         }))
         .filter(c => c.front || c.back);
+}
+
+function normalizeAiRepairInput(text) {
+    const trimmed = (text || '').trim();
+    if (!trimmed) return '';
+    if (trimmed.startsWith(AI_WRAPPED_JSON_PREFIX) && trimmed.endsWith(AI_WRAPPED_JSON_SUFFIX)) {
+        const unwrapped = trimmed
+            .slice(AI_WRAPPED_JSON_PREFIX.length, -AI_WRAPPED_JSON_SUFFIX.length)
+            .replace(/\\"/g, '"')
+            .replace(/\\n/g, '\n');
+        if (unwrapped.startsWith('[{') || trimmed.startsWith(AI_DOUBLE_WRAPPED_ARRAY_PREFIX)) {
+            return unwrapped;
+        }
+    }
+    return trimmed;
+}
+
+async function requestAiJsonRepair(rawText, cardCount) {
+    if (!rawText || !webllmEngine) return null;
+    const malformed = normalizeAiRepairInput(rawText);
+    if (!malformed) return null;
+
+    setAiStatus('Fixing malformed JSON…', 0.9);
+
+    const repairSystemPrompt =
+        'You repair malformed JSON for flashcards. ' +
+        'Output ONLY valid JSON. No markdown, no code fences, no explanation.';
+    const repairUserPrompt =
+        'Fix this text so it becomes valid JSON for flashcards. ' +
+        'Return only a JSON array of objects with string "front" and "back" fields.\n\n' +
+        malformed;
+
+    const repairResponse = await webllmEngine.chat.completions.create({
+        messages: [
+            { role: 'system', content: repairSystemPrompt },
+            { role: 'user', content: repairUserPrompt }
+        ],
+        temperature: 0.2,
+        max_tokens: Math.min(AI_MAX_TOKENS, Math.max(AI_MIN_TOKENS, cardCount * AI_TOKENS_PER_CARD))
+    });
+
+    return repairResponse.choices[0].message.content || null;
 }
 
 function renderAiPreview(cards) {
