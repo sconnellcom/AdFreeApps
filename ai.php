@@ -207,7 +207,8 @@ if ($bedrockHttpCode >= 200 && $bedrockHttpCode < 300 &&
     http_response_code(502);
     header('Content-Type: application/json');
     echo json_encode(['error' => $errMsg]);
-    aiLog('BEDROCK_ERROR', 'HTTP ' . $bedrockHttpCode . ' | ' . $errMsg, $totalChars);
+    $keyDiag = 'key_id=' . substr(AWS_ACCESS_KEY_ID, 0, 4) . '*** key_secret_len=' . strlen(AWS_SECRET_ACCESS_KEY);
+    aiLog('BEDROCK_ERROR', 'HTTP ' . $bedrockHttpCode . ' | ' . $errMsg . ' | ' . $keyDiag, $totalChars);
     exit;
 }
 
