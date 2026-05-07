@@ -1401,23 +1401,28 @@ async function startTrialGeneration(deck, cards) {
 
         const selectedCards = cards.slice(0, TRIAL_MAX_QUESTIONS);
 
-        // Do NOT pass response_format to WebLLM — any value triggers its internal grammar compiler
-        // (GrammarCompiler.CompileJSONSchema) which throws a BindingError in the C++ layer.
-        // Instead we instruct the model to output JSON via the system prompt and parse + validate
-        // the response ourselves in parseSingleTrialQuestion.
+        // Use a simple 6-line plain-text format that is easy for the LLM to follow.
+        // Line 1 is the question. Lines 2–6 are the five answer options. The one correct
+        // answer starts with the word "Correct:" while the four wrong answers start with
+        // "Wrong:". This avoids all JSON formatting issues.
         const systemPrompt =
             'You are a multiple-choice quiz question generator. ' +
             'Given a flashcard FRONT (term) and BACK (answer/definition), ' +
-            'create one multiple-choice question that tests knowledge of the BACK given the FRONT. ' +
-            'The correct answer must be the BACK verbatim or a close paraphrase. ' +
-            'The four distractors must be plausible but clearly wrong. ' +
-            'Place the correct answer at a random position among the 5 options.\n\n' +
-            'Respond with ONLY a JSON object in exactly this shape — no prose before or after:\n' +
-            '{\n' +
-            '  "question": "<question text>",\n' +
-            '  "answers": ["<option 0>", "<option 1>", "<option 2>", "<option 3>", "<option 4>"],\n' +
-            '  "correctIndex": <0-based index of the correct answer>\n' +
-            '}';
+            'output exactly 6 lines — no extra text, no blank lines, no numbering:\n' +
+            'Line 1: the question you are asking (end with a question mark)\n' +
+            'Lines 2–6: five answer options in any order. ' +
+            'Exactly one must be the correct answer and must start with "Correct: " ' +
+            '(capital C, colon, space). ' +
+            'The other four must be plausible but wrong answers and each must start with "Wrong: " ' +
+            '(capital W, colon, space). ' +
+            'The correct answer must be the BACK verbatim or a close paraphrase.\n\n' +
+            'Example output:\n' +
+            'What is the capital of France?\n' +
+            'Wrong: Berlin\n' +
+            'Wrong: Madrid\n' +
+            'Correct: Paris\n' +
+            'Wrong: Rome\n' +
+            'Wrong: Lisbon';
 
         for (let i = 0; i < selectedCards.length; i++) {
             const card = selectedCards[i];
@@ -1540,70 +1545,65 @@ function cancelTrialGeneration() {
 }
 
 function parseSingleTrialQuestion(text, cardId) {
-    // WebLLM does not support response_format — JSON is requested via system prompt only.
-    // The model may wrap its output in prose or markdown code fences, so we extract the
-    // first well-formed JSON object using a brace-counter that is aware of string literals.
-    let cleaned = text.trim();
+    // Expected format: 6 lines of plain text.
+    //   Line 1        – the question
+    //   Lines 2–6     – answer options, each prefixed with either "Correct: " or "Wrong: "
+    //
+    // We scan every non-empty line for those prefixes so the output is robust to extra
+    // blank lines, leading/trailing whitespace, or a small amount of surrounding prose.
 
-    // Step 1: strip a single ```json … ``` or ``` … ``` fence if present.
-    const fenceMatch = cleaned.match(/```(?:json)?\s*([\s\S]*?)```/);
-    if (fenceMatch) {
-        cleaned = fenceMatch[1].trim();
-    }
+    const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
 
-    // Step 2: extract the first top-level {...} block, correctly skipping } inside strings.
-    const jsonStart = cleaned.indexOf('{');
-    if (jsonStart !== -1) {
-        let depth = 0;
-        let inString = false;
-        let escaped = false;
-        for (let i = jsonStart; i < cleaned.length; i++) {
-            const ch = cleaned[i];
-            if (escaped) { escaped = false; continue; }
-            if (ch === '\\' && inString) { escaped = true; continue; }
-            if (ch === '"') { inString = !inString; continue; }
-            if (inString) continue;
-            if (ch === '{') { depth++; }
-            else if (ch === '}') {
-                depth--;
-                if (depth === 0) { cleaned = cleaned.slice(jsonStart, i + 1); break; }
+    let question = '';
+    const answers = [];
+    let correctIndex = -1;
+
+    for (const line of lines) {
+        if (!question) {
+            // First non-empty line that is not an answer option is the question.
+            const lc = line.toLowerCase();
+            if (!lc.startsWith('correct:') && !lc.startsWith('wrong:')) {
+                question = line;
+                continue;
+            }
+        }
+
+        if (answers.length < 5) {
+            const lc = line.toLowerCase();
+            if (lc.startsWith('correct:')) {
+                const answerText = line.slice('correct:'.length).trim();
+                if (answerText) {
+                    if (correctIndex !== -1) {
+                        // More than one "Correct:" line — the LLM made an error; reject this question.
+                        console.warn('[Trial] parseSingleTrialQuestion: multiple "Correct:" lines found; skipping question.', '| raw text:', text);
+                        return null;
+                    }
+                    correctIndex = answers.length;
+                    answers.push(answerText);
+                }
+            } else if (lc.startsWith('wrong:')) {
+                const answerText = line.slice('wrong:'.length).trim();
+                if (answerText) {
+                    answers.push(answerText);
+                }
             }
         }
     }
 
-    let data;
-    try {
-        data = JSON.parse(cleaned);
-    } catch (e) {
-        console.error('[Trial] JSON.parse failed:', e.message, '| raw text:', text);
-        return null;
-    }
-
-    const question = typeof data.question === 'string' ? data.question.trim() : '';
     if (!question) {
-        console.warn('[Trial] parseSingleTrialQuestion: "question" field is missing or empty.');
+        console.warn('[Trial] parseSingleTrialQuestion: could not find a question line.', '| raw text:', text);
         return null;
     }
 
-    if (!Array.isArray(data.answers) || data.answers.length < 3) {
-        console.warn(`[Trial] parseSingleTrialQuestion: "answers" must be an array with ≥3 items, got`, data.answers);
+    if (answers.length < 2) {
+        console.warn(`[Trial] parseSingleTrialQuestion: only ${answers.length} answer(s) found (need ≥2).`, '| raw text:', text);
         return null;
     }
 
-    // Defensive sanitisation: trim and filter blank answers in case the model
-    // includes an empty string or omits an option.
-    const answers = data.answers.slice(0, 5).map(a => String(a || '').trim()).filter(Boolean);
-    if (answers.length < 3) {
-        console.warn(`[Trial] parseSingleTrialQuestion: only ${answers.length} non-empty answer(s) after sanitising.`);
+    if (correctIndex === -1) {
+        console.warn('[Trial] parseSingleTrialQuestion: no "Correct:" answer line found.', '| raw text:', text);
         return null;
     }
-
-    // Use Number.isInteger rather than parseInt so fractional values (e.g. 1.7) are rejected.
-    if (!Number.isInteger(data.correctIndex) || data.correctIndex < 0 || data.correctIndex >= answers.length) {
-        console.warn(`[Trial] parseSingleTrialQuestion: "correctIndex" ${data.correctIndex} is not a valid integer in range 0–${answers.length - 1}.`);
-        return null;
-    }
-    const correctIndex = data.correctIndex;
 
     return {
         id: generateId(),
