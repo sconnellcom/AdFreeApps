@@ -168,12 +168,13 @@ $bodyJson   = json_encode($bedrockBody);
 $modelPath  = rawurlencode(AWS_MODEL_ID);
 $endpoint   = 'https://bedrock-runtime.' . AWS_REGION . '.amazonaws.com/model/' . $modelPath . '/invoke';
 
-$responseBody = awsBedrockPost($endpoint, $bodyJson);
+$bedrockHttpCode = 0;
+$responseBody = awsBedrockPost($endpoint, $bodyJson, $bedrockHttpCode);
 if ($responseBody === false) {
     http_response_code(502);
     header('Content-Type: application/json');
     echo json_encode(['error' => 'Failed to reach AWS Bedrock']);
-    aiLog('BEDROCK_ERROR', substr($bodyJson, 0, 200), $totalChars);
+    aiLog('BEDROCK_CURL_ERROR', '', $totalChars);
     exit;
 }
 
@@ -182,24 +183,29 @@ if (!is_array($bedrockResponse)) {
     http_response_code(502);
     header('Content-Type: application/json');
     echo json_encode(['error' => 'Invalid response from AWS Bedrock']);
-    aiLog('BEDROCK_PARSE_ERROR', substr($bodyJson, 0, 200), $totalChars);
+    aiLog('BEDROCK_PARSE_ERROR', 'HTTP ' . $bedrockHttpCode . ' | ' . substr($responseBody, 0, 300), $totalChars);
     exit;
 }
 
 // ===== EXTRACT CONTENT =====
 $content = '';
-if (isset($bedrockResponse['content']) && is_array($bedrockResponse['content'])) {
+if ($bedrockHttpCode >= 200 && $bedrockHttpCode < 300 &&
+    isset($bedrockResponse['content']) && is_array($bedrockResponse['content'])) {
     foreach ($bedrockResponse['content'] as $block) {
         if (($block['type'] ?? '') === 'text') {
             $content .= $block['text'];
         }
     }
-} elseif (isset($bedrockResponse['error'])) {
-    $errMsg = $bedrockResponse['error']['message'] ?? 'Bedrock error';
+} else {
+    // AWS Bedrock errors use {"message":"..."} at the top level (REST protocol)
+    $errMsg = $bedrockResponse['message']
+           ?? $bedrockResponse['Message']
+           ?? ($bedrockResponse['error']['message'] ?? null)
+           ?? ('HTTP ' . $bedrockHttpCode);
     http_response_code(502);
     header('Content-Type: application/json');
     echo json_encode(['error' => $errMsg]);
-    aiLog('BEDROCK_API_ERROR', $errMsg, $totalChars);
+    aiLog('BEDROCK_ERROR', 'HTTP ' . $bedrockHttpCode . ' | ' . $errMsg, $totalChars);
     exit;
 }
 
@@ -226,7 +232,7 @@ function aiLog($status, $detail, $inputChars) {
     @file_put_contents(LOG_FILE, trim($line) . "\n", FILE_APPEND | LOCK_EX);
 }
 
-function awsBedrockPost($url, $body) {
+function awsBedrockPost($url, $body, &$httpCode = 0) {
     $service   = 'bedrock-runtime';
     $region    = AWS_REGION;
     $accessKey = AWS_ACCESS_KEY_ID;
@@ -303,10 +309,10 @@ function awsBedrockPost($url, $body) {
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
 
-    if ($result === false || $httpCode < 200 || $httpCode >= 300) {
-        return false;
+    if ($result === false) {
+        return false;  // curl-level failure (no network, SSL error, etc.)
     }
-    return $result;
+    return $result;  // return body for all HTTP responses so caller can log the error
 }
 
 function hmacSha256($key, $data, $raw = false) {
