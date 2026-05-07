@@ -1089,7 +1089,7 @@ const AI_MIN_TOKENS = 256;
 const AI_TOKENS_PER_CARD = 60;
 const AI_PARSE_MAX_DEPTH = 3;
 // Some model outputs are accidentally wrapped as a JSON string array, e.g. ["[{...}]"].
-const AI_MALFORMED_JSON_PREFIX = '["[{';
+const AI_DOUBLE_WRAPPED_ARRAY_PREFIX = '["[{';
 const AI_WRAPPED_JSON_PREFIX = '["';
 const AI_WRAPPED_JSON_SUFFIX = '"]';
 
@@ -1241,9 +1241,12 @@ function parseAiCards(text) {
                 return tryParse(data.trim(), depth + 1);
             }
             if (Array.isArray(data)) {
-                if (data.length === 1 && typeof data[0] === 'string') {
-                    const nested = tryParse(data[0].trim(), depth + 1);
-                    if (nested) return nested;
+                if (data.some(item => typeof item === 'string')) {
+                    for (const item of data) {
+                        if (typeof item !== 'string') continue;
+                        const nested = tryParse(item.trim(), depth + 1);
+                        if (nested) return nested;
+                    }
                 }
                 return sanitizeAiCards(data);
             }
@@ -1282,11 +1285,14 @@ function sanitizeAiCards(arr) {
 function normalizeAiRepairInput(text) {
     const trimmed = (text || '').trim();
     if (!trimmed) return '';
-    if (trimmed.startsWith(AI_MALFORMED_JSON_PREFIX) && trimmed.endsWith(AI_WRAPPED_JSON_SUFFIX)) {
-        return trimmed
+    if (trimmed.startsWith(AI_WRAPPED_JSON_PREFIX) && trimmed.endsWith(AI_WRAPPED_JSON_SUFFIX)) {
+        const unwrapped = trimmed
             .slice(AI_WRAPPED_JSON_PREFIX.length, -AI_WRAPPED_JSON_SUFFIX.length)
             .replace(/\\"/g, '"')
             .replace(/\\n/g, '\n');
+        if (unwrapped.startsWith('[{') || trimmed.startsWith(AI_DOUBLE_WRAPPED_ARRAY_PREFIX)) {
+            return unwrapped;
+        }
     }
     return trimmed;
 }
