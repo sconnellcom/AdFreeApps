@@ -1401,24 +1401,31 @@ async function startTrialGeneration(deck, cards) {
 
         const selectedCards = cards.slice(0, TRIAL_MAX_QUESTIONS);
 
-        // Plain-text format is far more reliable than JSON for small models.
-        // The parser reads labelled lines, so extra prose / truncation can't break it.
+        // Use strict JSON schema mode so the model is constrained to valid JSON output.
         const systemPrompt =
-            'You are a quiz question generator. ' +
-            'Given a flashcard FRONT (term) and BACK (answer), write ONE multiple-choice question. ' +
-            'Output ONLY these 7 lines — no extra text before or after:\n' +
-            'QUESTION: [question text]\n' +
-            'A: [option]\n' +
-            'B: [option]\n' +
-            'C: [option]\n' +
-            'D: [option]\n' +
-            'E: [option]\n' +
-            'CORRECT: [A, B, C, D, or E]\n\n' +
-            'Rules: ' +
-            'One of A-E must be the flashcard BACK verbatim or a close paraphrase. ' +
-            'The other four must be plausible distractors. ' +
-            'CORRECT must be the letter of the right answer. ' +
-            'Do not add any explanation.';
+            'You are a multiple-choice quiz question generator. ' +
+            'Given a flashcard FRONT (term) and BACK (answer/definition), ' +
+            'create one multiple-choice question that tests knowledge of the BACK given the FRONT. ' +
+            'The correct answer must be the BACK verbatim or a close paraphrase. ' +
+            'The four distractors must be plausible but clearly wrong. ' +
+            'Place the correct answer at a random position among the 5 options.';
+
+        // JSON schema used with response_format to guarantee well-formed output.
+        const trialQuestionSchema = {
+            type: 'object',
+            properties: {
+                question: { type: 'string' },
+                answers: {
+                    type: 'array',
+                    items: { type: 'string' },
+                    minItems: 5,
+                    maxItems: 5
+                },
+                correctIndex: { type: 'integer' }
+            },
+            required: ['question', 'answers', 'correctIndex'],
+            additionalProperties: false
+        };
 
         for (let i = 0; i < selectedCards.length; i++) {
             const card = selectedCards[i];
@@ -1432,8 +1439,7 @@ async function startTrialGeneration(deck, cards) {
                 );
             }
 
-            const userPrompt =
-                `FRONT: ${card.front}\nBACK: ${card.back}`;
+            const userPrompt = `FRONT: ${card.front}\nBACK: ${card.back}`;
 
             let questionObj = null;
             try {
@@ -1443,7 +1449,15 @@ async function startTrialGeneration(deck, cards) {
                         { role: 'user', content: userPrompt }
                     ],
                     temperature: 0.5,
-                    max_tokens: 512
+                    max_tokens: 512,
+                    response_format: {
+                        type: 'json_schema',
+                        json_schema: {
+                            name: 'trial_question',
+                            strict: true,
+                            schema: trialQuestionSchema
+                        }
+                    }
                 });
 
                 const text = response.choices[0].message.content || '';
@@ -1542,77 +1556,49 @@ function cancelTrialGeneration() {
 }
 
 function parseSingleTrialQuestion(text, cardId) {
-    // Parse the labelled-line plain-text format produced by the LLM prompt.
-    // Example expected output:
-    //   QUESTION: What does photosynthesis produce?
-    //   A: Oxygen and glucose
-    //   B: Carbon dioxide
-    //   C: Water
-    //   D: Nitrogen
-    //   E: Methane
-    //   CORRECT: A
-    const LETTER_TO_INDEX = { A: 0, B: 1, C: 2, D: 3, E: 4 };
-
-    let question = '';
-    const answers = {};   // keyed by index so any output order works
-    let correctLetter = '';
-
-    for (const raw of text.split('\n')) {
-        const line = raw.trim();
-        if (!line) continue;
-
-        if (line.toUpperCase().startsWith('QUESTION:')) {
-            if (question) {
-                console.warn('[Trial] parseSingleTrialQuestion: extra QUESTION line ignored:', line);
-            } else {
-                question = line.slice(line.indexOf(':') + 1).trim();
-            }
-        } else if (/^[A-E]\s*:/i.test(line)) {
-            const letter = line[0].toUpperCase();
-            const idx = LETTER_TO_INDEX[letter];
-            if (!(idx in answers)) {               // take first occurrence of each letter
-                answers[idx] = line.slice(line.indexOf(':') + 1).trim();
-            }
-        } else if (line.toUpperCase().startsWith('CORRECT:')) {
-            correctLetter = line.slice(line.indexOf(':') + 1).trim().toUpperCase().charAt(0);
-        }
+    // The model is constrained by json_schema / strict mode, so the output should
+    // always be valid JSON.  We still validate the shape to guard against any
+    // edge-case where the model managed to produce unexpected content.
+    let data;
+    try {
+        data = JSON.parse(text.trim());
+    } catch (e) {
+        console.error('[Trial] JSON.parse failed:', e.message, '| raw text:', text);
+        return null;
     }
 
-    // Rebuild as a dense array in A-B-C-D-E order, skipping gaps
-    const answersArray = Object.keys(answers)
-        .map(Number)
-        .sort((a, b) => a - b)
-        .map(k => answers[k]);
-
+    const question = typeof data.question === 'string' ? data.question.trim() : '';
     if (!question) {
-        console.warn('[Trial] parseSingleTrialQuestion: missing QUESTION line.');
+        console.warn('[Trial] parseSingleTrialQuestion: "question" field is missing or empty.');
         return null;
     }
-    if (answersArray.length < 3) {
-        console.warn(`[Trial] parseSingleTrialQuestion: only ${answersArray.length} answer(s) found (need ≥3).`);
+
+    if (!Array.isArray(data.answers) || data.answers.length < 3) {
+        console.warn(`[Trial] parseSingleTrialQuestion: "answers" must be an array with ≥3 items, got`, data.answers);
         return null;
     }
-    const correctIndex = LETTER_TO_INDEX[correctLetter];
-    if (correctIndex === undefined) {
-        console.warn(`[Trial] parseSingleTrialQuestion: invalid or missing CORRECT letter "${correctLetter}".`);
+
+    // Defensive sanitisation: schema enforces exactly 5 string items with strict:true,
+    // but we still trim and filter blanks in case of any edge-case model deviation.
+    const answers = data.answers.slice(0, 5).map(a => String(a || '').trim()).filter(Boolean);
+    if (answers.length < 3) {
+        console.warn(`[Trial] parseSingleTrialQuestion: only ${answers.length} non-empty answer(s) after sanitising.`);
         return null;
     }
-    // Map the original letter index to its position in the dense array
-    const denseCorrectIndex = Object.keys(answers)
-        .map(Number)
-        .sort((a, b) => a - b)
-        .indexOf(correctIndex);
-    if (denseCorrectIndex === -1) {
-        console.warn(`[Trial] parseSingleTrialQuestion: CORRECT letter "${correctLetter}" has no matching answer option.`);
+
+    // Use Number.isInteger rather than parseInt so fractional values (e.g. 1.7) are rejected.
+    if (!Number.isInteger(data.correctIndex) || data.correctIndex < 0 || data.correctIndex >= answers.length) {
+        console.warn(`[Trial] parseSingleTrialQuestion: "correctIndex" ${data.correctIndex} is not a valid integer in range 0–${answers.length - 1}.`);
         return null;
     }
+    const correctIndex = data.correctIndex;
 
     return {
         id: generateId(),
         cardId,
         question,
-        answers: answersArray,
-        correctIndex: denseCorrectIndex
+        answers,
+        correctIndex
     };
 }
 
