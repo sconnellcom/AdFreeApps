@@ -52,7 +52,7 @@ if (!file_exists($credentialsFile)) {
 }
 require $credentialsFile;
 
-define('AWS_REGION',   'us-east-1');
+define('AWS_REGION',   'us-west-1');
 define('AWS_MODEL_ID', 'us.anthropic.claude-sonnet-4-6-20260101-v1:0');
 define('ALLOWED_ORIGIN',    'https://adfreeapps.com');
 define('MAX_CALLS_PER_DAY', 200);
@@ -277,16 +277,11 @@ function awsBedrockPost($url, $body, &$httpCode = 0) {
         hash('sha256', $canonicalRequest),
     ]);
 
-    $signingKey  = hmacSha256(
-        hmacSha256(
-            hmacSha256(
-                hmacSha256('AWS4' . $secretKey, $dateStamp, true),
-                $region, true
-            ),
-            $service, true
-        ),
-        'aws4_request', true
-    );
+    // Derive signing key: HMAC chain - each step uses previous result as key
+    $kDate      = hmacSha256('AWS4' . $secretKey, $dateStamp, true);
+    $kRegion    = hmacSha256($kDate,    $region,       true);
+    $kService   = hmacSha256($kRegion,  $service,      true);
+    $signingKey = hmacSha256($kService, 'aws4_request', true);
     $signature   = hash_hmac('sha256', $stringToSign, $signingKey);
 
     $authHeader = 'AWS4-HMAC-SHA256 Credential=' . $accessKey . '/' . $credentialScope .
