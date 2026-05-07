@@ -1401,8 +1401,10 @@ async function startTrialGeneration(deck, cards) {
 
         const selectedCards = cards.slice(0, TRIAL_MAX_QUESTIONS);
 
-        // WebLLM supports response_format: { type: "json_object" } which forces valid JSON output.
-        // We describe the required schema in the system prompt so the model fills the right fields.
+        // Do NOT pass response_format to WebLLM — any value triggers its internal grammar compiler
+        // (GrammarCompiler.CompileJSONSchema) which throws a BindingError in the C++ layer.
+        // Instead we instruct the model to output JSON via the system prompt and parse + validate
+        // the response ourselves in parseSingleTrialQuestion.
         const systemPrompt =
             'You are a multiple-choice quiz question generator. ' +
             'Given a flashcard FRONT (term) and BACK (answer/definition), ' +
@@ -1439,8 +1441,7 @@ async function startTrialGeneration(deck, cards) {
                         { role: 'user', content: userPrompt }
                     ],
                     temperature: 0.5,
-                    max_tokens: 512,
-                    response_format: { type: 'json_object' }
+                    max_tokens: 512
                 });
 
                 const text = response.choices[0].message.content || '';
@@ -1539,11 +1540,40 @@ function cancelTrialGeneration() {
 }
 
 function parseSingleTrialQuestion(text, cardId) {
-    // response_format: { type: "json_object" } forces WebLLM to output valid JSON.
-    // We still validate every required field in case the model omits or misnames one.
+    // WebLLM does not support response_format — JSON is requested via system prompt only.
+    // The model may wrap its output in prose or markdown code fences, so we extract the
+    // first well-formed JSON object using a brace-counter that is aware of string literals.
+    let cleaned = text.trim();
+
+    // Step 1: strip a single ```json … ``` or ``` … ``` fence if present.
+    const fenceMatch = cleaned.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (fenceMatch) {
+        cleaned = fenceMatch[1].trim();
+    }
+
+    // Step 2: extract the first top-level {...} block, correctly skipping } inside strings.
+    const jsonStart = cleaned.indexOf('{');
+    if (jsonStart !== -1) {
+        let depth = 0;
+        let inString = false;
+        let escaped = false;
+        for (let i = jsonStart; i < cleaned.length; i++) {
+            const ch = cleaned[i];
+            if (escaped) { escaped = false; continue; }
+            if (ch === '\\' && inString) { escaped = true; continue; }
+            if (ch === '"') { inString = !inString; continue; }
+            if (inString) continue;
+            if (ch === '{') { depth++; }
+            else if (ch === '}') {
+                depth--;
+                if (depth === 0) { cleaned = cleaned.slice(jsonStart, i + 1); break; }
+            }
+        }
+    }
+
     let data;
     try {
-        data = JSON.parse(text.trim());
+        data = JSON.parse(cleaned);
     } catch (e) {
         console.error('[Trial] JSON.parse failed:', e.message, '| raw text:', text);
         return null;
@@ -1560,8 +1590,8 @@ function parseSingleTrialQuestion(text, cardId) {
         return null;
     }
 
-    // Defensive sanitisation: json_object mode guarantees valid JSON but the model
-    // may still omit an answer or include a blank string, so we trim and filter.
+    // Defensive sanitisation: trim and filter blank answers in case the model
+    // includes an empty string or omits an option.
     const answers = data.answers.slice(0, 5).map(a => String(a || '').trim()).filter(Boolean);
     if (answers.length < 3) {
         console.warn(`[Trial] parseSingleTrialQuestion: only ${answers.length} non-empty answer(s) after sanitising.`);
