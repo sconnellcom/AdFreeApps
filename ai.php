@@ -5,20 +5,58 @@
 // Only accepts requests from adfreeapps.com.
 
 // ===== CONFIGURATION =====
-// Replace the placeholder values below with your actual AWS credentials and
-// the correct Bedrock model ID before deploying. Keep this file outside of
-// publicly-browsable version control once real credentials are set.
-define('AWS_ACCESS_KEY_ID',     'YOUR_ACCESS_KEY_HERE');
-define('AWS_SECRET_ACCESS_KEY', 'YOUR_SECRET_KEY_HERE');
-define('AWS_REGION',            'us-east-1');
-define('AWS_MODEL_ID',          'us.anthropic.claude-sonnet-4-6-20260101-v1:0');
-define('ALLOWED_ORIGIN',        'https://adfreeapps.com');
-define('MAX_CALLS_PER_DAY',     200);
-define('MAX_INPUT_CHARS',       12000);  // max combined input characters
+// AWS credentials are loaded from /../data/aws_credentials.php, which lives
+// one level above the web root and is therefore not directly accessible over HTTP.
+//
+// HOW TO CREATE THE CREDENTIALS FILE
+// -----------------------------------
+// 1. Log in to the AWS Console → IAM → Users → your user → Security credentials.
+//    Create an Access Key (type: "Application running outside AWS").
+//    Copy the Access Key ID and Secret Access Key — the secret is shown only once.
+//
+// 2. SSH (or SFTP) into your server and create the file at the path below.
+//    The directory already exists because the rate-limit counter and log live there.
+//
+//      nano /path/to/site/../data/aws_credentials.php
+//
+//    Paste exactly this content, replacing the placeholder values:
+//
+//      <?php
+//      define('AWS_ACCESS_KEY_ID',     'AKIAIOSFODNN7EXAMPLE');
+//      define('AWS_SECRET_ACCESS_KEY', 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY');
+//
+// 3. Lock down the file so only the web-server user can read it:
+//
+//      chmod 640 /path/to/site/../data/aws_credentials.php
+//      chown root:www-data /path/to/site/../data/aws_credentials.php
+//
+// 4. Make sure /../data/ is NOT inside a directory served by your web server
+//    (i.e. it must be outside the document root).  If your document root is
+//    /var/www/html then this file would live at /var/www/data/aws_credentials.php.
+//
+// 5. Never commit the real credentials file to version control.
+//    Add the following line to your .gitignore if data/ is ever inside the repo:
+//
+//      /data/aws_credentials.php
 
 define('DATA_DIR',   __DIR__ . '/../data');
 define('LOG_FILE',   DATA_DIR . '/ai.log');
 define('COUNT_FILE', DATA_DIR . '/ai_count.json');
+
+$credentialsFile = DATA_DIR . '/aws_credentials.php';
+if (!file_exists($credentialsFile)) {
+    http_response_code(500);
+    header('Content-Type: application/json');
+    echo json_encode(['error' => 'Server configuration error: credentials file not found.']);
+    exit;
+}
+require $credentialsFile;
+
+define('AWS_REGION',   'us-east-1');
+define('AWS_MODEL_ID', 'us.anthropic.claude-sonnet-4-6-20260101-v1:0');
+define('ALLOWED_ORIGIN',    'https://adfreeapps.com');
+define('MAX_CALLS_PER_DAY', 200);
+define('MAX_INPUT_CHARS',   12000);  // max combined input characters
 
 // ===== CORS / ORIGIN CHECK =====
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
