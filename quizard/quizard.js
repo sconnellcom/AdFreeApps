@@ -1410,16 +1410,15 @@ async function startTrialGeneration(deck, cards) {
             'You are a multiple-choice quiz question generator. ' +
             'Given a flashcard FRONT (term) and BACK (answer/definition), ' +
             'output exactly 6 lines with no extra text, no blank lines, and no labels or numbering:\n' +
-            'Line 1: the question (end with a question mark)\n' +
+            'Line 1: a question about the FRONT term (end with a question mark)\n' +
             'Line 2: the correct answer (use the BACK verbatim or a close paraphrase)\n' +
-            'Lines 3–6: four plausible but incorrect answers\n\n' +
-            'Example output:\n' +
-            'What is the capital of France?\n' +
-            'Paris\n' +
-            'Berlin\n' +
-            'Madrid\n' +
-            'Rome\n' +
-            'Lisbon';
+            'Lines 3–6: four plausible but incorrect answers\n' +
+            'Always base the question and answers on the specific card content provided. Do not repeat any previous example.';
+
+        // Few-shot example exchange so the model understands the format
+        // without copying the example output verbatim.
+        const exampleUser = 'FRONT: Photosynthesis\nBACK: The process by which plants use sunlight to convert CO2 and water into glucose and oxygen';
+        const exampleAssistant = 'What process do plants use to convert sunlight, CO2, and water into glucose and oxygen?\nThe process by which plants use sunlight to convert CO2 and water into glucose and oxygen\nThe process by which animals break down food for energy\nThe process of water evaporating from plant leaves\nThe chemical breakdown of organic matter by bacteria\nThe cycle of carbon moving through the atmosphere and biosphere';
 
         for (let i = 0; i < selectedCards.length; i++) {
             const card = selectedCards[i];
@@ -1440,9 +1439,11 @@ async function startTrialGeneration(deck, cards) {
                 const response = await webllmEngine.chat.completions.create({
                     messages: [
                         { role: 'system', content: systemPrompt },
+                        { role: 'user', content: exampleUser },
+                        { role: 'assistant', content: exampleAssistant },
                         { role: 'user', content: userPrompt }
                     ],
-                    temperature: 0.5,
+                    temperature: 0.7,
                     max_tokens: 512
                 });
 
