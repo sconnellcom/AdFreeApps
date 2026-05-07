@@ -1103,30 +1103,53 @@ function cancelEditCardModal() {
 
 let webllmEngine = null;
 let webllmLoadedModel = null;
+const CLOUD_MODEL_ID = 'claude-sonnet-4-6-cloud';
 const WEBGPU_UNAVAILABLE_MSG = 'WebGPU is not available in this browser. Please use a browser that supports WebGPU (e.g. Chrome or Edge on a desktop device).';
 const AI_MAX_TOKENS = 2048;
 const AI_MIN_TOKENS = 256;
 const AI_TOKENS_PER_CARD = 60;
+// Cloud (Bedrock) can support much larger outputs; use a generous per-card budget
+// so Claude's verbose JSON doesn't get truncated.
+const CLOUD_MAX_TOKENS = 4096;
+const CLOUD_MIN_TOKENS = 512;
+const CLOUD_TOKENS_PER_CARD = 200;
 const AI_PARSE_MAX_DEPTH = 3;
 // Some model outputs are accidentally wrapped as a JSON string array, e.g. ["[{...}]"].
 const AI_DOUBLE_WRAPPED_ARRAY_PREFIX = '["[{';
 const AI_WRAPPED_JSON_PREFIX = '["';
 const AI_WRAPPED_JSON_SUFFIX = '"]';
 
+function isLocalModel(modelId) {
+    return modelId !== CLOUD_MODEL_ID;
+}
+
+function onAiModelChange() {
+    const modelId = document.getElementById('aiModelSelect').value;
+    const noteEl = document.getElementById('aiLocalModelNote');
+    const msgEl = document.getElementById('aiSetupMsg');
+    const generateBtn = document.getElementById('aiGenerateBtn');
+    if (isLocalModel(modelId)) {
+        noteEl.style.display = '';
+        if (!navigator.gpu) {
+            msgEl.textContent = WEBGPU_UNAVAILABLE_MSG;
+            generateBtn.disabled = true;
+        } else {
+            msgEl.textContent = '';
+            generateBtn.disabled = false;
+        }
+    } else {
+        noteEl.style.display = 'none';
+        msgEl.textContent = '';
+        generateBtn.disabled = false;
+    }
+}
+
 function openAiDeckScreen() {
     showScreen('ai-deck');
     document.getElementById('aiSetupPanel').style.display = '';
     document.getElementById('aiStatusArea').style.display = 'none';
     document.getElementById('aiPreviewArea').style.display = 'none';
-    const msgEl = document.getElementById('aiSetupMsg');
-    const generateBtn = document.getElementById('aiGenerateBtn');
-    if (!navigator.gpu) {
-        msgEl.textContent = WEBGPU_UNAVAILABLE_MSG;
-        generateBtn.disabled = true;
-    } else {
-        msgEl.textContent = '';
-        generateBtn.disabled = false;
-    }
+    onAiModelChange();
 }
 
 async function generateAiDeck() {
@@ -1153,56 +1176,71 @@ async function generateAiDeck() {
     document.getElementById('aiPreviewArea').style.display = 'none';
     document.getElementById('aiStatusArea').style.display = '';
 
+    const systemPrompt =
+        'You are a flashcard creation assistant. ' +
+        'Output ONLY a valid JSON array of objects, each with exactly two string fields: ' +
+        '"front" (the question or term) and "back" (the answer or definition). ' +
+        'No extra text, no markdown, no code fences — just the raw JSON array.';
+
+    const userPrompt = notes
+        ? `Create ${cardCount} flashcards to study "${topic}" based on the following notes:\n\n${notes}` +
+          (notesOnly ? '\n\nIMPORTANT: Only use information found in the notes above. Do not add any facts or details from outside knowledge.' : '')
+        : `Create ${cardCount} clear and educational flashcards to study "${topic}".`;
+
+    // For WebLLM: ~60 tokens per card, capped at 2048. Keep this tight to avoid overflowing
+    // SmolLM2-1.7B's 2048-token total context window (prompt + output must fit).
+    // For cloud (Bedrock/Claude): use a larger budget — Claude produces verbose JSON and
+    // 60 tokens/card causes truncated, un-parseable responses.
+    const tokensPerCard  = modelId === CLOUD_MODEL_ID ? CLOUD_TOKENS_PER_CARD  : AI_TOKENS_PER_CARD;
+    const maxTokensLimit = modelId === CLOUD_MODEL_ID ? CLOUD_MAX_TOKENS        : AI_MAX_TOKENS;
+    const minTokensLimit = modelId === CLOUD_MODEL_ID ? CLOUD_MIN_TOKENS        : AI_MIN_TOKENS;
+    const maxTokens = Math.min(maxTokensLimit, Math.max(minTokensLimit, cardCount * tokensPerCard));
+
     try {
-        if (!webllmEngine || webllmLoadedModel !== modelId) {
-            webllmEngine = null;
-            webllmLoadedModel = null;
-            setAiStatus('Downloading model… this may take a few minutes on first use.', 0);
-            // WebLLM is loaded via dynamic import from the esm.run CDN (no build system in this project).
-            // The library runs the chosen model entirely in-browser using WebGPU.
-            const { CreateMLCEngine } = await import('https://esm.run/@mlc-ai/web-llm');
-            webllmEngine = await CreateMLCEngine(modelId, {
-                initProgressCallback: (p) => setAiStatus(p.text || 'Loading…', p.progress || 0)
+        let text;
+
+        if (modelId === CLOUD_MODEL_ID) {
+            setAiStatus('Generating flashcards…', 0.5);
+            text = await callCloudAI(
+                [{ role: 'user', content: userPrompt }],
+                systemPrompt,
+                maxTokens
+            );
+        } else {
+            if (!webllmEngine || webllmLoadedModel !== modelId) {
+                webllmEngine = null;
+                webllmLoadedModel = null;
+                setAiStatus('Downloading model… this may take a few minutes on first use.', 0);
+                // WebLLM is loaded via dynamic import from the esm.run CDN (no build system in this project).
+                // The library runs the chosen model entirely in-browser using WebGPU.
+                const { CreateMLCEngine } = await import('https://esm.run/@mlc-ai/web-llm');
+                webllmEngine = await CreateMLCEngine(modelId, {
+                    initProgressCallback: (p) => setAiStatus(p.text || 'Loading…', p.progress || 0)
+                });
+                webllmLoadedModel = modelId;
+            }
+
+            setAiStatus('Generating flashcards…', 0.8);
+
+            const response = await webllmEngine.chat.completions.create({
+                messages: [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user', content: userPrompt }
+                ],
+                temperature: 0.7,
+                max_tokens: maxTokens
             });
-            webllmLoadedModel = modelId;
+            text = response.choices[0].message.content || '';
         }
 
-        setAiStatus('Generating flashcards…', 0.8);
-
-        const systemPrompt =
-            'You are a flashcard creation assistant. ' +
-            'Output ONLY a valid JSON array of objects, each with exactly two string fields: ' +
-            '"front" (the question or term) and "back" (the answer or definition). ' +
-            'No extra text, no markdown, no code fences — just the raw JSON array.';
-
-        const userPrompt = notes
-            ? `Create ${cardCount} flashcards to study "${topic}" based on the following notes:\n\n${notes}` +
-              (notesOnly ? '\n\nIMPORTANT: Only use information found in the notes above. Do not add any facts or details from outside knowledge.' : '')
-            : `Create ${cardCount} clear and educational flashcards to study "${topic}".`;
-
-        // Allow roughly 60 tokens per card (front + back in JSON), capped at 2048.
-        // The 256-token floor ensures the model always has room to produce at least a few
-        // cards even for the minimum card count (3). Keeping this tight avoids overflowing
-        // the model's context window (SmolLM2-1.7B has a 2048-token total context, so a
-        // generous max_tokens causes OOM errors when combined with the prompt tokens already consumed).
-        const maxTokens = Math.min(AI_MAX_TOKENS, Math.max(AI_MIN_TOKENS, cardCount * AI_TOKENS_PER_CARD));
-
-        const response = await webllmEngine.chat.completions.create({
-            messages: [
-                { role: 'system', content: systemPrompt },
-                { role: 'user', content: userPrompt }
-            ],
-            temperature: 0.7,
-            max_tokens: maxTokens
-        });
-
-        const text = response.choices[0].message.content || '';
         let cards = parseAiCards(text);
 
         if (!cards || cards.length === 0) {
-            const repairedText = await requestAiJsonRepair(text, cardCount);
-            if (repairedText) {
-                cards = parseAiCards(repairedText);
+            if (modelId !== CLOUD_MODEL_ID) {
+                const repairedText = await requestAiJsonRepair(text, cardCount);
+                if (repairedText) {
+                    cards = parseAiCards(repairedText);
+                }
             }
         }
 
@@ -1241,6 +1279,21 @@ function cancelAiGeneration() {
     webllmLoadedModel = null;
     document.getElementById('aiStatusArea').style.display = 'none';
     document.getElementById('aiSetupPanel').style.display = '';
+}
+
+async function callCloudAI(messages, system, maxTokens) {
+    const payload = { messages, max_tokens: maxTokens };
+    if (system) payload.system = system;
+    const response = await fetch('/ai.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+        throw new Error(data.error || `Server error: ${response.status}`);
+    }
+    return data.content || '';
 }
 
 function setAiStatus(text, progress) {
@@ -1457,19 +1510,11 @@ async function startTrialGeneration(deck, cards) {
     // Reset trialState so we can detect "first question" below
     trialState = null;
 
-    const modelId = 'SmolLM2-1.7B-Instruct-q4f16_1-MLC';
+    // Always use the cloud model for Trial.
+    const useCloud = true;
 
     try {
-        if (!webllmEngine || webllmLoadedModel !== modelId) {
-            webllmEngine = null;
-            webllmLoadedModel = null;
-            setTrialLoadingStatus('Downloading model… this may take a few minutes on first use.', 0);
-            const { CreateMLCEngine } = await import('https://esm.run/@mlc-ai/web-llm');
-            webllmEngine = await CreateMLCEngine(modelId, {
-                initProgressCallback: (p) => setTrialLoadingStatus(p.text || 'Loading model…', p.progress || 0)
-            });
-            webllmLoadedModel = modelId;
-        }
+        // If using a local engine, it's already loaded — nothing to do here.
 
         const selectedCards = cards.slice(0, TRIAL_MAX_QUESTIONS);
 
@@ -1483,14 +1528,14 @@ async function startTrialGeneration(deck, cards) {
             'Given a flashcard FRONT (term) and BACK (answer/definition), ' +
             'output exactly 6 lines with no extra text, no blank lines, and no labels or numbering:\n' +
             'Line 1: a question about the FRONT term (end with a question mark)\n' +
-            'Line 2: the correct answer (use the BACK verbatim or a close paraphrase)\n' +
-            'Lines 3–6: four plausible but incorrect answers\n' +
-            'Always base the question and answers on the specific card content provided. Do not repeat any previous example.';
+            'Line 2: the correct answer — a short, concise phrase (do NOT copy the BACK verbatim; keep it similar in length and style to the wrong answers)\n' +
+            'Lines 3–6: four plausible but incorrect answers, each a short concise phrase\n' +
+            'All six answers should be roughly the same length. Do not repeat any previous example.';
 
         // Few-shot example exchange so the model understands the format
         // without copying the example output verbatim.
         const exampleUser = 'FRONT: Photosynthesis\nBACK: The process by which plants use sunlight to convert CO2 and water into glucose and oxygen';
-        const exampleAssistant = 'What process do plants use to convert sunlight, CO2, and water into glucose and oxygen?\nThe process by which plants use sunlight to convert CO2 and water into glucose and oxygen\nThe process by which animals break down food for energy\nThe process of water evaporating from plant leaves\nThe chemical breakdown of organic matter by bacteria\nThe cycle of carbon moving through the atmosphere and biosphere';
+        const exampleAssistant = 'What is photosynthesis?\nConverting sunlight, CO2, and water into glucose and oxygen\nBreaking down food molecules to release stored energy\nAbsorbing water and minerals through root systems\nReleasing CO2 as a byproduct of cellular respiration\nTransporting sugars through the plant\'s vascular tissue';
 
         for (let i = 0; i < selectedCards.length; i++) {
             const card = selectedCards[i];
@@ -1508,18 +1553,30 @@ async function startTrialGeneration(deck, cards) {
 
             let questionObj = null;
             try {
-                const response = await webllmEngine.chat.completions.create({
-                    messages: [
-                        { role: 'system', content: systemPrompt },
-                        { role: 'user', content: exampleUser },
-                        { role: 'assistant', content: exampleAssistant },
-                        { role: 'user', content: userPrompt }
-                    ],
-                    temperature: 0.7,
-                    max_tokens: 512
-                });
-
-                const text = response.choices[0].message.content || '';
+                let text;
+                if (useCloud) {
+                    text = await callCloudAI(
+                        [
+                            { role: 'user', content: exampleUser },
+                            { role: 'assistant', content: exampleAssistant },
+                            { role: 'user', content: userPrompt }
+                        ],
+                        systemPrompt,
+                        512
+                    );
+                } else {
+                    const response = await webllmEngine.chat.completions.create({
+                        messages: [
+                            { role: 'system', content: systemPrompt },
+                            { role: 'user', content: exampleUser },
+                            { role: 'assistant', content: exampleAssistant },
+                            { role: 'user', content: userPrompt }
+                        ],
+                        temperature: 0.7,
+                        max_tokens: 512
+                    });
+                    text = response.choices[0].message.content || '';
+                }
                 console.log(`[Trial] Raw LLM output for card ${card.id} (${i + 1}/${selectedCards.length}):`, text);
                 questionObj = parseSingleTrialQuestion(text, card.id);
                 if (!questionObj) {

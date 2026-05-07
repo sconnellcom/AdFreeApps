@@ -231,14 +231,15 @@
                     </div>
                     <div class="form-group" style="flex:2">
                         <label for="aiModelSelect">Model</label>
-                        <select id="aiModelSelect" class="form-input">
-                            <option value="SmolLM2-1.7B-Instruct-q4f16_1-MLC" selected>SmolLM2-1.7B (~1 GB)</option>
-                            <option value="Phi-3.5-mini-instruct-q4f16_1-MLC">Phi-3.5-mini (~2.2 GB)</option>
+                        <select id="aiModelSelect" class="form-input" onchange="onAiModelChange()">
+                            <option value="claude-sonnet-4-6-cloud" selected>Claude Sonnet 4.6 ☁️ (Cloud)</option>
+                            <option value="SmolLM2-1.7B-Instruct-q4f16_1-MLC">SmolLM2-1.7B (~1 GB, local)</option>
+                            <option value="Phi-3.5-mini-instruct-q4f16_1-MLC">Phi-3.5-mini (~2.2 GB, local)</option>
                         </select>
                     </div>
                 </div>
 
-                <div class="ai-model-note">
+                <div class="ai-model-note" id="aiLocalModelNote" style="display:none">
                     ⚠️ The AI model runs entirely in your browser using WebGPU (Chrome/Edge on desktop recommended). The first use downloads the model — this can take a few minutes. Subsequent uses load instantly from cache.
                 </div>
 
