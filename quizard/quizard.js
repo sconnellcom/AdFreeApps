@@ -1401,28 +1401,25 @@ async function startTrialGeneration(deck, cards) {
 
         const selectedCards = cards.slice(0, TRIAL_MAX_QUESTIONS);
 
-        // Use a simple 6-line plain-text format that is easy for the LLM to follow.
-        // Line 1 is the question. Lines 2–6 are the five answer options. The one correct
-        // answer starts with the word "Correct:" while the four wrong answers start with
-        // "Wrong:". This avoids all JSON formatting issues.
+        // Use the simplest possible 6-line plain-text format.
+        // Line 1  – the question
+        // Line 2  – the correct answer
+        // Lines 3–6 – four wrong (but plausible) answers
+        // Our code shuffles lines 2–6 before presenting them to the user.
         const systemPrompt =
             'You are a multiple-choice quiz question generator. ' +
             'Given a flashcard FRONT (term) and BACK (answer/definition), ' +
-            'output exactly 6 lines — no extra text, no blank lines, no numbering:\n' +
-            'Line 1: the question you are asking (end with a question mark)\n' +
-            'Lines 2–6: five answer options in any order. ' +
-            'Exactly one must be the correct answer and must start with "Correct: " ' +
-            '(capital C, colon, space). ' +
-            'The other four must be plausible but wrong answers and each must start with "Wrong: " ' +
-            '(capital W, colon, space). ' +
-            'The correct answer must be the BACK verbatim or a close paraphrase.\n\n' +
+            'output exactly 6 lines with no extra text, no blank lines, and no labels or numbering:\n' +
+            'Line 1: the question (end with a question mark)\n' +
+            'Line 2: the correct answer (use the BACK verbatim or a close paraphrase)\n' +
+            'Lines 3–6: four plausible but incorrect answers\n\n' +
             'Example output:\n' +
             'What is the capital of France?\n' +
-            'Wrong: Berlin\n' +
-            'Wrong: Madrid\n' +
-            'Correct: Paris\n' +
-            'Wrong: Rome\n' +
-            'Wrong: Lisbon';
+            'Paris\n' +
+            'Berlin\n' +
+            'Madrid\n' +
+            'Rome\n' +
+            'Lisbon';
 
         for (let i = 0; i < selectedCards.length; i++) {
             const card = selectedCards[i];
@@ -1545,65 +1542,43 @@ function cancelTrialGeneration() {
 }
 
 function parseSingleTrialQuestion(text, cardId) {
-    // Expected format: 6 lines of plain text.
-    //   Line 1        – the question
-    //   Lines 2–6     – answer options, each prefixed with either "Correct: " or "Wrong: "
+    // Expected format: 6 plain lines, no labels.
+    //   Line 1   – the question
+    //   Line 2   – the correct answer
+    //   Lines 3–6 – four wrong answers
     //
-    // We scan every non-empty line for those prefixes so the output is robust to extra
-    // blank lines, leading/trailing whitespace, or a small amount of surrounding prose.
+    // After parsing, the correct answer (index 0) and wrong answers (indices 1–4) are
+    // shuffled so the correct answer appears at a random position for the user.
 
     const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
 
-    let question = '';
-    const answers = [];
-    let correctIndex = -1;
-
-    for (const line of lines) {
-        if (!question) {
-            // First non-empty line that is not an answer option is the question.
-            const lc = line.toLowerCase();
-            if (!lc.startsWith('correct:') && !lc.startsWith('wrong:')) {
-                question = line;
-                continue;
-            }
-        }
-
-        if (answers.length < 5) {
-            const lc = line.toLowerCase();
-            if (lc.startsWith('correct:')) {
-                const answerText = line.slice('correct:'.length).trim();
-                if (answerText) {
-                    if (correctIndex !== -1) {
-                        // More than one "Correct:" line — the LLM made an error; reject this question.
-                        console.warn('[Trial] parseSingleTrialQuestion: multiple "Correct:" lines found; skipping question.', '| raw text:', text);
-                        return null;
-                    }
-                    correctIndex = answers.length;
-                    answers.push(answerText);
-                }
-            } else if (lc.startsWith('wrong:')) {
-                const answerText = line.slice('wrong:'.length).trim();
-                if (answerText) {
-                    answers.push(answerText);
-                }
-            }
-        }
-    }
-
-    if (!question) {
-        console.warn('[Trial] parseSingleTrialQuestion: could not find a question line.', '| raw text:', text);
+    if (lines.length < 3) {
+        console.warn(`[Trial] parseSingleTrialQuestion: expected ≥3 lines, got ${lines.length}.`, '| raw text:', text);
         return null;
     }
 
-    if (answers.length < 2) {
-        console.warn(`[Trial] parseSingleTrialQuestion: only ${answers.length} answer(s) found (need ≥2).`, '| raw text:', text);
+    const question = lines[0];
+    const correctAnswer = lines[1];
+    const wrongAnswers = lines.slice(2, 6); // up to 4 wrong answers
+
+    if (!question || !correctAnswer) {
+        console.warn('[Trial] parseSingleTrialQuestion: missing question or correct answer.', '| raw text:', text);
         return null;
     }
 
-    if (correctIndex === -1) {
-        console.warn('[Trial] parseSingleTrialQuestion: no "Correct:" answer line found.', '| raw text:', text);
+    if (wrongAnswers.length < 1) {
+        console.warn('[Trial] parseSingleTrialQuestion: no wrong answers found.', '| raw text:', text);
         return null;
     }
+
+    // Build the answers array: correct answer at index 0, then wrong answers.
+    // Shuffle using Fisher-Yates so the correct answer lands at a random position.
+    const answers = [correctAnswer, ...wrongAnswers];
+    for (let i = answers.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [answers[i], answers[j]] = [answers[j], answers[i]];
+    }
+    const correctIndex = answers.indexOf(correctAnswer);
 
     return {
         id: generateId(),
