@@ -238,7 +238,7 @@ function aiLog($status, $detail, $inputChars) {
 // Returns the response body string on any HTTP response, or false on a curl-level failure.
 // $httpCode is an output parameter set to the HTTP status code returned by AWS.
 function awsBedrockPost($url, $body, &$httpCode = 0) {
-    $service   = 'bedrock-runtime';
+    $service   = 'bedrock';  // SigV4 service name for Bedrock Runtime is 'bedrock', not 'bedrock-runtime'
     $region    = AWS_REGION;
     $accessKey = AWS_ACCESS_KEY_ID;
     $secretKey = AWS_SECRET_ACCESS_KEY;
@@ -256,10 +256,9 @@ function awsBedrockPost($url, $body, &$httpCode = 0) {
     $canonicalHeaders =
         'content-type:' . $contentType . "\n" .
         'host:' . $host . "\n" .
-        'x-amz-date:' . $amzDate . "\n" .
-        'x-amz-target:com.amazonaws.bedrock-runtime.AmazonBedrockFrontendService.InvokeModel' . "\n";
+        'x-amz-date:' . $amzDate . "\n";
 
-    $signedHeaders = 'content-type;host;x-amz-date;x-amz-target';
+    $signedHeaders = 'content-type;host;x-amz-date';
 
     $canonicalRequest = implode("\n", [
         'POST',
@@ -305,7 +304,6 @@ function awsBedrockPost($url, $body, &$httpCode = 0) {
         CURLOPT_HTTPHEADER     => [
             'Content-Type: '    . $contentType,
             'X-Amz-Date: '      . $amzDate,
-            'X-Amz-Target: com.amazonaws.bedrock-runtime.AmazonBedrockFrontendService.InvokeModel',
             'Authorization: '   . $authHeader,
         ],
     ]);
