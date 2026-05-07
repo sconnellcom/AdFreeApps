@@ -1510,8 +1510,8 @@ async function startTrialGeneration(deck, cards) {
     // Reset trialState so we can detect "first question" below
     trialState = null;
 
-    // Use the cloud model for Trial by default; use the already-loaded local engine if present.
-    const useCloud = !webllmEngine;
+    // Always use the cloud model for Trial.
+    const useCloud = true;
 
     try {
         // If using a local engine, it's already loaded — nothing to do here.
