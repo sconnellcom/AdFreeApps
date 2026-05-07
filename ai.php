@@ -197,7 +197,9 @@ if ($bedrockHttpCode >= 200 && $bedrockHttpCode < 300 &&
         }
     }
 } else {
-    // AWS Bedrock errors use {"message":"..."} at the top level (REST protocol)
+    // Extract the error message from the AWS response.
+    // Bedrock Runtime REST errors use {"message":"..."} or {"Message":"..."}.
+    // Older / wrapped error shapes use {"error":{"message":"..."}}.
     $errMsg = $bedrockResponse['message']
            ?? $bedrockResponse['Message']
            ?? ($bedrockResponse['error']['message'] ?? null)
@@ -232,6 +234,9 @@ function aiLog($status, $detail, $inputChars) {
     @file_put_contents(LOG_FILE, trim($line) . "\n", FILE_APPEND | LOCK_EX);
 }
 
+// Signs and posts a request to AWS Bedrock Runtime.
+// Returns the response body string on any HTTP response, or false on a curl-level failure.
+// $httpCode is an output parameter set to the HTTP status code returned by AWS.
 function awsBedrockPost($url, $body, &$httpCode = 0) {
     $service   = 'bedrock-runtime';
     $region    = AWS_REGION;
