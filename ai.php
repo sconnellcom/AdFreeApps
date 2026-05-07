@@ -155,13 +155,38 @@ if ($totalChars > MAX_INPUT_CHARS) {
 }
 
 // ===== BEDROCK REQUEST =====
-$bedrockBody = [
-    'anthropic_version' => 'bedrock-2023-05-31',
-    'max_tokens'        => $maxTokens,
-    'messages'          => $messages,
-];
-if ($system) {
-    $bedrockBody['system'] = $system;
+// Detect model family to pick the right request/response format.
+// Anthropic Claude uses its own native API body (anthropic_version + string content).
+// Amazon Nova / Titan / other models use the native InvokeModel body where message
+// content must be an array of content blocks and the system prompt is also an array.
+$isAnthropic = (strpos(AWS_MODEL_ID, 'anthropic.') !== false ||
+                strpos(AWS_MODEL_ID, 'us.anthropic.') !== false);
+
+if ($isAnthropic) {
+    $bedrockBody = [
+        'anthropic_version' => 'bedrock-2023-05-31',
+        'max_tokens'        => $maxTokens,
+        'messages'          => $messages,
+    ];
+    if ($system) {
+        $bedrockBody['system'] = $system;
+    }
+} else {
+    // Amazon Nova / other models: content must be an array of content blocks.
+    $normalizedMessages = array_map(function ($msg) {
+        $content = $msg['content'] ?? '';
+        if (is_string($content)) {
+            $content = [['text' => $content]];
+        }
+        return ['role' => $msg['role'] ?? 'user', 'content' => $content];
+    }, $messages);
+    $bedrockBody = [
+        'messages'        => $normalizedMessages,
+        'inferenceConfig' => ['maxTokens' => $maxTokens],
+    ];
+    if ($system) {
+        $bedrockBody['system'] = [['text' => $system]];
+    }
 }
 
 $bodyJson   = json_encode($bedrockBody);
@@ -190,11 +215,21 @@ if (!is_array($bedrockResponse)) {
 
 // ===== EXTRACT CONTENT =====
 $content = '';
-if ($bedrockHttpCode >= 200 && $bedrockHttpCode < 300 &&
-    isset($bedrockResponse['content']) && is_array($bedrockResponse['content'])) {
-    foreach ($bedrockResponse['content'] as $block) {
-        if (($block['type'] ?? '') === 'text') {
-            $content .= $block['text'];
+if ($bedrockHttpCode >= 200 && $bedrockHttpCode < 300) {
+    if ($isAnthropic && isset($bedrockResponse['content']) && is_array($bedrockResponse['content'])) {
+        // Anthropic Claude response: {"content":[{"type":"text","text":"..."}]}
+        foreach ($bedrockResponse['content'] as $block) {
+            if (($block['type'] ?? '') === 'text') {
+                $content .= $block['text'];
+            }
+        }
+    } elseif (!$isAnthropic) {
+        // Amazon Nova / other models: {"output":{"message":{"content":[{"text":"..."}]}}}
+        $msgContent = $bedrockResponse['output']['message']['content'] ?? [];
+        foreach ($msgContent as $block) {
+            if (isset($block['text'])) {
+                $content .= $block['text'];
+            }
         }
     }
 } else {
