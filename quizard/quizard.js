@@ -1528,14 +1528,14 @@ async function startTrialGeneration(deck, cards) {
             'Given a flashcard FRONT (term) and BACK (answer/definition), ' +
             'output exactly 6 lines with no extra text, no blank lines, and no labels or numbering:\n' +
             'Line 1: a question about the FRONT term (end with a question mark)\n' +
-            'Line 2: the correct answer (use the BACK verbatim or a close paraphrase)\n' +
-            'Lines 3–6: four plausible but incorrect answers\n' +
-            'Always base the question and answers on the specific card content provided. Do not repeat any previous example.';
+            'Line 2: the correct answer — a short, concise phrase (do NOT copy the BACK verbatim; keep it similar in length and style to the wrong answers)\n' +
+            'Lines 3–6: four plausible but incorrect answers, each a short concise phrase\n' +
+            'All six answers should be roughly the same length. Do not repeat any previous example.';
 
         // Few-shot example exchange so the model understands the format
         // without copying the example output verbatim.
         const exampleUser = 'FRONT: Photosynthesis\nBACK: The process by which plants use sunlight to convert CO2 and water into glucose and oxygen';
-        const exampleAssistant = 'What process do plants use to convert sunlight, CO2, and water into glucose and oxygen?\nThe process by which plants use sunlight to convert CO2 and water into glucose and oxygen\nThe process by which animals break down food for energy\nThe process of water evaporating from plant leaves\nThe chemical breakdown of organic matter by bacteria\nThe cycle of carbon moving through the atmosphere and biosphere';
+        const exampleAssistant = 'What is photosynthesis?\nConverting sunlight, CO2, and water into glucose and oxygen\nBreaking down food molecules to release stored energy\nAbsorbing water and minerals through root systems\nReleasing CO2 as a byproduct of cellular respiration\nTransporting sugars through the plant\'s vascular tissue';
 
         for (let i = 0; i < selectedCards.length; i++) {
             const card = selectedCards[i];
