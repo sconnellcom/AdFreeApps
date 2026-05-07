@@ -1401,31 +1401,21 @@ async function startTrialGeneration(deck, cards) {
 
         const selectedCards = cards.slice(0, TRIAL_MAX_QUESTIONS);
 
-        // Use strict JSON schema mode so the model is constrained to valid JSON output.
+        // WebLLM supports response_format: { type: "json_object" } which forces valid JSON output.
+        // We describe the required schema in the system prompt so the model fills the right fields.
         const systemPrompt =
             'You are a multiple-choice quiz question generator. ' +
             'Given a flashcard FRONT (term) and BACK (answer/definition), ' +
             'create one multiple-choice question that tests knowledge of the BACK given the FRONT. ' +
             'The correct answer must be the BACK verbatim or a close paraphrase. ' +
             'The four distractors must be plausible but clearly wrong. ' +
-            'Place the correct answer at a random position among the 5 options.';
-
-        // JSON schema used with response_format to guarantee well-formed output.
-        const trialQuestionSchema = {
-            type: 'object',
-            properties: {
-                question: { type: 'string' },
-                answers: {
-                    type: 'array',
-                    items: { type: 'string' },
-                    minItems: 5,
-                    maxItems: 5
-                },
-                correctIndex: { type: 'integer' }
-            },
-            required: ['question', 'answers', 'correctIndex'],
-            additionalProperties: false
-        };
+            'Place the correct answer at a random position among the 5 options.\n\n' +
+            'Respond with ONLY a JSON object in exactly this shape — no prose before or after:\n' +
+            '{\n' +
+            '  "question": "<question text>",\n' +
+            '  "answers": ["<option 0>", "<option 1>", "<option 2>", "<option 3>", "<option 4>"],\n' +
+            '  "correctIndex": <0-based index of the correct answer>\n' +
+            '}';
 
         for (let i = 0; i < selectedCards.length; i++) {
             const card = selectedCards[i];
@@ -1450,14 +1440,7 @@ async function startTrialGeneration(deck, cards) {
                     ],
                     temperature: 0.5,
                     max_tokens: 512,
-                    response_format: {
-                        type: 'json_schema',
-                        json_schema: {
-                            name: 'trial_question',
-                            strict: true,
-                            schema: trialQuestionSchema
-                        }
-                    }
+                    response_format: { type: 'json_object' }
                 });
 
                 const text = response.choices[0].message.content || '';
@@ -1556,9 +1539,8 @@ function cancelTrialGeneration() {
 }
 
 function parseSingleTrialQuestion(text, cardId) {
-    // The model is constrained by json_schema / strict mode, so the output should
-    // always be valid JSON.  We still validate the shape to guard against any
-    // edge-case where the model managed to produce unexpected content.
+    // response_format: { type: "json_object" } forces WebLLM to output valid JSON.
+    // We still validate every required field in case the model omits or misnames one.
     let data;
     try {
         data = JSON.parse(text.trim());
@@ -1578,8 +1560,8 @@ function parseSingleTrialQuestion(text, cardId) {
         return null;
     }
 
-    // Defensive sanitisation: schema enforces exactly 5 string items with strict:true,
-    // but we still trim and filter blanks in case of any edge-case model deviation.
+    // Defensive sanitisation: json_object mode guarantees valid JSON but the model
+    // may still omit an answer or include a blank string, so we trim and filter.
     const answers = data.answers.slice(0, 5).map(a => String(a || '').trim()).filter(Boolean);
     if (answers.length < 3) {
         console.warn(`[Trial] parseSingleTrialQuestion: only ${answers.length} non-empty answer(s) after sanitising.`);
