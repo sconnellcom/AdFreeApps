@@ -542,6 +542,7 @@ function initMenu() {
     document.addEventListener('click', () => {
         menuDropdown.style.display = 'none';
         themeSubmenu.style.display = 'none';
+        document.querySelectorAll('.deck-menu-dropdown').forEach(d => { d.style.display = 'none'; });
     });
 
     menuDropdown.addEventListener('click', (e) => e.stopPropagation());
@@ -583,14 +584,28 @@ function renderDeckList() {
             <div class="deck-actions">
                 <button class="btn btn-primary" onclick="startStudy('${deck.id}')" title="Rehearse" ${cardCount === 0 ? 'disabled' : ''}>Rehearse</button>
                 <button class="btn btn-secondary" onclick="openTrial('${deck.id}')" title="Trial — AI multiple-choice quiz" ${cardCount === 0 ? 'disabled' : ''}>🔮 Trial</button>
-                <button class="btn-icon" onclick="renderDeckStudyLog('${deck.id}')" title="View Chronicle for this Spellbook" aria-label="View Chronicle for ${escapeHtml(deck.title)}">📊</button>
-                <button class="btn-icon" onclick="openEditor('${deck.id}')" title="Edit">✏️</button>
-                <button class="btn-icon" onclick="exportDeck('${deck.id}')" title="Export Spellbook as file" aria-label="Export ${escapeHtml(deck.title)} as file">⬇️</button>
-                <button class="btn-icon" onclick="shareDeckLink('${deck.id}')" title="Copy share link" aria-label="Copy share link for ${escapeHtml(deck.title)}">🔗</button>
-                <button class="btn-icon" onclick="deleteDeck('${deck.id}')" title="Delete">🗑️</button>
+                <div class="deck-menu-wrap">
+                    <button class="btn-icon deck-menu-btn" onclick="toggleDeckMenu('${deck.id}', event)" title="More options" aria-label="More options for ${escapeHtml(deck.title)}">⋮</button>
+                    <div class="deck-menu-dropdown" id="deck-menu-${deck.id}" style="display:none">
+                        <button class="deck-menu-item" onclick="renderDeckStudyLog('${deck.id}')"><span class="deck-menu-icon">📊</span> Chronicle</button>
+                        <button class="deck-menu-item" onclick="openEditor('${deck.id}')"><span class="deck-menu-icon">✏️</span> Edit</button>
+                        <button class="deck-menu-item" onclick="exportDeck('${deck.id}')"><span class="deck-menu-icon">⬇️</span> Export</button>
+                        <button class="deck-menu-item" onclick="shareDeckLink('${deck.id}')"><span class="deck-menu-icon">🔗</span> Share Link</button>
+                        <button class="deck-menu-item deck-menu-item--danger" onclick="deleteDeck('${deck.id}')"><span class="deck-menu-icon">🗑️</span> Delete</button>
+                    </div>
+                </div>
             </div>
         </div>`;
     }).join('');
+}
+
+function toggleDeckMenu(deckId, event) {
+    event.stopPropagation();
+    const dropdown = document.getElementById(`deck-menu-${deckId}`);
+    if (!dropdown) return;
+    const isOpen = dropdown.style.display !== 'none';
+    document.querySelectorAll('.deck-menu-dropdown').forEach(d => { d.style.display = 'none'; });
+    if (!isOpen) dropdown.style.display = 'block';
 }
 
 function deleteDeck(deckId) {
