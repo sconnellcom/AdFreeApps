@@ -1090,6 +1090,8 @@ const AI_TOKENS_PER_CARD = 60;
 const AI_PARSE_MAX_DEPTH = 3;
 // Some model outputs are accidentally wrapped as a JSON string array, e.g. ["[{...}]"].
 const AI_MALFORMED_JSON_PREFIX = '["[{';
+const AI_WRAPPED_JSON_PREFIX = '["';
+const AI_WRAPPED_JSON_SUFFIX = '"]';
 
 function openAiDeckScreen() {
     showScreen('ai-deck');
@@ -1228,7 +1230,7 @@ function setAiStatus(text, progress) {
 
 function parseAiCards(text) {
     const tryParse = (str, depth = 0) => {
-        if (!str || depth > AI_PARSE_MAX_DEPTH) return null;
+        if (!str || depth >= AI_PARSE_MAX_DEPTH) return null;
         try {
             const data = JSON.parse(str);
             if (typeof data === 'string') {
@@ -1275,9 +1277,10 @@ function sanitizeAiCards(arr) {
 
 function normalizeAiRepairInput(text) {
     const trimmed = (text || '').trim();
-    if (trimmed.startsWith(AI_MALFORMED_JSON_PREFIX) && trimmed.endsWith('"]')) {
+    if (!trimmed) return null;
+    if (trimmed.startsWith(AI_MALFORMED_JSON_PREFIX) && trimmed.endsWith(AI_WRAPPED_JSON_SUFFIX)) {
         return trimmed
-            .slice(2, -2)
+            .slice(AI_WRAPPED_JSON_PREFIX.length, -AI_WRAPPED_JSON_SUFFIX.length)
             .replace(/\\"/g, '"')
             .replace(/\\n/g, '\n');
     }
@@ -1285,8 +1288,9 @@ function normalizeAiRepairInput(text) {
 }
 
 async function requestAiJsonRepair(rawText, cardCount) {
+    if (!rawText || !webllmEngine) return null;
     const malformed = normalizeAiRepairInput(rawText);
-    if (!malformed || !webllmEngine) return '';
+    if (!malformed) return null;
 
     setAiStatus('Fixing malformed JSON…', 0.9);
 
@@ -1307,7 +1311,7 @@ async function requestAiJsonRepair(rawText, cardCount) {
         max_tokens: Math.min(AI_MAX_TOKENS, Math.max(AI_MIN_TOKENS, cardCount * AI_TOKENS_PER_CARD))
     });
 
-    return repairResponse.choices[0].message.content || '';
+    return repairResponse.choices[0].message.content || null;
 }
 
 function renderAiPreview(cards) {
