@@ -1503,23 +1503,11 @@ async function startTrialGeneration(deck, cards) {
     // Reset trialState so we can detect "first question" below
     trialState = null;
 
-    // Use the cloud model for Trial by default; fall back to local if engine already loaded.
+    // Use the cloud model for Trial by default; use the already-loaded local engine if present.
     const useCloud = !webllmEngine;
 
     try {
-        if (!useCloud) {
-            const modelId = webllmLoadedModel;
-            if (!webllmEngine || webllmLoadedModel !== modelId) {
-                webllmEngine = null;
-                webllmLoadedModel = null;
-                setTrialLoadingStatus('Downloading model… this may take a few minutes on first use.', 0);
-                const { CreateMLCEngine } = await import('https://esm.run/@mlc-ai/web-llm');
-                webllmEngine = await CreateMLCEngine(modelId, {
-                    initProgressCallback: (p) => setTrialLoadingStatus(p.text || 'Loading model…', p.progress || 0)
-                });
-                webllmLoadedModel = modelId;
-            }
-        }
+        // If using a local engine, it's already loaded — nothing to do here.
 
         const selectedCards = cards.slice(0, TRIAL_MAX_QUESTIONS);
 

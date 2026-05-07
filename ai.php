@@ -5,6 +5,9 @@
 // Only accepts requests from adfreeapps.com.
 
 // ===== CONFIGURATION =====
+// Replace the placeholder values below with your actual AWS credentials and
+// the correct Bedrock model ID before deploying. Keep this file outside of
+// publicly-browsable version control once real credentials are set.
 define('AWS_ACCESS_KEY_ID',     'YOUR_ACCESS_KEY_HERE');
 define('AWS_SECRET_ACCESS_KEY', 'YOUR_SECRET_KEY_HERE');
 define('AWS_REGION',            'us-east-1');
