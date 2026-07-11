@@ -106,10 +106,16 @@
 
         <!-- BPM Preset Menu -->
         <div id="bpmPresetMenu" class="bpm-preset-menu" style="display: none;">
-            <!-- BPM Slider -->
+            <!-- BPM Slider with adjust buttons -->
             <div class="control-group">
                 <label for="bpmSlider">Tempo:</label>
-                <input type="range" id="bpmSlider" min="10" max="240" value="120" step="1">
+                <div class="bpm-slider-row">
+                    <button class="bpm-adjust-btn" id="bpmMinus5" title="Decrease BPM by 5">-5</button>
+                    <button class="bpm-adjust-btn" id="bpmMinus1" title="Decrease BPM by 1">-1</button>
+                    <input type="range" id="bpmSlider" min="10" max="240" value="120" step="1">
+                    <button class="bpm-adjust-btn" id="bpmPlus1" title="Increase BPM by 1">+1</button>
+                    <button class="bpm-adjust-btn" id="bpmPlus5" title="Increase BPM by 5">+5</button>
+                </div>
             </div>
             <div class="bpm-preset-header">Quick Tempo Presets</div>
             <div class="bpm-preset-grid">

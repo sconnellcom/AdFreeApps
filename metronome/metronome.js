@@ -281,6 +281,21 @@ class Metronome {
             }
         });
 
+        // BPM adjust buttons
+        const adjustBpm = (delta) => {
+            this.bpm = Math.min(240, Math.max(10, this.bpm + delta));
+            this.bpmValue.textContent = this.bpm;
+            this.bpmSlider.value = this.bpm;
+            if (this.isRunning) {
+                this.stop();
+                this.start();
+            }
+        };
+        document.getElementById('bpmMinus5').addEventListener('click', () => adjustBpm(-5));
+        document.getElementById('bpmMinus1').addEventListener('click', () => adjustBpm(-1));
+        document.getElementById('bpmPlus1').addEventListener('click', () => adjustBpm(1));
+        document.getElementById('bpmPlus5').addEventListener('click', () => adjustBpm(5));
+
         // Start/Stop button
         this.startStopBtn.addEventListener('click', () => {
             if (this.isRunning) {
