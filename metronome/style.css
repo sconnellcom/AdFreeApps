@@ -553,16 +553,14 @@ h3 {
 }
 
 /* BPM Controls (display + adjust buttons) */
-.bpm-controls {
+.bpm-slider-row {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 8px;
-    margin-bottom: 15px;
+    gap: 6px;
 }
 
-.bpm-controls .bpm-display {
-    margin-bottom: 0;
+.bpm-slider-row input[type="range"] {
+    flex: 1;
 }
 
 .bpm-adjust-btn {
