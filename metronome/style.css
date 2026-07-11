@@ -552,6 +552,43 @@ h3 {
     color: #e53e3e;
 }
 
+/* BPM Controls (display + adjust buttons) */
+.bpm-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.bpm-controls .bpm-display {
+    margin-bottom: 0;
+}
+
+.bpm-adjust-btn {
+    background: var(--surface-bg);
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-color);
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: 700;
+    padding: 6px 10px;
+    transition: all 0.2s ease;
+}
+
+.bpm-adjust-btn:hover {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 3px 10px var(--pulse-shadow);
+}
+
+.bpm-adjust-btn:active {
+    transform: translateY(0);
+}
+
 /* BPM Display */
 .bpm-display {
     text-align: center;
