@@ -542,7 +542,7 @@ function updateProgress() {
     document.getElementById('remainingText').textContent = `${remainingCount} facts left`;
     document.getElementById('masteryFill').style.width = `${percent}%`;
     document.getElementById('imageCaption').textContent = waitingForPick
-        ? 'Pick a box on the image to show the next card.'
+        ? ''
         : remainingCount === 0
         ? 'You uncovered the whole picture. Keep practicing as long as you like.'
         : '';
