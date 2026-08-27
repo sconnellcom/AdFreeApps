@@ -16,7 +16,7 @@ const DEFAULT_IMAGE = 'default-image.svg';
 const REVEAL_ORDER = buildRevealOrder(TOTAL_FACTS);
 const MASTERY_STREAK_REQUIRED = 2;
 const MASTERY_AVG_MS = 6000;
-const MASTERED_MS = 1500;
+const MASTERED_MS = 1250;
 const AUTOMATIC_MS = 2000;
 const SOLID_MS = 4000;
 const LEARNING_MS = 10000;
@@ -24,7 +24,7 @@ const SHARE_IMAGE_HASH_KEY = 'image';
 const SHARE_ROTATION_HASH_KEY = 'rotation';
 const SHARE_PICK_MODE_HASH_KEY = 'pick';
 const CATEGORY_META = {
-    mastered: { label: 'Super Fast' },
+    mastered: { label: 'Insainly Fast' },
     automatic: { label: 'Automatic' },
     solid: { label: 'Solid' },
     learning: { label: 'Learning' },
