@@ -432,11 +432,18 @@ body {
 
 .results-gameplay-row {
     justify-content: center;
+    margin-bottom: 18px;
 }
 
 .settings-panel {
     text-align: left;
     margin-bottom: 18px;
+}
+
+.settings-footer-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 24px;
 }
 
 .settings-label {

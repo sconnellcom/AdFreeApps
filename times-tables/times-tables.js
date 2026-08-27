@@ -24,6 +24,8 @@ const ACTIVE_TIMER_CAP_MS = 20000;
 const SHARE_IMAGE_LIST_HASH_KEY = 'images';
 const SHARE_IMAGE_INDEX_HASH_KEY = 'imageIndex';
 const SHARE_ROTATION_HASH_KEY = 'rotation';
+const SHARE_LEARNING_HASH_KEY = 'learning';
+const SHARE_DISTRACTED_HASH_KEY = 'distracted';
 const SHARE_PICK_MODE_HASH_KEY = 'pick';
 const SHARE_PROGRESS_HASH_KEY = 'progress';
 const CATEGORY_META = {
@@ -134,7 +136,11 @@ function buildEmptySession() {
         lastActivityAt: now,
         attempts: [],
         undoState: null,
-        awaitingPick: isPickCardModeActive()
+        awaitingPick: isPickCardModeActive(),
+        currentPickTileId: null,
+        lastPickTileId: null,
+        lastPickFactId: null,
+        lastPickWasCorrect: null
     };
 }
 
@@ -241,7 +247,8 @@ function loadState() {
         imageUrls: [],
         currentImageIndex: 0,
         settings: {
-            rotateUnmasteredOnly: true,
+            keepLearningInRotation: true,
+            keepDistractedInRotation: true,
             pickCardMode: false,
             progressSolidOrBetter: true
         },
@@ -293,9 +300,15 @@ function sanitizeState(input) {
                 ? input.activeSession.attempts.map(sanitizeAttemptEntry).filter(Boolean)
                 : [],
             undoState: null,
-            awaitingPick: Boolean(input.activeSession.awaitingPick)
+            awaitingPick: Boolean(input.activeSession.awaitingPick),
+            currentPickTileId: FACT_BY_ID[input.activeSession.currentPickTileId] ? input.activeSession.currentPickTileId : null,
+            lastPickTileId: FACT_BY_ID[input.activeSession.lastPickTileId] ? input.activeSession.lastPickTileId : null,
+            lastPickFactId: FACT_BY_ID[input.activeSession.lastPickFactId] ? input.activeSession.lastPickFactId : null,
+            lastPickWasCorrect: typeof input.activeSession.lastPickWasCorrect === 'boolean' ? input.activeSession.lastPickWasCorrect : null
         }
         : null;
+
+    const legacyRotate = !input.settings || input.settings.rotateUnmasteredOnly !== false;
 
     const lastSessionStats = input.lastSessionStats && typeof input.lastSessionStats === 'object'
         ? {
@@ -317,7 +330,12 @@ function sanitizeState(input) {
         imageUrls: sanitizeImageUrls(input.imageUrls, input.imageDataUrl),
         currentImageIndex: sanitizeImageIndex(input.currentImageIndex, input.imageUrls, input.imageDataUrl),
         settings: {
-            rotateUnmasteredOnly: !input.settings || input.settings.rotateUnmasteredOnly !== false,
+            keepLearningInRotation: input.settings && 'keepLearningInRotation' in input.settings
+                ? input.settings.keepLearningInRotation !== false
+                : legacyRotate,
+            keepDistractedInRotation: input.settings && 'keepDistractedInRotation' in input.settings
+                ? input.settings.keepDistractedInRotation !== false
+                : legacyRotate,
             pickCardMode: Boolean(input.settings && input.settings.pickCardMode),
             progressSolidOrBetter: !input.settings || input.settings.progressSolidOrBetter !== false
         },
@@ -481,7 +499,11 @@ function captureUndoState() {
         currentCardActiveMs: state.activeSession.currentCardActiveMs,
         lastActivityAt: state.activeSession.lastActivityAt,
         attempts: state.activeSession.attempts,
-        awaitingPick: state.activeSession.awaitingPick
+        awaitingPick: state.activeSession.awaitingPick,
+        currentPickTileId: state.activeSession.currentPickTileId,
+        lastPickTileId: state.activeSession.lastPickTileId,
+        lastPickFactId: state.activeSession.lastPickFactId,
+        lastPickWasCorrect: state.activeSession.lastPickWasCorrect
     });
 
     return {
@@ -522,12 +544,13 @@ function ensureSession() {
     const hasValidCurrentFact = Boolean(FACT_BY_ID[currentFactId]);
     const shouldReplaceForRotation =
         !isPickCardModeActive() &&
-        state.settings.rotateUnmasteredOnly &&
+        usesRotationPool() &&
         currentFactProgress &&
         !shouldKeepInRotation(currentFactProgress);
 
     if (isPickCardModeActive() && !hasValidCurrentFact) {
         state.activeSession.currentFactId = null;
+        state.activeSession.currentPickTileId = null;
         resetCurrentCardTimer();
         state.activeSession.awaitingPick = true;
         return;
@@ -544,12 +567,14 @@ function shouldKeepInRotation(progress) {
     if (!progress || !progress.attempts) {
         return true;
     }
-    return isLearningOrDistracted(progress);
-}
-
-function isLearningOrDistracted(progress) {
     const category = getProgressCategory(progress);
-    return category === 'learning' || category === 'distracted';
+    if (category === 'learning') {
+        return state.settings.keepLearningInRotation !== false;
+    }
+    if (category === 'distracted') {
+        return state.settings.keepDistractedInRotation !== false;
+    }
+    return false;
 }
 
 function getProgressCategory(progress) {
@@ -577,6 +602,10 @@ function isAwaitingPick() {
 
 function isCurrentFact(factId) {
     return Boolean(state.activeSession && state.activeSession.currentFactId === factId);
+}
+
+function isCurrentPickTile(factId) {
+    return Boolean(state.activeSession && state.activeSession.currentPickTileId === factId);
 }
 
 function isSolidOrBetterCategory(category) {
@@ -614,8 +643,12 @@ function getImageQueueLabel() {
     return `Image ${state.currentImageIndex + 1} of ${imageUrls.length}`;
 }
 
+function usesRotationPool() {
+    return state.settings.keepLearningInRotation !== false || state.settings.keepDistractedInRotation !== false;
+}
+
 function pickNextFactId(previousFactId) {
-    let pool = state.settings.rotateUnmasteredOnly
+    let pool = usesRotationPool()
         ? FACTS.filter((fact) => shouldKeepInRotation(state.factProgress[fact.id]))
         : FACTS.slice();
 
@@ -703,7 +736,7 @@ function renderCoverTiles() {
             } else if (progress && progress.correct > 0) {
                 tile.classList.add('partial');
             }
-            if (!canPick && isCurrentFact(fact.id) && !isTileFullyCleared(progress)) {
+            if (!canPick && ((isPickCardModeActive() && isCurrentPickTile(fact.id)) || (!isPickCardModeActive() && isCurrentFact(fact.id))) && !isTileFullyCleared(progress)) {
                 tile.classList.add('next-reveal');
             }
             if (cover.id === 'imageCover' && canPick && (allCleared || !isTileFullyCleared(progress))) {
@@ -763,7 +796,8 @@ function updateSessionText() {
 
 function updateGameplayToggle() {
     document.getElementById('progressSolidToggle').checked = isProgressBasedOnSolidOrBetter();
-    document.getElementById('rotateUnmasteredToggle').checked = state.settings.rotateUnmasteredOnly;
+    document.getElementById('keepLearningToggle').checked = state.settings.keepLearningInRotation !== false;
+    document.getElementById('keepDistractedToggle').checked = state.settings.keepDistractedInRotation !== false;
     document.getElementById('pickCardModeToggle').checked = isPickCardModeActive();
 }
 
@@ -839,7 +873,12 @@ function handleCoverTilePick(factId) {
     }
     recordSessionActivity();
     if (FACT_BY_ID[factId]) {
-        state.activeSession.currentFactId = factId;
+        const previousFactId =
+            state.activeSession.lastPickTileId === factId && state.activeSession.lastPickWasCorrect === false
+                ? state.activeSession.lastPickFactId
+                : null;
+        state.activeSession.currentFactId = pickNextFactId(previousFactId);
+        state.activeSession.currentPickTileId = factId;
     }
     state.activeSession.awaitingPick = false;
     state.activeSession.isFlipped = false;
@@ -967,11 +1006,16 @@ function markAnswer(wasCorrect) {
     session.isFlipped = false;
 
     if (isPickCardModeActive()) {
+        session.lastPickTileId = session.currentPickTileId;
+        session.lastPickFactId = currentFactId;
+        session.lastPickWasCorrect = wasCorrect;
         session.currentFactId = null;
+        session.currentPickTileId = null;
         session.awaitingPick = true;
         resetCurrentCardTimer();
     } else {
         session.currentFactId = pickNextFactId(advancedToNextImage ? null : currentFactId);
+        session.currentPickTileId = null;
         session.awaitingPick = false;
         resetCurrentCardTimer();
     }
@@ -1131,9 +1175,24 @@ function startFreshSession() {
     renderStudyScreen();
 }
 
-function setRotateUnmasteredOnly(enabled) {
+function setKeepLearningInRotation(enabled) {
     recordSessionActivity();
-    state.settings.rotateUnmasteredOnly = enabled;
+    state.settings.keepLearningInRotation = enabled;
+    saveState();
+    if (document.getElementById('screen-settings').classList.contains('active')) {
+        renderSettingsScreen();
+        return;
+    }
+    if (document.getElementById('screen-stats').classList.contains('active')) {
+        renderStatsScreen();
+        return;
+    }
+    renderStudyScreen();
+}
+
+function setKeepDistractedInRotation(enabled) {
+    recordSessionActivity();
+    state.settings.keepDistractedInRotation = enabled;
     saveState();
     if (document.getElementById('screen-settings').classList.contains('active')) {
         renderSettingsScreen();
@@ -1167,11 +1226,13 @@ function setPickCardMode(enabled) {
     if (state.activeSession) {
         if (!enabled && state.activeSession.awaitingPick) {
             state.activeSession.awaitingPick = false;
+            state.activeSession.currentPickTileId = null;
             resetCurrentCardTimer();
         }
         if (enabled) {
             state.activeSession.isFlipped = false;
             state.activeSession.currentFactId = null;
+            state.activeSession.currentPickTileId = null;
             state.activeSession.awaitingPick = true;
             resetCurrentCardTimer();
         }
@@ -1285,7 +1346,9 @@ function getShareUrl() {
     const url = new URL(window.location.href);
     url.hash = '';
     const params = new URLSearchParams({
-        [SHARE_ROTATION_HASH_KEY]: state.settings.rotateUnmasteredOnly ? '1' : '0',
+        [SHARE_ROTATION_HASH_KEY]: usesRotationPool() ? '1' : '0',
+        [SHARE_LEARNING_HASH_KEY]: state.settings.keepLearningInRotation !== false ? '1' : '0',
+        [SHARE_DISTRACTED_HASH_KEY]: state.settings.keepDistractedInRotation !== false ? '1' : '0',
         [SHARE_PICK_MODE_HASH_KEY]: state.settings.pickCardMode ? '1' : '0',
         [SHARE_PROGRESS_HASH_KEY]: isProgressBasedOnSolidOrBetter() ? '1' : '0'
     });
@@ -1307,13 +1370,15 @@ function loadSharedStateFromUrl() {
     const sharedImages = params.get(SHARE_IMAGE_LIST_HASH_KEY);
     const sharedImageIndex = params.get(SHARE_IMAGE_INDEX_HASH_KEY);
     const rotationSetting = params.get(SHARE_ROTATION_HASH_KEY);
+    const learningSetting = params.get(SHARE_LEARNING_HASH_KEY);
+    const distractedSetting = params.get(SHARE_DISTRACTED_HASH_KEY);
     const pickSetting = params.get(SHARE_PICK_MODE_HASH_KEY);
     const progressSetting = params.get(SHARE_PROGRESS_HASH_KEY);
     const sharedImageUrls = typeof sharedImages === 'string'
         ? sharedImages.split('\n').map((value) => value.trim()).filter(Boolean)
         : [];
     const hasSharedImageList = sharedImageUrls.length > 0;
-    const hasSharedSettings = rotationSetting !== null || pickSetting !== null || progressSetting !== null;
+    const hasSharedSettings = rotationSetting !== null || learningSetting !== null || distractedSetting !== null || pickSetting !== null || progressSetting !== null;
 
     if (!hasSharedImageList && !hasSharedSettings) {
         return;
@@ -1322,8 +1387,15 @@ function loadSharedStateFromUrl() {
         state.imageUrls = sharedImageUrls;
         state.currentImageIndex = sanitizeImageIndex(sharedImageIndex, sharedImageUrls);
     }
-    if (rotationSetting !== null) {
-        state.settings.rotateUnmasteredOnly = rotationSetting !== '0';
+    if (learningSetting !== null) {
+        state.settings.keepLearningInRotation = learningSetting !== '0';
+    } else if (rotationSetting !== null) {
+        state.settings.keepLearningInRotation = rotationSetting !== '0';
+    }
+    if (distractedSetting !== null) {
+        state.settings.keepDistractedInRotation = distractedSetting !== '0';
+    } else if (rotationSetting !== null) {
+        state.settings.keepDistractedInRotation = rotationSetting !== '0';
     }
     if (pickSetting !== null) {
         state.settings.pickCardMode = pickSetting === '1';
@@ -1348,15 +1420,6 @@ async function shareImageLink() {
         // Fall through to prompt.
     }
     window.prompt('Copy this share link:', shareUrl);
-}
-
-function resetImage() {
-    state.imageUrls = [];
-    state.currentImageIndex = 0;
-    clearOverlayProgress();
-    saveState();
-    renderSettingsScreen();
-    showNotice('Using the default image with a fresh covered overlay.');
 }
 
 function saveImageUrls() {
@@ -1418,13 +1481,15 @@ function initEvents() {
     document.getElementById('flipBtn').addEventListener('click', flipCard);
     document.getElementById('wrongBtn').addEventListener('click', () => markAnswer(false));
     document.getElementById('rightBtn').addEventListener('click', () => markAnswer(true));
-    document.getElementById('resetImageBtn').addEventListener('click', resetImage);
     document.getElementById('shareImageBtn').addEventListener('click', shareImageLink);
     document.getElementById('saveImageUrlsBtn').addEventListener('click', saveImageUrls);
     document.getElementById('undoBtn').addEventListener('click', undoLastAnswer);
     document.getElementById('resetAllTimeBtn').addEventListener('click', resetAllProgressAndStats);
-    document.getElementById('rotateUnmasteredToggle').addEventListener('change', (event) => {
-        setRotateUnmasteredOnly(event.target.checked);
+    document.getElementById('keepLearningToggle').addEventListener('change', (event) => {
+        setKeepLearningInRotation(event.target.checked);
+    });
+    document.getElementById('keepDistractedToggle').addEventListener('change', (event) => {
+        setKeepDistractedInRotation(event.target.checked);
     });
     document.getElementById('progressSolidToggle').addEventListener('change', (event) => {
         setProgressSolidOrBetter(event.target.checked);

@@ -10,7 +10,7 @@
     <link rel="manifest" href="../manifest.json">
     <link rel="apple-touch-icon" href="../icons/icon-152x152.png">
     <title>Times Tables</title>
-    <link rel="stylesheet" href="style.css?v=6">
+    <link rel="stylesheet" href="style.css?v=7">
 </head>
 
 <body>
@@ -197,8 +197,6 @@
                     <textarea id="imageUrlsInput" class="settings-textarea" rows="6" placeholder="https://example.com/image-1.jpg&#10;https://example.com/image-2.jpg"></textarea>
                     <div class="image-controls">
                         <button id="saveImageUrlsBtn" class="btn btn-primary" type="button">Save image list</button>
-                        <button id="resetImageBtn" class="btn btn-secondary" type="button">Use default image</button>
-                        <button id="shareImageBtn" class="btn btn-secondary" type="button">Share setup</button>
                     </div>
                 </section>
 
@@ -207,14 +205,21 @@
                         <input id="progressSolidToggle" type="checkbox" checked>
                         Progress based on solid or better
                     </label>
-                    <label class="toggle-option" for="rotateUnmasteredToggle">
-                        <input id="rotateUnmasteredToggle" type="checkbox" checked>
-                        Keep learning or distracted in rotation
+                    <label class="toggle-option" for="keepLearningToggle">
+                        <input id="keepLearningToggle" type="checkbox" checked>
+                        Keep learning in rotation
+                    </label>
+                    <label class="toggle-option" for="keepDistractedToggle">
+                        <input id="keepDistractedToggle" type="checkbox" checked>
+                        Keep distracted in rotation
                     </label>
                     <label class="toggle-option" for="pickCardModeToggle">
                         <input id="pickCardModeToggle" type="checkbox">
                         Pick a card mode
                     </label>
+                </div>
+                <div class="settings-footer-actions">
+                    <button id="shareImageBtn" class="btn btn-secondary" type="button">Share setup</button>
                 </div>
             </div>
         </div>
@@ -231,7 +236,7 @@
         </div>
     </div>
 
-    <script src="times-tables.js?v=6"></script>
+    <script src="times-tables.js?v=7"></script>
 </body>
 
 </html>
