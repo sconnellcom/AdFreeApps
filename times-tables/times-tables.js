@@ -449,12 +449,16 @@ function isCurrentFact(factId) {
     return Boolean(state.activeSession && state.activeSession.currentFactId === factId);
 }
 
+function isSolidOrBetterCategory(category) {
+    return category === 'mastered' || category === 'automatic' || category === 'solid';
+}
+
 function isTileFullyCleared(progress) {
     if (!progress) {
         return false;
     }
     const category = getProgressCategory(progress);
-    return Boolean(progress.mastered || category === 'mastered' || category === 'automatic');
+    return Boolean(progress.mastered || isSolidOrBetterCategory(category));
 }
 
 function getClearedTileCount() {
@@ -511,19 +515,19 @@ function updateStudyCard(options = {}) {
 }
 
 function updateProgress() {
-    const masteredCount = state.masteredIds.length;
-    const remainingCount = TOTAL_FACTS - masteredCount;
-    const percent = Math.round((masteredCount / TOTAL_FACTS) * 100);
+    const clearedCount = getClearedTileCount();
+    const remainingCount = TOTAL_FACTS - clearedCount;
+    const percent = Math.round((clearedCount / TOTAL_FACTS) * 100);
     const waitingForPick = isAwaitingPick();
 
-    document.getElementById('masteryText').textContent = `${masteredCount} of ${TOTAL_FACTS} mastered`;
+    document.getElementById('masteryText').textContent = `${clearedCount} of ${TOTAL_FACTS} solid or better`;
     document.getElementById('remainingText').textContent = `${remainingCount} facts left`;
     document.getElementById('masteryFill').style.width = `${percent}%`;
     document.getElementById('imageCaption').textContent = waitingForPick
         ? 'Pick a box on the image to show the next card.'
         : remainingCount === 0
         ? 'You uncovered the whole picture. Keep practicing as long as you like.'
-        : 'Correct answers uncover more, and mastered or automatic answers fully clear a tile.';
+        : 'Correct answers uncover more, and solid or better answers fully clear a tile.';
     const clearedTileCount = getClearedTileCount();
     document.getElementById('resultsImageCaption').textContent = clearedTileCount === TOTAL_FACTS
         ? 'Your whole image is uncovered.'
@@ -538,7 +542,7 @@ function renderCoverTiles() {
         document.getElementById('resultsImageCover')
     ].filter(Boolean);
     const canPick = isAwaitingPick();
-    const allMastered = state.masteredIds.length === TOTAL_FACTS;
+    const allCleared = getClearedTileCount() === TOTAL_FACTS;
     const highlightNextReveal = !isPickCardModeActive() && !canPick;
 
     covers.forEach((cover) => {
@@ -560,7 +564,7 @@ function renderCoverTiles() {
             if (highlightNextReveal && isCurrentFact(fact.id) && !isTileFullyCleared(progress)) {
                 tile.classList.add('next-reveal');
             }
-            if (cover.id === 'imageCover' && canPick && (allMastered || !isTileFullyCleared(progress))) {
+            if (cover.id === 'imageCover' && canPick && (allCleared || !isTileFullyCleared(progress))) {
                 tile.classList.add('pickable');
                 tile.addEventListener('click', () => handleCoverTilePick(fact.id));
             }
