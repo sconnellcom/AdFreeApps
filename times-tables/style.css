@@ -10,8 +10,33 @@
     margin: 0;
 }
 
+.pick-card-mode .image-card-host {
+    flex-direction: column;
+    justify-content: center;
+    gap: 12px;
+}
+
 .image-card-host .flashcard-wrap {
     margin: 0;
+    pointer-events: auto;
+    order: 1;
+}
+
+.pick-mode-actions-host {
+    display: none;
+    width: 100%;
+    max-width: 320px;
+    pointer-events: none;
+    order: 2;
+}
+
+.pick-card-mode .pick-mode-actions-host {
+    display: block;
+}
+
+.pick-mode-actions-host .rating-row {
+    width: 100%;
+    justify-content: center;
     pointer-events: auto;
 }
 
@@ -445,6 +470,10 @@ body {
     flex-direction: column;
     gap: 12px;
     margin-top: -4px;
+}
+
+.pick-card-mode .study-actions {
+    margin-top: 0;
 }
 
 .rating-row {

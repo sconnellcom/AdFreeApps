@@ -97,7 +97,8 @@ function buildEmptyFactProgress() {
         lastResponseMs: null,
         lastWasCorrect: false,
         recentResults: [],
-        mastered: false
+        mastered: false,
+        cleared: false
     };
 }
 
@@ -202,11 +203,15 @@ function sanitizeFactProgressMap(rawMap, fallbackMasteredIds) {
             lastResponseMs: Number.isFinite(Number(input.lastResponseMs)) ? Math.max(0, Number(input.lastResponseMs)) : null,
             lastWasCorrect: Boolean(input.lastWasCorrect),
             recentResults,
-            mastered: Boolean(input.mastered) || masteredSet.has(factId)
+            mastered: Boolean(input.mastered) || masteredSet.has(factId),
+            cleared: Boolean(input.cleared)
         };
         if (isFactMastered(progress)) {
             progress.mastered = true;
             masteredSet.add(factId);
+        }
+        if (progress.mastered || isSolidOrBetterCategory(getProgressCategory(progress))) {
+            progress.cleared = true;
         }
         map[factId] = progress;
     });
@@ -458,7 +463,7 @@ function isTileFullyCleared(progress) {
         return false;
     }
     const category = getProgressCategory(progress);
-    return Boolean(progress.mastered || isSolidOrBetterCategory(category));
+    return Boolean(progress.cleared || progress.mastered || isSolidOrBetterCategory(category));
 }
 
 function getClearedTileCount() {
@@ -601,12 +606,21 @@ function updateFlashcardPlacement() {
     const wrap = document.getElementById('flashcardWrap');
     const standardHost = document.getElementById('flashcardHost');
     const imageHost = document.getElementById('imageCardHost');
+    const studyActions = document.getElementById('studyActions');
+    const ratingRow = document.getElementById('ratingRow');
+    const pickModeActionsHost = document.getElementById('pickModeActionsHost');
     const useImageHost = isPickCardModeActive();
 
     if (useImageHost && wrap.parentElement !== imageHost) {
         imageHost.appendChild(wrap);
     } else if (!useImageHost && wrap.parentElement !== standardHost) {
         standardHost.appendChild(wrap);
+    }
+
+    if (useImageHost && ratingRow.parentElement !== pickModeActionsHost) {
+        pickModeActionsHost.appendChild(ratingRow);
+    } else if (!useImageHost && ratingRow.parentElement !== studyActions) {
+        studyActions.appendChild(ratingRow);
     }
 
     document.body.classList.toggle('pick-card-mode', useImageHost);
@@ -666,11 +680,14 @@ function recordFactAttempt(factId, wasCorrect, responseMs) {
     progress.totalResponseMs += responseMs;
     progress.lastResponseMs = responseMs;
     progress.lastWasCorrect = wasCorrect;
-    if (progress.fastestResponseMs === null || responseMs < progress.fastestResponseMs) {
+    if (wasCorrect && (progress.fastestResponseMs === null || responseMs < progress.fastestResponseMs)) {
         progress.fastestResponseMs = responseMs;
     }
     if (wasCorrect) {
         progress.correct += 1;
+        if (responseMs <= SOLID_MS) {
+            progress.cleared = true;
+        }
     }
     progress.recentResults.push({ correct: wasCorrect, responseMs });
     progress.recentResults = progress.recentResults.slice(-5);

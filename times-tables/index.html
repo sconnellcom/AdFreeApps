@@ -88,7 +88,9 @@
                 <div class="image-frame">
                     <img id="rewardImage" class="reward-image" src="default-image.svg" alt="Hidden reward image">
                     <div id="imageCover" class="image-cover" aria-hidden="true"></div>
-                    <div id="imageCardHost" class="image-card-host"></div>
+                    <div id="imageCardHost" class="image-card-host">
+                        <div id="pickModeActionsHost" class="pick-mode-actions-host"></div>
+                    </div>
                 </div>
                 <div class="image-caption" id="imageCaption">Each new correct answer uncovers one part of the picture.</div>
             </section>
@@ -106,7 +108,7 @@
                 </div>
             </div>
 
-            <div class="study-actions">
+            <div class="study-actions" id="studyActions">
                 <button id="flipBtn" class="btn btn-primary" type="button">Flip card</button>
                 <div class="rating-row" id="ratingRow">
                     <button id="wrongBtn" class="btn btn-warning" type="button">Not yet</button>
