@@ -443,6 +443,10 @@ function isAwaitingPick() {
     return Boolean(state.activeSession && state.activeSession.awaitingPick && isPickCardModeActive());
 }
 
+function isCurrentFact(factId) {
+    return Boolean(state.activeSession && state.activeSession.currentFactId === factId);
+}
+
 function pickNextFactId(previousFactId) {
     let pool = state.settings.rotateUnmasteredOnly
         ? FACTS.filter((fact) => shouldKeepInRotation(state.factProgress[fact.id]))
@@ -515,6 +519,7 @@ function renderCoverTiles() {
     imageCover.innerHTML = '';
     const canPick = isAwaitingPick();
     const allMastered = state.masteredIds.length === TOTAL_FACTS;
+    const highlightNextReveal = !isPickCardModeActive() && !canPick;
 
     FACTS.forEach((fact, factIndex) => {
         const tile = document.createElement('div');
@@ -527,9 +532,15 @@ function renderCoverTiles() {
         } else if (progress && progress.correct > 0) {
             tile.classList.add('partial');
         }
+        if (isPickCardModeActive() && !canPick && isCurrentFact(fact.id) && (!progress || !progress.mastered)) {
+            tile.classList.add('preview-reveal');
+        }
+        if (highlightNextReveal && isCurrentFact(fact.id) && (!progress || !progress.mastered)) {
+            tile.classList.add('next-reveal');
+        }
         if (canPick && (allMastered || !progress || !progress.mastered)) {
             tile.classList.add('pickable');
-            tile.addEventListener('click', handleCoverTilePick);
+            tile.addEventListener('click', () => handleCoverTilePick(fact.id));
         }
         imageCover.appendChild(tile);
     });
@@ -567,6 +578,7 @@ function updateFlashcardPlacement() {
     }
 
     document.body.classList.toggle('pick-card-mode', useImageHost);
+    document.body.classList.toggle('awaiting-pick', isAwaitingPick());
 }
 
 function renderStudyScreen(options = {}) {
@@ -583,9 +595,12 @@ function renderStudyScreen(options = {}) {
     updateNotice();
 }
 
-function handleCoverTilePick() {
+function handleCoverTilePick(factId) {
     if (!isAwaitingPick()) {
         return;
+    }
+    if (FACT_BY_ID[factId]) {
+        state.activeSession.currentFactId = factId;
     }
     state.activeSession.awaitingPick = false;
     state.activeSession.isFlipped = false;
