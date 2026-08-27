@@ -653,7 +653,7 @@ function updateProgress() {
     const progressLabel = isProgressBasedOnSolidOrBetter() ? 'solid or better' : 'correct';
 
     document.getElementById('masteryText').textContent = `${clearedCount} of ${TOTAL_FACTS} ${progressLabel}`;
-    document.getElementById('remainingText').textContent = `${remainingCount} facts left`;
+    document.getElementById('remainingText').textContent = `${remainingCount} problems left`;
     document.getElementById('masteryFill').style.width = `${percent}%`;
     document.getElementById('imageCaption').textContent = waitingForPick
         ? ''
