@@ -14,6 +14,21 @@ const FACT_BY_ID = Object.fromEntries(FACTS.map((fact) => [fact.id, fact]));
 const STORAGE_KEY = 'times_tables_progress_v1';
 const DEFAULT_IMAGE = 'default-image.svg';
 const REVEAL_ORDER = buildRevealOrder(TOTAL_FACTS);
+const MASTERY_STREAK_REQUIRED = 2;
+const MASTERY_AVG_MS = 6000;
+const REALLY_FAST_MS = 2000;
+const KNOWN_MS = 3500;
+const FAST_MS = 5500;
+const SLOW_MS = 9000;
+const CATEGORY_META = {
+    mastered: { label: 'Mastered' },
+    'really-fast': { label: 'Really Fast' },
+    known: { label: 'Known' },
+    fast: { label: 'Fast' },
+    'needs-work': { label: 'Needs Work' },
+    slow: { label: 'Slow' }
+};
+const CATEGORY_ORDER = ['mastered', 'really-fast', 'known', 'fast', 'needs-work', 'slow'];
 const themeIcons = {
     default: '💜',
     black: '⚫',
@@ -71,10 +86,119 @@ function buildRevealOrder(length) {
     return values;
 }
 
+function buildEmptyFactProgress() {
+    return {
+        attempts: 0,
+        correct: 0,
+        totalResponseMs: 0,
+        fastestResponseMs: null,
+        lastResponseMs: null,
+        recentResults: [],
+        mastered: false
+    };
+}
+
+function buildEmptySession() {
+    return {
+        startedAt: Date.now(),
+        seen: 0,
+        correct: 0,
+        incorrect: 0,
+        newlyMastered: 0,
+        currentFactId: null,
+        isFlipped: false,
+        questionShownAt: Date.now(),
+        attempts: []
+    };
+}
+
+function sanitizeTimestamp(value, maxAgeMs) {
+    const parsed = Number(value);
+    const now = Date.now();
+    if (!parsed || parsed > now) {
+        return now;
+    }
+    if (maxAgeMs && now - parsed > maxAgeMs) {
+        return now;
+    }
+    return parsed;
+}
+
+function sanitizeAttemptEntry(input) {
+    if (!input || !FACT_BY_ID[input.factId]) {
+        return null;
+    }
+    const responseMs = Math.max(0, Number(input.responseMs) || 0);
+    const wasCorrect = Boolean(input.wasCorrect);
+    const category = CATEGORY_META[input.category] ? input.category : categorizeAttempt({
+        wasCorrect,
+        responseMs,
+        isNowMastered: Boolean(input.isNowMastered)
+    });
+
+    return {
+        factId: input.factId,
+        expression: FACT_BY_ID[input.factId].expression,
+        responseMs,
+        wasCorrect,
+        category,
+        isNowMastered: Boolean(input.isNowMastered),
+        answeredAt: sanitizeTimestamp(input.answeredAt)
+    };
+}
+
+function sanitizeFactProgressMap(rawMap, fallbackMasteredIds) {
+    const map = {};
+    const masteredSet = new Set(Array.isArray(fallbackMasteredIds) ? fallbackMasteredIds.filter((id) => FACT_BY_ID[id]) : []);
+    const inputMap = rawMap && typeof rawMap === 'object' ? rawMap : {};
+
+    Object.keys(inputMap).forEach((factId) => {
+        if (!FACT_BY_ID[factId]) {
+            return;
+        }
+        const input = inputMap[factId] || {};
+        const recentResults = Array.isArray(input.recentResults)
+            ? input.recentResults
+                .map((entry) => ({
+                    correct: Boolean(entry && entry.correct),
+                    responseMs: Math.max(0, Number(entry && entry.responseMs) || 0)
+                }))
+                .slice(-5)
+            : [];
+        const progress = {
+            attempts: Math.max(0, Number(input.attempts) || 0),
+            correct: Math.max(0, Number(input.correct) || 0),
+            totalResponseMs: Math.max(0, Number(input.totalResponseMs) || 0),
+            fastestResponseMs: Number.isFinite(Number(input.fastestResponseMs)) ? Math.max(0, Number(input.fastestResponseMs)) : null,
+            lastResponseMs: Number.isFinite(Number(input.lastResponseMs)) ? Math.max(0, Number(input.lastResponseMs)) : null,
+            recentResults,
+            mastered: Boolean(input.mastered) || masteredSet.has(factId)
+        };
+        if (isFactMastered(progress)) {
+            progress.mastered = true;
+            masteredSet.add(factId);
+        }
+        map[factId] = progress;
+    });
+
+    masteredSet.forEach((factId) => {
+        if (!map[factId]) {
+            map[factId] = buildEmptyFactProgress();
+            map[factId].mastered = true;
+        }
+    });
+
+    return map;
+}
+
 function loadState() {
     const baseState = {
         masteredIds: [],
+        factProgress: {},
         imageDataUrl: '',
+        settings: {
+            rotateUnmasteredOnly: true
+        },
         activeSession: null,
         lastSessionStats: null
     };
@@ -96,36 +220,48 @@ function loadState() {
 }
 
 function sanitizeState(input) {
-    const validMastered = Array.isArray(input.masteredIds)
-        ? input.masteredIds.filter((id) => FACT_BY_ID[id])
-        : [];
+    const factProgress = sanitizeFactProgressMap(input.factProgress, input.masteredIds);
+    const masteredIds = Array.from(new Set(
+        Object.keys(factProgress).filter((factId) => factProgress[factId].mastered)
+    ));
 
     const session = input.activeSession && typeof input.activeSession === 'object'
         ? {
-            startedAt: Number(input.activeSession.startedAt) || Date.now(),
-            seen: Number(input.activeSession.seen) || 0,
-            correct: Number(input.activeSession.correct) || 0,
-            incorrect: Number(input.activeSession.incorrect) || 0,
-            newlyMastered: Number(input.activeSession.newlyMastered) || 0,
+            startedAt: sanitizeTimestamp(input.activeSession.startedAt),
+            seen: Math.max(0, Number(input.activeSession.seen) || 0),
+            correct: Math.max(0, Number(input.activeSession.correct) || 0),
+            incorrect: Math.max(0, Number(input.activeSession.incorrect) || 0),
+            newlyMastered: Math.max(0, Number(input.activeSession.newlyMastered) || 0),
             currentFactId: FACT_BY_ID[input.activeSession.currentFactId] ? input.activeSession.currentFactId : null,
-            isFlipped: Boolean(input.activeSession.isFlipped)
+            isFlipped: Boolean(input.activeSession.isFlipped),
+            questionShownAt: sanitizeTimestamp(input.activeSession.questionShownAt, 30 * 60 * 1000),
+            attempts: Array.isArray(input.activeSession.attempts)
+                ? input.activeSession.attempts.map(sanitizeAttemptEntry).filter(Boolean)
+                : []
         }
         : null;
 
     const lastSessionStats = input.lastSessionStats && typeof input.lastSessionStats === 'object'
         ? {
-            seen: Number(input.lastSessionStats.seen) || 0,
-            correct: Number(input.lastSessionStats.correct) || 0,
-            incorrect: Number(input.lastSessionStats.incorrect) || 0,
-            newlyMastered: Number(input.lastSessionStats.newlyMastered) || 0,
-            elapsedSeconds: Number(input.lastSessionStats.elapsedSeconds) || 0,
-            masteredTotal: Number(input.lastSessionStats.masteredTotal) || validMastered.length
+            seen: Math.max(0, Number(input.lastSessionStats.seen) || 0),
+            correct: Math.max(0, Number(input.lastSessionStats.correct) || 0),
+            incorrect: Math.max(0, Number(input.lastSessionStats.incorrect) || 0),
+            newlyMastered: Math.max(0, Number(input.lastSessionStats.newlyMastered) || 0),
+            elapsedSeconds: Math.max(0, Number(input.lastSessionStats.elapsedSeconds) || 0),
+            masteredTotal: Math.max(0, Number(input.lastSessionStats.masteredTotal) || masteredIds.length),
+            attempts: Array.isArray(input.lastSessionStats.attempts)
+                ? input.lastSessionStats.attempts.map(sanitizeAttemptEntry).filter(Boolean)
+                : []
         }
         : null;
 
     return {
-        masteredIds: Array.from(new Set(validMastered)),
+        masteredIds,
+        factProgress,
         imageDataUrl: typeof input.imageDataUrl === 'string' ? input.imageDataUrl : '',
+        settings: {
+            rotateUnmasteredOnly: !input.settings || input.settings.rotateUnmasteredOnly !== false
+        },
         activeSession: session,
         lastSessionStats
     };
@@ -146,27 +282,70 @@ function getMasteredSet() {
     return new Set(state.masteredIds);
 }
 
+function getFactProgress(factId) {
+    if (!state.factProgress[factId]) {
+        state.factProgress[factId] = buildEmptyFactProgress();
+    }
+    return state.factProgress[factId];
+}
+
+function isFactMastered(progress) {
+    if (!progress) {
+        return false;
+    }
+    if (progress.mastered) {
+        return true;
+    }
+    const recent = Array.isArray(progress.recentResults) ? progress.recentResults.slice(-MASTERY_STREAK_REQUIRED) : [];
+    if (recent.length < MASTERY_STREAK_REQUIRED) {
+        return false;
+    }
+    if (!recent.every((entry) => entry.correct)) {
+        return false;
+    }
+    const averageMs = recent.reduce((sum, entry) => sum + entry.responseMs, 0) / recent.length;
+    return averageMs <= MASTERY_AVG_MS;
+}
+
+function categorizeAttempt({ wasCorrect, responseMs, isNowMastered }) {
+    if (isNowMastered) {
+        return 'mastered';
+    }
+    if (responseMs >= SLOW_MS) {
+        return 'slow';
+    }
+    if (!wasCorrect) {
+        return 'needs-work';
+    }
+    if (responseMs <= REALLY_FAST_MS) {
+        return 'really-fast';
+    }
+    if (responseMs <= KNOWN_MS) {
+        return 'known';
+    }
+    if (responseMs <= FAST_MS) {
+        return 'fast';
+    }
+    return 'needs-work';
+}
+
 function ensureSession() {
     if (!state.activeSession) {
-        state.activeSession = {
-            startedAt: Date.now(),
-            seen: 0,
-            correct: 0,
-            incorrect: 0,
-            newlyMastered: 0,
-            currentFactId: null,
-            isFlipped: false
-        };
+        state.activeSession = buildEmptySession();
     }
 
     if (!FACT_BY_ID[state.activeSession.currentFactId]) {
         state.activeSession.currentFactId = pickNextFactId();
+        state.activeSession.questionShownAt = Date.now();
     }
 }
 
 function pickNextFactId(previousFactId) {
     const mastered = getMasteredSet();
-    let pool = FACTS.filter((fact) => !mastered.has(fact.id));
+    let pool = state.settings.rotateUnmasteredOnly
+        ? FACTS.filter((fact) => !mastered.has(fact.id))
+        : FACTS.slice();
+
     if (pool.length === 0) {
         pool = FACTS.slice();
     }
@@ -202,7 +381,7 @@ function updateProgress() {
     document.getElementById('masteryFill').style.width = `${percent}%`;
     document.getElementById('imageCaption').textContent = remainingCount === 0
         ? 'You uncovered the whole picture. Keep practicing as long as you like.'
-        : 'Each new correct answer uncovers one part of the picture.';
+        : 'Each correct answer uncovers more, and mastered facts fully clear their tile.';
 
     renderCoverTiles();
 }
@@ -210,15 +389,17 @@ function updateProgress() {
 function renderCoverTiles() {
     const imageCover = document.getElementById('imageCover');
     imageCover.innerHTML = '';
-    const mastered = getMasteredSet();
 
     FACTS.forEach((fact, factIndex) => {
         const tile = document.createElement('div');
         tile.className = 'cover-tile';
         const tileIndex = REVEAL_ORDER[factIndex];
         tile.style.order = tileIndex;
-        if (mastered.has(fact.id)) {
+        const progress = state.factProgress[fact.id];
+        if (progress && progress.mastered) {
             tile.classList.add('revealed');
+        } else if (progress && progress.correct > 0) {
+            tile.classList.add('partial');
         }
         imageCover.appendChild(tile);
     });
@@ -234,12 +415,18 @@ function updateSessionText() {
     document.getElementById('sessionText').textContent = `Session: ${session.seen} seen · ${session.correct} right · ${session.incorrect} not yet`;
 }
 
+function updateGameplayToggle() {
+    document.getElementById('rotateUnmasteredToggle').checked = state.settings.rotateUnmasteredOnly;
+}
+
 function renderStudyScreen() {
+    closeDetailsModal();
     showScreen('study');
     ensureSession();
     updateImage();
     updateProgress();
     updateSessionText();
+    updateGameplayToggle();
     updateStudyCard();
     updateNotice();
 }
@@ -259,32 +446,80 @@ function flipCard() {
     updateStudyCard();
 }
 
+function recordFactAttempt(factId, wasCorrect, responseMs) {
+    const progress = getFactProgress(factId);
+    progress.attempts += 1;
+    progress.totalResponseMs += responseMs;
+    progress.lastResponseMs = responseMs;
+    if (progress.fastestResponseMs === null || responseMs < progress.fastestResponseMs) {
+        progress.fastestResponseMs = responseMs;
+    }
+    if (wasCorrect) {
+        progress.correct += 1;
+    }
+    progress.recentResults.push({ correct: wasCorrect, responseMs });
+    progress.recentResults = progress.recentResults.slice(-5);
+
+    const alreadyMastered = progress.mastered || getMasteredSet().has(factId);
+    const isNowMastered = alreadyMastered || isFactMastered(progress);
+    if (isNowMastered) {
+        progress.mastered = true;
+    }
+    return isNowMastered;
+}
+
 function markAnswer(wasCorrect) {
     ensureSession();
     const session = state.activeSession;
     const currentFactId = session.currentFactId;
     const mastered = getMasteredSet();
+    const responseMs = Math.max(0, Date.now() - session.questionShownAt);
 
     session.seen += 1;
     if (wasCorrect) {
         session.correct += 1;
-        if (!mastered.has(currentFactId)) {
-            mastered.add(currentFactId);
-            state.masteredIds = Array.from(mastered);
-            session.newlyMastered += 1;
-        }
     } else {
         session.incorrect += 1;
     }
 
+    const alreadyMastered = mastered.has(currentFactId);
+    const isNowMastered = recordFactAttempt(currentFactId, wasCorrect, responseMs);
+    if (isNowMastered && !alreadyMastered) {
+        mastered.add(currentFactId);
+        state.masteredIds = Array.from(mastered);
+        session.newlyMastered += 1;
+    }
+
+    const category = categorizeAttempt({ wasCorrect, responseMs, isNowMastered });
+    session.attempts.push({
+        factId: currentFactId,
+        expression: FACT_BY_ID[currentFactId].expression,
+        responseMs,
+        wasCorrect,
+        category,
+        isNowMastered,
+        answeredAt: Date.now()
+    });
+
     session.currentFactId = pickNextFactId(currentFactId);
     session.isFlipped = false;
+    session.questionShownAt = Date.now();
 
     if (!saveState()) {
         showNotice('Progress is only available during this visit.');
     }
 
     renderStudyScreen();
+}
+
+function buildCategoryBuckets(attempts) {
+    const buckets = Object.fromEntries(CATEGORY_ORDER.map((categoryId) => [categoryId, []]));
+    attempts.forEach((attempt) => {
+        if (buckets[attempt.category]) {
+            buckets[attempt.category].push(attempt);
+        }
+    });
+    return buckets;
 }
 
 function finishSession() {
@@ -298,21 +533,35 @@ function finishSession() {
         incorrect: session.incorrect,
         newlyMastered: session.newlyMastered,
         elapsedSeconds,
-        masteredTotal: state.masteredIds.length
+        masteredTotal: state.masteredIds.length,
+        attempts: session.attempts.slice()
     };
     state.activeSession = null;
     saveState();
     renderResultsScreen();
 }
 
+function renderResultsBuckets(attempts) {
+    const buckets = buildCategoryBuckets(attempts);
+    CATEGORY_ORDER.forEach((categoryId) => {
+        const button = document.querySelector(`.results-bucket[data-category="${categoryId}"]`);
+        const countEl = document.getElementById(`resultsBucket-${categoryId}`);
+        const count = buckets[categoryId].length;
+        countEl.textContent = String(count);
+        button.disabled = count === 0;
+    });
+}
+
 function renderResultsScreen() {
+    closeDetailsModal();
     const stats = state.lastSessionStats || {
         seen: 0,
         correct: 0,
         incorrect: 0,
         newlyMastered: 0,
         elapsedSeconds: 0,
-        masteredTotal: state.masteredIds.length
+        masteredTotal: state.masteredIds.length,
+        attempts: []
     };
     const remaining = TOTAL_FACTS - state.masteredIds.length;
     const accuracy = stats.seen > 0 ? Math.round((stats.correct / stats.seen) * 100) : 0;
@@ -321,17 +570,10 @@ function renderResultsScreen() {
     document.getElementById('resultsCorrect').textContent = stats.correct;
     document.getElementById('resultsIncorrect').textContent = stats.incorrect;
     document.getElementById('resultsNew').textContent = stats.newlyMastered;
-    document.getElementById('resultsSummary').textContent = `${formatElapsed(stats.elapsedSeconds)} · ${accuracy}% accuracy · ${stats.masteredTotal} mastered total · ${remaining} remaining`;
+    document.getElementById('resultsSummary').textContent = `${formatElapsed(stats.elapsedSeconds)} · ${accuracy}% accuracy · ${stats.masteredTotal} mastered total · ${remaining} remaining · time measured to flip`;
     document.getElementById('resultsIcon').textContent = remaining === 0 ? '🏆' : stats.newlyMastered > 0 ? '🧩' : '🎉';
+    renderResultsBuckets(stats.attempts || []);
     showScreen('results');
-}
-
-function startFreshSession() {
-    state.activeSession = null;
-    state.lastSessionStats = null;
-    ensureSession();
-    saveState();
-    renderStudyScreen();
 }
 
 function formatElapsed(totalSeconds) {
@@ -341,6 +583,55 @@ function formatElapsed(totalSeconds) {
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
     return minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
+}
+
+function formatResponseMs(ms) {
+    if (ms < 1000) {
+        return `${Math.round(ms)}ms`;
+    }
+    return `${(ms / 1000).toFixed(1)}s`;
+}
+
+function openDetailsModal(categoryId) {
+    if (!state.lastSessionStats || !CATEGORY_META[categoryId]) {
+        return;
+    }
+    const attempts = (state.lastSessionStats.attempts || [])
+        .filter((attempt) => attempt.category === categoryId)
+        .sort((left, right) => right.responseMs - left.responseMs);
+
+    if (attempts.length === 0) {
+        return;
+    }
+
+    document.getElementById('detailsTitle').textContent = CATEGORY_META[categoryId].label;
+    const list = document.getElementById('detailsList');
+    list.innerHTML = attempts.map((attempt) => `
+        <div class="details-item">
+            <div class="details-expression">${attempt.expression}</div>
+            <div class="details-meta">${formatResponseMs(attempt.responseMs)} · ${attempt.wasCorrect ? 'right' : 'not yet'}</div>
+        </div>
+    `).join('');
+    document.getElementById('detailsModal').style.display = 'flex';
+}
+
+function closeDetailsModal() {
+    document.getElementById('detailsModal').style.display = 'none';
+}
+
+function startFreshSession() {
+    closeDetailsModal();
+    state.activeSession = null;
+    state.lastSessionStats = null;
+    ensureSession();
+    saveState();
+    renderStudyScreen();
+}
+
+function setRotateUnmasteredOnly(enabled) {
+    state.settings.rotateUnmasteredOnly = enabled;
+    saveState();
+    renderStudyScreen();
 }
 
 function applyTheme(theme) {
@@ -505,6 +796,26 @@ function initEvents() {
     document.getElementById('resumeBtn').addEventListener('click', startFreshSession);
     document.getElementById('resetImageBtn').addEventListener('click', resetImage);
     document.getElementById('imageUploadInput').addEventListener('change', handleImageUpload);
+    document.getElementById('rotateUnmasteredToggle').addEventListener('change', (event) => {
+        setRotateUnmasteredOnly(event.target.checked);
+    });
+
+    document.querySelectorAll('.results-bucket').forEach((button) => {
+        button.addEventListener('click', () => openDetailsModal(button.dataset.category));
+    });
+
+    document.getElementById('detailsCloseBtn').addEventListener('click', closeDetailsModal);
+    document.getElementById('detailsModal').addEventListener('click', (event) => {
+        if (event.target.id === 'detailsModal') {
+            closeDetailsModal();
+        }
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            closeDetailsModal();
+        }
+    });
 }
 
 document.addEventListener('DOMContentLoaded', () => {

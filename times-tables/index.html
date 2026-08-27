@@ -94,6 +94,13 @@
                 <button id="doneBtn" class="btn btn-secondary" type="button">Done for now</button>
             </div>
 
+            <div class="gameplay-row">
+                <label class="toggle-option" for="rotateUnmasteredToggle">
+                    <input id="rotateUnmasteredToggle" type="checkbox" checked>
+                    Keep unmastered in rotation
+                </label>
+            </div>
+
             <div class="flashcard-wrap">
                 <div id="flashcard" class="flashcard" role="button" tabindex="0" aria-label="Flip flash card">
                     <div class="card-face card-face-front">
@@ -135,14 +142,51 @@
                     </div>
                     <div class="stat-box">
                         <div class="stat-value" id="resultsNew">0</div>
-                        <div class="stat-label">New Tiles</div>
+                        <div class="stat-label">New Mastered</div>
                     </div>
                 </div>
                 <div class="results-summary" id="resultsSummary"></div>
+                <div class="results-buckets" id="resultsBuckets">
+                    <button class="results-bucket" type="button" data-category="mastered">
+                        <span class="results-bucket-count" id="resultsBucket-mastered">0</span>
+                        <span class="results-bucket-label">Mastered</span>
+                    </button>
+                    <button class="results-bucket" type="button" data-category="really-fast">
+                        <span class="results-bucket-count" id="resultsBucket-really-fast">0</span>
+                        <span class="results-bucket-label">Really Fast</span>
+                    </button>
+                    <button class="results-bucket" type="button" data-category="known">
+                        <span class="results-bucket-count" id="resultsBucket-known">0</span>
+                        <span class="results-bucket-label">Known</span>
+                    </button>
+                    <button class="results-bucket" type="button" data-category="fast">
+                        <span class="results-bucket-count" id="resultsBucket-fast">0</span>
+                        <span class="results-bucket-label">Fast</span>
+                    </button>
+                    <button class="results-bucket" type="button" data-category="needs-work">
+                        <span class="results-bucket-count" id="resultsBucket-needs-work">0</span>
+                        <span class="results-bucket-label">Needs Work</span>
+                    </button>
+                    <button class="results-bucket" type="button" data-category="slow">
+                        <span class="results-bucket-count" id="resultsBucket-slow">0</span>
+                        <span class="results-bucket-label">Slow</span>
+                    </button>
+                </div>
                 <div class="results-actions">
                     <button id="resumeBtn" class="btn btn-primary" type="button">Keep practicing</button>
                     <button class="btn btn-secondary" type="button" onclick="window.location.href='../'">Back to apps</button>
                 </div>
+            </div>
+        </div>
+
+        <div id="detailsModal" class="details-modal" style="display: none;">
+            <div class="details-panel" role="dialog" aria-modal="true" aria-labelledby="detailsTitle">
+                <div class="details-header">
+                    <h3 id="detailsTitle">Results</h3>
+                    <button id="detailsCloseBtn" class="btn btn-secondary" type="button" aria-label="Close details">Close</button>
+                </div>
+                <div class="details-subtitle">Slowest first</div>
+                <div id="detailsList" class="details-list"></div>
             </div>
         </div>
     </div>
