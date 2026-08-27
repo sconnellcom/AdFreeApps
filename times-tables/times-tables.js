@@ -20,6 +20,7 @@ const MASTERED_MS = 1000;
 const AUTOMATIC_MS = 2000;
 const SOLID_MS = 4000;
 const LEARNING_MS = 10000;
+const SHARE_IMAGE_HASH_KEY = 'image';
 const CATEGORY_META = {
     mastered: { label: 'Mastered' },
     automatic: { label: 'Automatic' },
@@ -97,6 +98,17 @@ function buildEmptyFactProgress() {
     };
 }
 
+function buildEmptyAllTimeStats() {
+    return {
+        sessions: 0,
+        seen: 0,
+        correct: 0,
+        incorrect: 0,
+        newlyMastered: 0,
+        elapsedSeconds: 0
+    };
+}
+
 function buildEmptySession() {
     return {
         startedAt: Date.now(),
@@ -108,7 +120,8 @@ function buildEmptySession() {
         isFlipped: false,
         questionShownAt: Date.now(),
         answerShownAt: null,
-        attempts: []
+        attempts: [],
+        undoState: null
     };
 }
 
@@ -144,6 +157,18 @@ function sanitizeAttemptEntry(input) {
         category,
         isNowMastered: Boolean(input.isNowMastered),
         answeredAt: sanitizeTimestamp(input.answeredAt)
+    };
+}
+
+function sanitizeAllTimeStats(input) {
+    const source = input && typeof input === 'object' ? input : {};
+    return {
+        sessions: Math.max(0, Number(source.sessions) || 0),
+        seen: Math.max(0, Number(source.seen) || 0),
+        correct: Math.max(0, Number(source.correct) || 0),
+        incorrect: Math.max(0, Number(source.incorrect) || 0),
+        newlyMastered: Math.max(0, Number(source.newlyMastered) || 0),
+        elapsedSeconds: Math.max(0, Number(source.elapsedSeconds) || 0)
     };
 }
 
@@ -200,7 +225,8 @@ function loadState() {
             rotateUnmasteredOnly: true
         },
         activeSession: null,
-        lastSessionStats: null
+        lastSessionStats: null,
+        allTimeStats: buildEmptyAllTimeStats()
     };
 
     if (!storage.available) {
@@ -238,7 +264,8 @@ function sanitizeState(input) {
             answerShownAt: input.activeSession.answerShownAt ? sanitizeTimestamp(input.activeSession.answerShownAt, 30 * 60 * 1000) : null,
             attempts: Array.isArray(input.activeSession.attempts)
                 ? input.activeSession.attempts.map(sanitizeAttemptEntry).filter(Boolean)
-                : []
+                : [],
+            undoState: null
         }
         : null;
 
@@ -264,7 +291,8 @@ function sanitizeState(input) {
             rotateUnmasteredOnly: !input.settings || input.settings.rotateUnmasteredOnly !== false
         },
         activeSession: session,
-        lastSessionStats
+        lastSessionStats,
+        allTimeStats: sanitizeAllTimeStats(input.allTimeStats)
     };
 }
 
@@ -277,6 +305,10 @@ function saveState() {
     } catch (error) {
         return false;
     }
+}
+
+function deepClone(value) {
+    return JSON.parse(JSON.stringify(value));
 }
 
 function getMasteredSet() {
@@ -308,6 +340,34 @@ function isFactMastered(progress) {
     return averageMs <= MASTERY_AVG_MS;
 }
 
+function hasUndoState() {
+    return Boolean(state.activeSession && state.activeSession.undoState);
+}
+
+function captureUndoState() {
+    if (!state.activeSession) {
+        return null;
+    }
+    const activeSession = deepClone({
+        startedAt: state.activeSession.startedAt,
+        seen: state.activeSession.seen,
+        correct: state.activeSession.correct,
+        incorrect: state.activeSession.incorrect,
+        newlyMastered: state.activeSession.newlyMastered,
+        currentFactId: state.activeSession.currentFactId,
+        isFlipped: state.activeSession.isFlipped,
+        questionShownAt: state.activeSession.questionShownAt,
+        answerShownAt: state.activeSession.answerShownAt,
+        attempts: state.activeSession.attempts
+    });
+
+    return {
+        masteredIds: deepClone(state.masteredIds),
+        factProgress: deepClone(state.factProgress),
+        activeSession
+    };
+}
+
 function categorizeAttempt({ wasCorrect, responseMs, isNowMastered }) {
     if (responseMs <= MASTERED_MS) {
         return 'mastered';
@@ -329,7 +389,12 @@ function ensureSession() {
         state.activeSession = buildEmptySession();
     }
 
-    if (!FACT_BY_ID[state.activeSession.currentFactId]) {
+    const currentFactProgress = state.activeSession.currentFactId ? state.factProgress[state.activeSession.currentFactId] : null;
+    const shouldReplaceCurrent =
+        !FACT_BY_ID[state.activeSession.currentFactId] ||
+        (state.settings.rotateUnmasteredOnly && currentFactProgress && currentFactProgress.mastered);
+
+    if (shouldReplaceCurrent) {
         state.activeSession.currentFactId = pickNextFactId();
         state.activeSession.questionShownAt = Date.now();
         state.activeSession.answerShownAt = null;
@@ -428,6 +493,10 @@ function updateGameplayToggle() {
     document.getElementById('rotateUnmasteredToggle').checked = state.settings.rotateUnmasteredOnly;
 }
 
+function updateUndoButton() {
+    document.getElementById('undoBtn').disabled = !hasUndoState();
+}
+
 function renderStudyScreen(options = {}) {
     closeDetailsModal();
     showScreen('study');
@@ -436,6 +505,7 @@ function renderStudyScreen(options = {}) {
     updateProgress();
     updateSessionText();
     updateGameplayToggle();
+    updateUndoButton();
     updateStudyCard(options);
     updateNotice();
 }
@@ -483,6 +553,7 @@ function recordFactAttempt(factId, wasCorrect, responseMs) {
 function markAnswer(wasCorrect) {
     ensureSession();
     const session = state.activeSession;
+    const undoState = captureUndoState();
     const currentFactId = session.currentFactId;
     const mastered = getMasteredSet();
     const responseMs = Math.max(0, (session.answerShownAt || Date.now()) - session.questionShownAt);
@@ -517,12 +588,28 @@ function markAnswer(wasCorrect) {
     session.isFlipped = false;
     session.questionShownAt = Date.now();
     session.answerShownAt = null;
+    session.undoState = undoState;
 
     if (!saveState()) {
         showNotice('Progress is only available during this visit.');
     }
 
     renderStudyScreen({ instantReset: true });
+}
+
+function undoLastAnswer() {
+    if (!hasUndoState()) {
+        return;
+    }
+    const undoState = deepClone(state.activeSession.undoState);
+    state.masteredIds = Array.isArray(undoState.masteredIds) ? undoState.masteredIds : [];
+    state.factProgress = undoState.factProgress && typeof undoState.factProgress === 'object' ? undoState.factProgress : {};
+    state.activeSession = undoState.activeSession && typeof undoState.activeSession === 'object'
+        ? { ...undoState.activeSession, undoState: null }
+        : buildEmptySession();
+    saveState();
+    renderStudyScreen({ instantReset: true });
+    showNotice('Last answer undone.');
 }
 
 function buildCategoryBuckets(attempts) {
@@ -549,6 +636,12 @@ function finishSession() {
         masteredTotal: state.masteredIds.length,
         attempts: session.attempts.slice()
     };
+    state.allTimeStats.sessions += 1;
+    state.allTimeStats.seen += session.seen;
+    state.allTimeStats.correct += session.correct;
+    state.allTimeStats.incorrect += session.incorrect;
+    state.allTimeStats.newlyMastered += session.newlyMastered;
+    state.allTimeStats.elapsedSeconds += elapsedSeconds;
     state.activeSession = null;
     saveState();
     renderResultsScreen();
@@ -585,8 +678,15 @@ function renderResultsScreen() {
     document.getElementById('resultsNew').textContent = stats.newlyMastered;
     document.getElementById('resultsSummary').textContent = `${formatElapsed(stats.elapsedSeconds)} · ${accuracy}% accuracy · ${stats.masteredTotal} mastered total · ${remaining} remaining · time measured to flip`;
     document.getElementById('resultsIcon').textContent = remaining === 0 ? '🏆' : stats.newlyMastered > 0 ? '🧩' : '🎉';
+    renderAllTimeSummary();
     renderResultsBuckets(stats.attempts || []);
     showScreen('results');
+}
+
+function renderAllTimeSummary() {
+    const stats = state.allTimeStats || buildEmptyAllTimeStats();
+    document.getElementById('allTimeSummary').textContent =
+        `All time: ${stats.seen} seen · ${stats.correct} right · ${stats.incorrect} not yet · ${state.masteredIds.length} mastered · ${formatElapsed(stats.elapsedSeconds)}`;
 }
 
 function formatElapsed(totalSeconds) {
@@ -645,6 +745,13 @@ function setRotateUnmasteredOnly(enabled) {
     state.settings.rotateUnmasteredOnly = enabled;
     saveState();
     renderStudyScreen();
+}
+
+function resetAllTimeStats() {
+    state.allTimeStats = buildEmptyAllTimeStats();
+    saveState();
+    renderResultsScreen();
+    showNotice('All-time stats reset.');
 }
 
 function applyTheme(theme) {
@@ -737,6 +844,45 @@ function resizeImage(file) {
     });
 }
 
+function getShareUrl() {
+    const url = new URL(window.location.href);
+    url.hash = '';
+    if (state.imageDataUrl) {
+        url.hash = new URLSearchParams({
+            [SHARE_IMAGE_HASH_KEY]: state.imageDataUrl
+        }).toString();
+    }
+    return url.toString();
+}
+
+function loadSharedImageFromUrl() {
+    const hash = window.location.hash ? window.location.hash.slice(1) : '';
+    if (!hash) {
+        return;
+    }
+    const params = new URLSearchParams(hash);
+    const sharedImage = params.get(SHARE_IMAGE_HASH_KEY);
+    if (!sharedImage || !sharedImage.startsWith('data:image/')) {
+        return;
+    }
+    state.imageDataUrl = sharedImage;
+    saveState();
+}
+
+async function shareImageLink() {
+    const shareUrl = getShareUrl();
+    try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(shareUrl);
+            showNotice('Share link copied.');
+            return;
+        }
+    } catch (error) {
+        // Fall through to prompt.
+    }
+    window.prompt('Copy this share link:', shareUrl);
+}
+
 async function handleImageUpload(event) {
     const file = event.target.files && event.target.files[0];
     event.target.value = '';
@@ -808,7 +954,10 @@ function initEvents() {
     document.getElementById('doneBtn').addEventListener('click', finishSession);
     document.getElementById('resumeBtn').addEventListener('click', startFreshSession);
     document.getElementById('resetImageBtn').addEventListener('click', resetImage);
+    document.getElementById('shareImageBtn').addEventListener('click', shareImageLink);
     document.getElementById('imageUploadInput').addEventListener('change', handleImageUpload);
+    document.getElementById('undoBtn').addEventListener('click', undoLastAnswer);
+    document.getElementById('resetAllTimeBtn').addEventListener('click', resetAllTimeStats);
     document.getElementById('rotateUnmasteredToggle').addEventListener('change', (event) => {
         setRotateUnmasteredOnly(event.target.checked);
     });
@@ -834,6 +983,7 @@ function initEvents() {
 document.addEventListener('DOMContentLoaded', () => {
     initTheme();
     initMenu();
+    loadSharedImageFromUrl();
     initEvents();
     renderStudyScreen();
 });

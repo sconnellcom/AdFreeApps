@@ -86,12 +86,16 @@
                     <label class="upload-btn" for="imageUploadInput" id="uploadLabel">Upload image</label>
                     <input id="imageUploadInput" type="file" accept="image/*" hidden>
                     <button id="resetImageBtn" class="btn btn-secondary" type="button">Use default image</button>
+                    <button id="shareImageBtn" class="btn btn-secondary" type="button">Share image</button>
                 </div>
             </section>
 
             <div class="session-strip">
                 <span id="sessionText">Session: 0 seen · 0 right · 0 not yet</span>
-                <button id="doneBtn" class="btn btn-secondary" type="button">Done for now</button>
+                <div class="session-actions">
+                    <button id="undoBtn" class="btn btn-secondary" type="button" disabled>Undo</button>
+                    <button id="doneBtn" class="btn btn-secondary" type="button">Done for now</button>
+                </div>
             </div>
 
             <div class="gameplay-row">
@@ -171,6 +175,10 @@
                 <div class="results-actions">
                     <button id="resumeBtn" class="btn btn-primary" type="button">Keep practicing</button>
                     <button class="btn btn-secondary" type="button" onclick="window.location.href='../'">Back to apps</button>
+                </div>
+                <div class="all-time-row">
+                    <div class="all-time-summary" id="allTimeSummary">All time: 0 seen · 0 right · 0 not yet · 0 mastered · 0s</div>
+                    <button id="resetAllTimeBtn" class="btn btn-secondary" type="button">Reset all-time stats</button>
                 </div>
             </div>
         </div>

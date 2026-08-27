@@ -198,6 +198,12 @@ body {
     margin-bottom: 12px;
 }
 
+.session-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
 .gameplay-row {
     margin: 12px 0 4px;
 }
@@ -513,6 +519,22 @@ body {
     display: flex;
     flex-direction: column;
     gap: 10px;
+}
+
+.all-time-row {
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+}
+
+.all-time-summary {
+    color: var(--text-secondary);
+    text-align: center;
+    line-height: 1.6;
 }
 
 .details-modal {
