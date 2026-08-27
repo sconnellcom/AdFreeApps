@@ -76,6 +76,14 @@
                 <div class="progress-bar-fill" id="masteryFill"></div>
             </div>
 
+            <div class="session-strip">
+                <span id="sessionText">Session: 0 seen · 0 correct · 0 not yet</span>
+                <div class="session-actions">
+                    <button id="undoBtn" class="btn btn-secondary" type="button" disabled>Undo</button>
+                    <button id="doneBtn" class="btn btn-secondary" type="button">Done for now</button>
+                </div>
+            </div>
+
             <section class="image-section">
                 <div class="image-frame">
                     <img id="rewardImage" class="reward-image" src="default-image.svg" alt="Hidden reward image">
@@ -83,32 +91,7 @@
                     <div id="imageCardHost" class="image-card-host"></div>
                 </div>
                 <div class="image-caption" id="imageCaption">Each new correct answer uncovers one part of the picture.</div>
-                <div class="image-controls">
-                    <label class="upload-btn" for="imageUploadInput" id="uploadLabel">Upload image</label>
-                    <input id="imageUploadInput" type="file" accept="image/*" hidden>
-                    <button id="resetImageBtn" class="btn btn-secondary" type="button">Use default image</button>
-                    <button id="shareImageBtn" class="btn btn-secondary" type="button">Share image</button>
-                </div>
             </section>
-
-            <div class="session-strip">
-                <span id="sessionText">Session: 0 seen · 0 right · 0 not yet</span>
-                <div class="session-actions">
-                    <button id="undoBtn" class="btn btn-secondary" type="button" disabled>Undo</button>
-                    <button id="doneBtn" class="btn btn-secondary" type="button">Done for now</button>
-                </div>
-            </div>
-
-            <div class="gameplay-row">
-                <label class="toggle-option" for="rotateUnmasteredToggle">
-                    <input id="rotateUnmasteredToggle" type="checkbox" checked>
-                    Keep learning or distracted in rotation
-                </label>
-                <label class="toggle-option" for="pickCardModeToggle">
-                    <input id="pickCardModeToggle" type="checkbox">
-                    Pick a card mode
-                </label>
-            </div>
 
             <div id="flashcardHost" class="flashcard-host">
                 <div id="flashcardWrap" class="flashcard-wrap">
@@ -157,6 +140,29 @@
                     </div>
                 </div>
                 <div class="results-summary" id="resultsSummary"></div>
+                <section class="image-section results-image-section">
+                    <div class="image-frame">
+                        <img id="resultsRewardImage" class="reward-image" src="default-image.svg" alt="Hidden reward image">
+                        <div id="resultsImageCover" class="image-cover" aria-hidden="true"></div>
+                    </div>
+                    <div class="image-caption" id="resultsImageCaption">Your current image progress.</div>
+                    <div class="image-controls">
+                        <label class="upload-btn" for="imageUploadInput" id="uploadLabel">Upload image</label>
+                        <input id="imageUploadInput" type="file" accept="image/*" hidden>
+                        <button id="resetImageBtn" class="btn btn-secondary" type="button">Use default image</button>
+                        <button id="shareImageBtn" class="btn btn-secondary" type="button">Share image</button>
+                    </div>
+                    <div class="gameplay-row results-gameplay-row">
+                        <label class="toggle-option" for="rotateUnmasteredToggle">
+                            <input id="rotateUnmasteredToggle" type="checkbox" checked>
+                            Keep learning or distracted in rotation
+                        </label>
+                        <label class="toggle-option" for="pickCardModeToggle">
+                            <input id="pickCardModeToggle" type="checkbox">
+                            Pick a card mode
+                        </label>
+                    </div>
+                </section>
                 <div class="results-buckets" id="resultsBuckets">
                     <button class="results-bucket" type="button" data-category="mastered">
                         <span class="results-bucket-count" id="resultsBucket-mastered">0</span>
@@ -185,7 +191,7 @@
                 </div>
                 <div class="all-time-row">
                     <div class="all-time-summary" id="allTimeSummary">All time: 0 seen · 0 correct · 0 not yet · 0 mastered · 0s</div>
-                    <button id="resetAllTimeBtn" class="btn btn-secondary" type="button">Reset all-time stats</button>
+                    <button id="resetAllTimeBtn" class="btn btn-secondary" type="button">Reset all progress and stats</button>
                 </div>
             </div>
         </div>

@@ -209,6 +209,10 @@ body {
     margin-bottom: 12px;
 }
 
+.session-strip {
+    margin-bottom: 18px;
+}
+
 .session-actions {
     display: flex;
     gap: 10px;
@@ -366,6 +370,14 @@ body {
     flex-wrap: wrap;
 }
 
+.results-image-section {
+    margin-bottom: 18px;
+}
+
+.results-gameplay-row {
+    justify-content: center;
+}
+
 .flashcard-host {
     display: flex;
     justify-content: center;
@@ -432,6 +444,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 12px;
+    margin-top: -4px;
 }
 
 .rating-row {

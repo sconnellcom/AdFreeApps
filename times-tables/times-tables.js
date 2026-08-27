@@ -16,11 +16,13 @@ const DEFAULT_IMAGE = 'default-image.svg';
 const REVEAL_ORDER = buildRevealOrder(TOTAL_FACTS);
 const MASTERY_STREAK_REQUIRED = 2;
 const MASTERY_AVG_MS = 6000;
-const MASTERED_MS = 1000;
+const MASTERED_MS = 1500;
 const AUTOMATIC_MS = 2000;
 const SOLID_MS = 4000;
 const LEARNING_MS = 10000;
 const SHARE_IMAGE_HASH_KEY = 'image';
+const SHARE_ROTATION_HASH_KEY = 'rotation';
+const SHARE_PICK_MODE_HASH_KEY = 'pick';
 const CATEGORY_META = {
     mastered: { label: 'Mastered' },
     automatic: { label: 'Automatic' },
@@ -447,6 +449,18 @@ function isCurrentFact(factId) {
     return Boolean(state.activeSession && state.activeSession.currentFactId === factId);
 }
 
+function isTileFullyCleared(progress) {
+    if (!progress) {
+        return false;
+    }
+    const category = getProgressCategory(progress);
+    return Boolean(progress.mastered || category === 'mastered' || category === 'automatic');
+}
+
+function getClearedTileCount() {
+    return FACTS.reduce((count, fact) => count + (isTileFullyCleared(state.factProgress[fact.id]) ? 1 : 0), 0);
+}
+
 function pickNextFactId(previousFactId) {
     let pool = state.settings.rotateUnmasteredOnly
         ? FACTS.filter((fact) => shouldKeepInRotation(state.factProgress[fact.id]))
@@ -489,7 +503,7 @@ function updateStudyCard(options = {}) {
     }
     flashcardWrap.classList.toggle('is-hidden', isAwaitingPick());
     document.getElementById('ratingRow').style.display = session.isFlipped ? 'flex' : 'none';
-    document.getElementById('flipBtn').style.display = session.isFlipped ? 'none' : 'block';
+    document.getElementById('flipBtn').style.display = session.isFlipped || isPickCardModeActive() ? 'none' : 'block';
     if (isAwaitingPick()) {
         document.getElementById('ratingRow').style.display = 'none';
         document.getElementById('flipBtn').style.display = 'none';
@@ -509,51 +523,65 @@ function updateProgress() {
         ? 'Pick a box on the image to show the next card.'
         : remainingCount === 0
         ? 'You uncovered the whole picture. Keep practicing as long as you like.'
-        : 'Each correct answer uncovers more, and mastered facts fully clear their tile.';
+        : 'Correct answers uncover more, and mastered or automatic answers fully clear a tile.';
+    const clearedTileCount = getClearedTileCount();
+    document.getElementById('resultsImageCaption').textContent = clearedTileCount === TOTAL_FACTS
+        ? 'Your whole image is uncovered.'
+        : `${clearedTileCount} tiles fully cleared so far.`;
 
     renderCoverTiles();
 }
 
 function renderCoverTiles() {
-    const imageCover = document.getElementById('imageCover');
-    imageCover.innerHTML = '';
+    const covers = [
+        document.getElementById('imageCover'),
+        document.getElementById('resultsImageCover')
+    ].filter(Boolean);
     const canPick = isAwaitingPick();
     const allMastered = state.masteredIds.length === TOTAL_FACTS;
     const highlightNextReveal = !isPickCardModeActive() && !canPick;
 
-    FACTS.forEach((fact, factIndex) => {
-        const tile = document.createElement('div');
-        tile.className = 'cover-tile';
-        const tileIndex = REVEAL_ORDER[factIndex];
-        tile.style.order = tileIndex;
-        const progress = state.factProgress[fact.id];
-        if (progress && progress.mastered) {
-            tile.classList.add('revealed');
-        } else if (progress && progress.correct > 0) {
-            tile.classList.add('partial');
-        }
-        if (isPickCardModeActive() && !canPick && isCurrentFact(fact.id) && (!progress || !progress.mastered)) {
-            tile.classList.add('preview-reveal');
-        }
-        if (highlightNextReveal && isCurrentFact(fact.id) && (!progress || !progress.mastered)) {
-            tile.classList.add('next-reveal');
-        }
-        if (canPick && (allMastered || !progress || !progress.mastered)) {
-            tile.classList.add('pickable');
-            tile.addEventListener('click', () => handleCoverTilePick(fact.id));
-        }
-        imageCover.appendChild(tile);
+    covers.forEach((cover) => {
+        cover.innerHTML = '';
+        FACTS.forEach((fact, factIndex) => {
+            const tile = document.createElement('div');
+            tile.className = 'cover-tile';
+            const tileIndex = REVEAL_ORDER[factIndex];
+            tile.style.order = tileIndex;
+            const progress = state.factProgress[fact.id];
+            if (isTileFullyCleared(progress)) {
+                tile.classList.add('revealed');
+            } else if (progress && progress.correct > 0) {
+                tile.classList.add('partial');
+            }
+            if (isPickCardModeActive() && !canPick && isCurrentFact(fact.id) && !isTileFullyCleared(progress)) {
+                tile.classList.add('preview-reveal');
+            }
+            if (highlightNextReveal && isCurrentFact(fact.id) && !isTileFullyCleared(progress)) {
+                tile.classList.add('next-reveal');
+            }
+            if (cover.id === 'imageCover' && canPick && (allMastered || !isTileFullyCleared(progress))) {
+                tile.classList.add('pickable');
+                tile.addEventListener('click', () => handleCoverTilePick(fact.id));
+            }
+            cover.appendChild(tile);
+        });
     });
 }
 
 function updateImage() {
-    document.getElementById('rewardImage').src = state.imageDataUrl || DEFAULT_IMAGE;
+    const imageUrl = state.imageDataUrl || DEFAULT_IMAGE;
+    document.getElementById('rewardImage').src = imageUrl;
+    const resultsImage = document.getElementById('resultsRewardImage');
+    if (resultsImage) {
+        resultsImage.src = imageUrl;
+    }
 }
 
 function updateSessionText() {
     ensureSession();
     const session = state.activeSession;
-    document.getElementById('sessionText').textContent = `Session: ${session.seen} seen · ${session.correct} right · ${session.incorrect} not yet`;
+    document.getElementById('sessionText').textContent = `Session: ${session.seen} seen · ${session.correct} correct · ${session.incorrect} not yet`;
 }
 
 function updateGameplayToggle() {
@@ -785,6 +813,9 @@ function renderResultsScreen() {
     document.getElementById('resultsNew').textContent = stats.newlyMastered;
     document.getElementById('resultsSummary').textContent = `${formatElapsed(stats.elapsedSeconds)} · ${accuracy}% accuracy · ${stats.masteredTotal} mastered total · ${remaining} remaining · time measured to flip`;
     document.getElementById('resultsIcon').textContent = remaining === 0 ? '🏆' : stats.newlyMastered > 0 ? '🧩' : '🎉';
+    updateImage();
+    updateProgress();
+    updateGameplayToggle();
     renderAllTimeSummary();
     renderResultsBuckets(stats.attempts || []);
     showScreen('results');
@@ -829,7 +860,7 @@ function openDetailsModal(categoryId) {
     list.innerHTML = attempts.map((attempt) => `
         <div class="details-item">
             <div class="details-expression">${attempt.expression}</div>
-            <div class="details-meta">${formatResponseMs(attempt.responseMs)} · ${attempt.wasCorrect ? 'right' : 'not yet'}</div>
+            <div class="details-meta">${formatResponseMs(attempt.responseMs)} · ${attempt.wasCorrect ? 'correct' : 'not yet'}</div>
         </div>
     `).join('');
     document.getElementById('detailsModal').style.display = 'flex';
@@ -851,6 +882,10 @@ function startFreshSession() {
 function setRotateUnmasteredOnly(enabled) {
     state.settings.rotateUnmasteredOnly = enabled;
     saveState();
+    if (document.getElementById('screen-results').classList.contains('active')) {
+        renderResultsScreen();
+        return;
+    }
     renderStudyScreen();
 }
 
@@ -867,14 +902,28 @@ function setPickCardMode(enabled) {
         }
     }
     saveState();
+    if (document.getElementById('screen-results').classList.contains('active')) {
+        renderResultsScreen();
+        return;
+    }
     renderStudyScreen({ instantReset: true });
 }
 
-function resetAllTimeStats() {
-    state.allTimeStats = buildEmptyAllTimeStats();
+function clearOverlayProgress({ clearStats = false } = {}) {
+    state.masteredIds = [];
+    state.factProgress = {};
+    state.activeSession = null;
+    if (clearStats) {
+        state.lastSessionStats = null;
+        state.allTimeStats = buildEmptyAllTimeStats();
+    }
+}
+
+function resetAllProgressAndStats() {
+    clearOverlayProgress({ clearStats: true });
     saveState();
     renderResultsScreen();
-    showNotice('All-time stats reset.');
+    showNotice('Progress, overlay, and stats reset.');
 }
 
 function applyTheme(theme) {
@@ -970,25 +1019,43 @@ function resizeImage(file) {
 function getShareUrl() {
     const url = new URL(window.location.href);
     url.hash = '';
+    const params = new URLSearchParams({
+        [SHARE_ROTATION_HASH_KEY]: state.settings.rotateUnmasteredOnly ? '1' : '0',
+        [SHARE_PICK_MODE_HASH_KEY]: state.settings.pickCardMode ? '1' : '0'
+    });
     if (state.imageDataUrl) {
-        url.hash = new URLSearchParams({
-            [SHARE_IMAGE_HASH_KEY]: state.imageDataUrl
-        }).toString();
+        params.set(SHARE_IMAGE_HASH_KEY, state.imageDataUrl);
     }
+    url.hash = params.toString();
     return url.toString();
 }
 
-function loadSharedImageFromUrl() {
+function loadSharedStateFromUrl() {
     const hash = window.location.hash ? window.location.hash.slice(1) : '';
     if (!hash) {
         return;
     }
     const params = new URLSearchParams(hash);
     const sharedImage = params.get(SHARE_IMAGE_HASH_KEY);
-    if (!sharedImage || !sharedImage.startsWith('data:image/')) {
+    const rotationSetting = params.get(SHARE_ROTATION_HASH_KEY);
+    const pickSetting = params.get(SHARE_PICK_MODE_HASH_KEY);
+    const hasSharedImage = Boolean(sharedImage && sharedImage.startsWith('data:image/'));
+    const hasSharedSettings = rotationSetting !== null || pickSetting !== null;
+
+    if (!hasSharedImage && !hasSharedSettings) {
         return;
     }
-    state.imageDataUrl = sharedImage;
+    if (hasSharedImage) {
+        state.imageDataUrl = sharedImage;
+    }
+    if (rotationSetting !== null) {
+        state.settings.rotateUnmasteredOnly = rotationSetting !== '0';
+    }
+    if (pickSetting !== null) {
+        state.settings.pickCardMode = pickSetting === '1';
+    }
+    clearOverlayProgress();
+    state.lastSessionStats = null;
     saveState();
 }
 
@@ -1014,12 +1081,13 @@ async function handleImageUpload(event) {
     }
     try {
         state.imageDataUrl = await resizeImage(file);
+        clearOverlayProgress();
         if (!saveState()) {
             showNotice('Custom image loaded for now, but this browser could not save it.');
         } else {
-            showNotice('Custom image saved.');
+            showNotice('Custom image saved and progress reset for the new picture.');
         }
-        renderStudyScreen();
+        renderResultsScreen();
     } catch (error) {
         showNotice('That image could not be used here.');
     }
@@ -1027,9 +1095,10 @@ async function handleImageUpload(event) {
 
 function resetImage() {
     state.imageDataUrl = '';
+    clearOverlayProgress();
     saveState();
-    renderStudyScreen();
-    showNotice('Using the default image.');
+    renderResultsScreen();
+    showNotice('Using the default image with a fresh covered overlay.');
 }
 
 function showNotice(message) {
@@ -1080,7 +1149,7 @@ function initEvents() {
     document.getElementById('shareImageBtn').addEventListener('click', shareImageLink);
     document.getElementById('imageUploadInput').addEventListener('change', handleImageUpload);
     document.getElementById('undoBtn').addEventListener('click', undoLastAnswer);
-    document.getElementById('resetAllTimeBtn').addEventListener('click', resetAllTimeStats);
+    document.getElementById('resetAllTimeBtn').addEventListener('click', resetAllProgressAndStats);
     document.getElementById('rotateUnmasteredToggle').addEventListener('change', (event) => {
         setRotateUnmasteredOnly(event.target.checked);
     });
@@ -1109,7 +1178,7 @@ function initEvents() {
 document.addEventListener('DOMContentLoaded', () => {
     initTheme();
     initMenu();
-    loadSharedImageFromUrl();
+    loadSharedStateFromUrl();
     initEvents();
     renderStudyScreen();
 });

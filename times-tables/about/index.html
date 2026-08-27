@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="About Times Tables - a simple multiplication flash card app with a hidden picture reward.">
+    <meta name="description" content="About Times Tables - multiplication flash cards with saved progress, image reveals, pick-a-card mode, and session stats.">
     <meta name="theme-color" content="#667eea">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <link rel="manifest" href="../../manifest.json">
@@ -61,26 +61,34 @@
         <div class="hero">
             <div class="hero-icon">🧮</div>
             <h1>Times Tables</h1>
-            <p class="tagline">Multiplication flash cards with a hidden picture reward</p>
+            <p class="tagline">Multiplication flash cards with saved progress and a hidden picture reward</p>
             <a href="../" class="cta-button">Launch Times Tables →</a>
         </div>
 
         <h2>What is Times Tables?</h2>
         <p>
             Times Tables is a simple practice app for multiplication facts from 2 × 2 through 12 × 12.
-            Flip each card, decide whether you got it right, and gradually uncover a hidden image as you master every combination.
+            Flip each square flash card, decide whether you got it correct, and gradually uncover a hidden image as you work through every combination.
         </p>
 
         <h2>Features</h2>
         <ul class="feature-list">
-            <li><span class="fi">🎲</span> Random flash cards that cover every multiplication fact from 2 through 12</li>
-            <li><span class="fi">🃏</span> Clean front and back card faces that show only the math problem or the answer</li>
-            <li><span class="fi">✅</span> Mark each fact as right or not yet, similar to a self-graded flash card session</li>
-            <li><span class="fi">🧩</span> Each newly mastered fact uncovers one more piece of a hidden picture</li>
-            <li><span class="fi">🖼️</span> Use the included image or upload your own reward picture</li>
-            <li><span class="fi">💾</span> Progress is saved in your browser so you can come back later and keep going</li>
-            <li><span class="fi">📊</span> End any session with “Done for now” to see quick stats</li>
+            <li><span class="fi">🎲</span> Random flash cards for every fact from 2 × 2 through 12 × 12, with mastered facts skipped when you come back later</li>
+            <li><span class="fi">🃏</span> Clean square cards whose front shows only the expression and whose back shows only the answer</li>
+            <li><span class="fi">✅</span> Self-grade each card with “Got it right” or “Not yet,” plus an undo button if you tap the wrong one</li>
+            <li><span class="fi">🧩</span> Hidden-image progression with partial reveals for slower correct answers and full clears for automatic or mastered answers</li>
+            <li><span class="fi">🖼️</span> Use the built-in image or upload your own; changing the image starts a fresh covered puzzle</li>
+            <li><span class="fi">🟨</span> Optional pick-a-card mode lets you tap image squares to choose the next prompt instead of getting the next card automatically</li>
+            <li><span class="fi">🔗</span> Share links can include your custom image and current checkbox settings so someone else can open the same setup</li>
+            <li><span class="fi">📊</span> “Done for now” shows last-session stats, all-time stats, timing categories, and your current image progress</li>
+            <li><span class="fi">💾</span> Progress, stats, settings, and your optional custom image are saved in your browser when storage is available</li>
         </ul>
+
+        <h2>How sessions work</h2>
+        <p>
+            Timing is measured from when a card appears until you flip it. Correct answers are grouped into Mastered, Automatic, Solid,
+            Learning, and Distracted buckets on the stats screen. Incorrect answers count toward your session totals but are not included in the timing buckets.
+        </p>
 
         <h2>Privacy</h2>
         <p>
