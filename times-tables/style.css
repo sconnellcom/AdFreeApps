@@ -15,6 +15,10 @@
     justify-content: center;
 }
 
+.pick-card-mode .image-frame {
+    overflow: visible;
+}
+
 .image-card-host .flashcard-wrap {
     margin: 0;
     pointer-events: auto;
@@ -325,6 +329,13 @@ body {
     border-radius: 18px;
     padding: 16px;
     margin-bottom: 18px;
+}
+
+#screen-study .image-section {
+    background: none;
+    border: 0;
+    border-radius: 0;
+    padding: 0;
 }
 
 .image-frame {
@@ -728,12 +739,26 @@ body {
         right: 18px;
     }
 
+    #screen-study .image-frame {
+        width: 100%;
+    }
+
     .flashcard {
         width: 100%;
     }
 
     .rating-row {
         flex-direction: column;
+    }
+
+    .pick-mode-actions-host .rating-row {
+        flex-direction: row;
+        gap: 8px;
+    }
+
+    .pick-mode-actions-host .btn {
+        padding: 12px 10px;
+        font-size: 0.95rem;
     }
 
     .results-stats {

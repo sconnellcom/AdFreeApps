@@ -541,7 +541,7 @@ function updateProgress() {
         ? 'Pick a box on the image to show the next card.'
         : remainingCount === 0
         ? 'You uncovered the whole picture. Keep practicing as long as you like.'
-        : 'Correct answers uncover more, and solid or better answers fully clear a tile.';
+        : '';
     const clearedTileCount = getClearedTileCount();
     document.getElementById('resultsImageCaption').textContent = clearedTileCount === TOTAL_FACTS
         ? 'Your whole image is uncovered.'
