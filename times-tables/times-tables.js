@@ -189,6 +189,7 @@ function updateStudyCard() {
     const flashcard = document.getElementById('flashcard');
     flashcard.classList.toggle('flipped', session.isFlipped);
     document.getElementById('ratingRow').style.display = session.isFlipped ? 'flex' : 'none';
+    document.getElementById('flipBtn').style.display = session.isFlipped ? 'none' : 'block';
 }
 
 function updateProgress() {
