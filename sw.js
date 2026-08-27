@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ad-free-apps-v8';
+const CACHE_NAME = 'ad-free-apps-v9';
 const urlsToCache = [
     '/',
     '/index.html',
@@ -36,8 +36,8 @@ const urlsToCache = [
     '/quizard/quizard.js?v=3',
     '/times-tables/',
     '/times-tables/index.html',
-    '/times-tables/style.css?v=3',
-    '/times-tables/times-tables.js?v=3',
+    '/times-tables/style.css?v=4',
+    '/times-tables/times-tables.js?v=4',
     '/times-tables/default-image.svg',
     '/scrollfix/',
     '/scrollfix/index.html',

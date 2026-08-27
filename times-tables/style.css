@@ -667,6 +667,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 10px;
+    margin-bottom: 18px;
 }
 
 .all-time-row {

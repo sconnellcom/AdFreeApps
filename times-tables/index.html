@@ -10,7 +10,7 @@
     <link rel="manifest" href="../manifest.json">
     <link rel="apple-touch-icon" href="../icons/icon-152x152.png">
     <title>Times Tables</title>
-    <link rel="stylesheet" href="style.css?v=3">
+    <link rel="stylesheet" href="style.css?v=4">
 </head>
 
 <body>
@@ -205,6 +205,10 @@
                 </section>
 
                 <div class="gameplay-row results-gameplay-row">
+                    <label class="toggle-option" for="progressSolidToggle">
+                        <input id="progressSolidToggle" type="checkbox" checked>
+                        Progress based on solid or better
+                    </label>
                     <label class="toggle-option" for="rotateUnmasteredToggle">
                         <input id="rotateUnmasteredToggle" type="checkbox" checked>
                         Keep learning or distracted in rotation
@@ -229,7 +233,7 @@
         </div>
     </div>
 
-    <script src="times-tables.js?v=3"></script>
+    <script src="times-tables.js?v=4"></script>
 </body>
 
 </html>

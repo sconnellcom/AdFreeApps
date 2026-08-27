@@ -25,6 +25,7 @@ const SHARE_IMAGE_LIST_HASH_KEY = 'images';
 const SHARE_IMAGE_INDEX_HASH_KEY = 'imageIndex';
 const SHARE_ROTATION_HASH_KEY = 'rotation';
 const SHARE_PICK_MODE_HASH_KEY = 'pick';
+const SHARE_PROGRESS_HASH_KEY = 'progress';
 const CATEGORY_META = {
     mastered: { label: 'Insainly Fast' },
     automatic: { label: 'Automatic' },
@@ -241,7 +242,8 @@ function loadState() {
         currentImageIndex: 0,
         settings: {
             rotateUnmasteredOnly: true,
-            pickCardMode: false
+            pickCardMode: false,
+            progressSolidOrBetter: true
         },
         activeSession: null,
         lastSessionStats: null,
@@ -316,7 +318,8 @@ function sanitizeState(input) {
         currentImageIndex: sanitizeImageIndex(input.currentImageIndex, input.imageUrls, input.imageDataUrl),
         settings: {
             rotateUnmasteredOnly: !input.settings || input.settings.rotateUnmasteredOnly !== false,
-            pickCardMode: Boolean(input.settings && input.settings.pickCardMode)
+            pickCardMode: Boolean(input.settings && input.settings.pickCardMode),
+            progressSolidOrBetter: !input.settings || input.settings.progressSolidOrBetter !== false
         },
         activeSession: session,
         lastSessionStats,
@@ -545,6 +548,10 @@ function isPickCardModeActive() {
     return Boolean(state.settings.pickCardMode);
 }
 
+function isProgressBasedOnSolidOrBetter() {
+    return state.settings.progressSolidOrBetter !== false;
+}
+
 function isAwaitingPick() {
     return Boolean(state.activeSession && state.activeSession.awaitingPick && isPickCardModeActive());
 }
@@ -557,16 +564,27 @@ function isSolidOrBetterCategory(category) {
     return category === 'mastered' || category === 'automatic' || category === 'solid';
 }
 
-function isTileFullyCleared(progress) {
+function hasAnyCorrectAnswer(progress) {
+    return Boolean(progress && progress.correct > 0);
+}
+
+function countsTowardProgress(progress) {
     if (!progress) {
         return false;
+    }
+    if (!isProgressBasedOnSolidOrBetter()) {
+        return hasAnyCorrectAnswer(progress);
     }
     const category = getProgressCategory(progress);
     return Boolean(progress.cleared || progress.mastered || isSolidOrBetterCategory(category));
 }
 
+function isTileFullyCleared(progress) {
+    return countsTowardProgress(progress);
+}
+
 function getClearedTileCount() {
-    return FACTS.reduce((count, fact) => count + (isTileFullyCleared(state.factProgress[fact.id]) ? 1 : 0), 0);
+    return FACTS.reduce((count, fact) => count + (countsTowardProgress(state.factProgress[fact.id]) ? 1 : 0), 0);
 }
 
 function getImageQueueLabel() {
@@ -632,8 +650,9 @@ function updateProgress() {
     const remainingCount = TOTAL_FACTS - clearedCount;
     const percent = Math.round((clearedCount / TOTAL_FACTS) * 100);
     const waitingForPick = isAwaitingPick();
+    const progressLabel = isProgressBasedOnSolidOrBetter() ? 'solid or better' : 'correct';
 
-    document.getElementById('masteryText').textContent = `${clearedCount} of ${TOTAL_FACTS} solid or better`;
+    document.getElementById('masteryText').textContent = `${clearedCount} of ${TOTAL_FACTS} ${progressLabel}`;
     document.getElementById('remainingText').textContent = `${remainingCount} facts left`;
     document.getElementById('masteryFill').style.width = `${percent}%`;
     document.getElementById('imageCaption').textContent = waitingForPick
@@ -724,6 +743,7 @@ function updateSessionText() {
 }
 
 function updateGameplayToggle() {
+    document.getElementById('progressSolidToggle').checked = isProgressBasedOnSolidOrBetter();
     document.getElementById('rotateUnmasteredToggle').checked = state.settings.rotateUnmasteredOnly;
     document.getElementById('pickCardModeToggle').checked = isPickCardModeActive();
 }
@@ -1101,6 +1121,21 @@ function setRotateUnmasteredOnly(enabled) {
     renderStudyScreen();
 }
 
+function setProgressSolidOrBetter(enabled) {
+    recordSessionActivity();
+    state.settings.progressSolidOrBetter = enabled;
+    saveState();
+    if (document.getElementById('screen-settings').classList.contains('active')) {
+        renderSettingsScreen();
+        return;
+    }
+    if (document.getElementById('screen-stats').classList.contains('active')) {
+        renderStatsScreen();
+        return;
+    }
+    renderStudyScreen();
+}
+
 function setPickCardMode(enabled) {
     recordSessionActivity();
     state.settings.pickCardMode = enabled;
@@ -1226,7 +1261,8 @@ function getShareUrl() {
     url.hash = '';
     const params = new URLSearchParams({
         [SHARE_ROTATION_HASH_KEY]: state.settings.rotateUnmasteredOnly ? '1' : '0',
-        [SHARE_PICK_MODE_HASH_KEY]: state.settings.pickCardMode ? '1' : '0'
+        [SHARE_PICK_MODE_HASH_KEY]: state.settings.pickCardMode ? '1' : '0',
+        [SHARE_PROGRESS_HASH_KEY]: isProgressBasedOnSolidOrBetter() ? '1' : '0'
     });
     const imageUrls = getConfiguredImageUrls();
     if (imageUrls.length > 0) {
@@ -1247,11 +1283,12 @@ function loadSharedStateFromUrl() {
     const sharedImageIndex = params.get(SHARE_IMAGE_INDEX_HASH_KEY);
     const rotationSetting = params.get(SHARE_ROTATION_HASH_KEY);
     const pickSetting = params.get(SHARE_PICK_MODE_HASH_KEY);
+    const progressSetting = params.get(SHARE_PROGRESS_HASH_KEY);
     const sharedImageUrls = typeof sharedImages === 'string'
         ? sharedImages.split('\n').map((value) => value.trim()).filter(Boolean)
         : [];
     const hasSharedImageList = sharedImageUrls.length > 0;
-    const hasSharedSettings = rotationSetting !== null || pickSetting !== null;
+    const hasSharedSettings = rotationSetting !== null || pickSetting !== null || progressSetting !== null;
 
     if (!hasSharedImageList && !hasSharedSettings) {
         return;
@@ -1265,6 +1302,9 @@ function loadSharedStateFromUrl() {
     }
     if (pickSetting !== null) {
         state.settings.pickCardMode = pickSetting === '1';
+    }
+    if (progressSetting !== null) {
+        state.settings.progressSolidOrBetter = progressSetting !== '0';
     }
     clearOverlayProgress();
     state.lastSessionStats = null;
@@ -1361,6 +1401,9 @@ function initEvents() {
     document.getElementById('resetAllTimeBtn').addEventListener('click', resetAllProgressAndStats);
     document.getElementById('rotateUnmasteredToggle').addEventListener('change', (event) => {
         setRotateUnmasteredOnly(event.target.checked);
+    });
+    document.getElementById('progressSolidToggle').addEventListener('change', (event) => {
+        setProgressSolidOrBetter(event.target.checked);
     });
     document.getElementById('pickCardModeToggle').addEventListener('change', (event) => {
         setPickCardMode(event.target.checked);
