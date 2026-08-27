@@ -20,7 +20,8 @@ const MASTERED_MS = 1250;
 const AUTOMATIC_MS = 2000;
 const SOLID_MS = 4000;
 const LEARNING_MS = 10000;
-const SHARE_IMAGE_HASH_KEY = 'image';
+const SHARE_IMAGE_LIST_HASH_KEY = 'images';
+const SHARE_IMAGE_INDEX_HASH_KEY = 'imageIndex';
 const SHARE_ROTATION_HASH_KEY = 'rotation';
 const SHARE_PICK_MODE_HASH_KEY = 'pick';
 const CATEGORY_META = {
@@ -230,7 +231,8 @@ function loadState() {
     const baseState = {
         masteredIds: [],
         factProgress: {},
-        imageDataUrl: '',
+        imageUrls: [],
+        currentImageIndex: 0,
         settings: {
             rotateUnmasteredOnly: true,
             pickCardMode: false
@@ -298,7 +300,8 @@ function sanitizeState(input) {
     return {
         masteredIds,
         factProgress,
-        imageDataUrl: typeof input.imageDataUrl === 'string' ? input.imageDataUrl : '',
+        imageUrls: sanitizeImageUrls(input.imageUrls, input.imageDataUrl),
+        currentImageIndex: sanitizeImageIndex(input.currentImageIndex, input.imageUrls, input.imageDataUrl),
         settings: {
             rotateUnmasteredOnly: !input.settings || input.settings.rotateUnmasteredOnly !== false,
             pickCardMode: Boolean(input.settings && input.settings.pickCardMode)
@@ -307,6 +310,27 @@ function sanitizeState(input) {
         lastSessionStats,
         allTimeStats: sanitizeAllTimeStats(input.allTimeStats)
     };
+}
+
+function sanitizeImageUrls(imageUrls, legacyImageDataUrl) {
+    if (Array.isArray(imageUrls)) {
+        return imageUrls
+            .map((value) => typeof value === 'string' ? value.trim() : '')
+            .filter(Boolean);
+    }
+    if (typeof legacyImageDataUrl === 'string' && legacyImageDataUrl.trim()) {
+        return [legacyImageDataUrl.trim()];
+    }
+    return [];
+}
+
+function sanitizeImageIndex(imageIndex, imageUrls, legacyImageDataUrl) {
+    const availableUrls = sanitizeImageUrls(imageUrls, legacyImageDataUrl);
+    const parsed = Math.max(0, Number(imageIndex) || 0);
+    if (availableUrls.length === 0) {
+        return 0;
+    }
+    return Math.min(parsed, availableUrls.length - 1);
 }
 
 function saveState() {
@@ -333,6 +357,15 @@ function getFactProgress(factId) {
         state.factProgress[factId] = buildEmptyFactProgress();
     }
     return state.factProgress[factId];
+}
+
+function getConfiguredImageUrls() {
+    return Array.isArray(state.imageUrls) ? state.imageUrls.filter(Boolean) : [];
+}
+
+function getCurrentImageSource() {
+    const imageUrls = getConfiguredImageUrls();
+    return imageUrls[state.currentImageIndex] || DEFAULT_IMAGE;
 }
 
 function isFactMastered(progress) {
@@ -378,6 +411,8 @@ function captureUndoState() {
     return {
         masteredIds: deepClone(state.masteredIds),
         factProgress: deepClone(state.factProgress),
+        currentImageIndex: state.currentImageIndex,
+        allTimeStats: deepClone(state.allTimeStats),
         activeSession
     };
 }
@@ -482,6 +517,14 @@ function getClearedTileCount() {
     return FACTS.reduce((count, fact) => count + (isTileFullyCleared(state.factProgress[fact.id]) ? 1 : 0), 0);
 }
 
+function getImageQueueLabel() {
+    const imageUrls = getConfiguredImageUrls();
+    if (imageUrls.length === 0) {
+        return 'Using the default image.';
+    }
+    return `Image ${state.currentImageIndex + 1} of ${imageUrls.length}`;
+}
+
 function pickNextFactId(previousFactId) {
     let pool = state.settings.rotateUnmasteredOnly
         ? FACTS.filter((fact) => shouldKeepInRotation(state.factProgress[fact.id]))
@@ -546,18 +589,13 @@ function updateProgress() {
         : remainingCount === 0
         ? 'You uncovered the whole picture. Keep practicing as long as you like.'
         : '';
-    const clearedTileCount = getClearedTileCount();
-    document.getElementById('resultsImageCaption').textContent = clearedTileCount === TOTAL_FACTS
-        ? 'Your whole image is uncovered.'
-        : `${clearedTileCount} tiles fully cleared so far.`;
-
     renderCoverTiles();
 }
 
 function renderCoverTiles() {
     const covers = [
         document.getElementById('imageCover'),
-        document.getElementById('resultsImageCover')
+        document.getElementById('settingsImageCover')
     ].filter(Boolean);
     const canPick = isAwaitingPick();
     const allCleared = getClearedTileCount() === TOTAL_FACTS;
@@ -588,12 +626,39 @@ function renderCoverTiles() {
 }
 
 function updateImage() {
-    const imageUrl = state.imageDataUrl || DEFAULT_IMAGE;
+    const imageUrl = getCurrentImageSource();
     document.getElementById('rewardImage').src = imageUrl;
-    const resultsImage = document.getElementById('resultsRewardImage');
-    if (resultsImage) {
-        resultsImage.src = imageUrl;
+    const settingsImage = document.getElementById('settingsRewardImage');
+    if (settingsImage) {
+        settingsImage.src = imageUrl;
     }
+    updateSettingsImageCaption();
+    updateImageUrlsInput();
+}
+
+function updateImageUrlsInput() {
+    const imageUrlsInput = document.getElementById('imageUrlsInput');
+    if (imageUrlsInput) {
+        imageUrlsInput.value = getConfiguredImageUrls().join('\n');
+    }
+}
+
+function updateSettingsImageCaption() {
+    const caption = document.getElementById('settingsImageCaption');
+    if (!caption) {
+        return;
+    }
+    const clearedTileCount = getClearedTileCount();
+    const imageUrls = getConfiguredImageUrls();
+    if (imageUrls.length === 0) {
+        caption.textContent = clearedTileCount === TOTAL_FACTS
+            ? 'Default image complete.'
+            : 'Using the default image.';
+        return;
+    }
+    caption.textContent = clearedTileCount === TOTAL_FACTS && state.currentImageIndex === imageUrls.length - 1
+        ? `${getImageQueueLabel()} complete.`
+        : `${getImageQueueLabel()} · ${clearedTileCount} tiles cleared`;
 }
 
 function updateSessionText() {
@@ -700,6 +765,18 @@ function showScreen(name) {
     }
 }
 
+function openStudyScreen() {
+    renderStudyScreen();
+}
+
+function openStatsScreen() {
+    renderStatsScreen();
+}
+
+function openSettingsScreen() {
+    renderSettingsScreen();
+}
+
 function flipCard() {
     ensureSession();
     state.activeSession.isFlipped = !state.activeSession.isFlipped;
@@ -757,6 +834,7 @@ function markAnswer(wasCorrect) {
         mastered.add(currentFactId);
         state.masteredIds = Array.from(mastered);
         session.newlyMastered += 1;
+        state.allTimeStats.newlyMastered += 1;
     }
 
     const category = categorizeAttempt({ wasCorrect, responseMs, isNowMastered });
@@ -770,6 +848,15 @@ function markAnswer(wasCorrect) {
         answeredAt: Date.now()
     });
 
+    state.allTimeStats.seen += 1;
+    state.allTimeStats.elapsedSeconds += Math.max(0, Math.round(responseMs / 1000));
+    if (wasCorrect) {
+        state.allTimeStats.correct += 1;
+    } else {
+        state.allTimeStats.incorrect += 1;
+    }
+
+    const advancedToNextImage = advanceToNextImageIfNeeded();
     session.undoState = undoState;
     session.isFlipped = false;
     session.answerShownAt = null;
@@ -778,7 +865,7 @@ function markAnswer(wasCorrect) {
         session.currentFactId = null;
         session.awaitingPick = true;
     } else {
-        session.currentFactId = pickNextFactId(currentFactId);
+        session.currentFactId = pickNextFactId(advancedToNextImage ? null : currentFactId);
         session.awaitingPick = false;
         session.questionShownAt = Date.now();
     }
@@ -797,6 +884,8 @@ function undoLastAnswer() {
     const undoState = deepClone(state.activeSession.undoState);
     state.masteredIds = Array.isArray(undoState.masteredIds) ? undoState.masteredIds : [];
     state.factProgress = undoState.factProgress && typeof undoState.factProgress === 'object' ? undoState.factProgress : {};
+    state.currentImageIndex = Math.max(0, Number(undoState.currentImageIndex) || 0);
+    state.allTimeStats = sanitizeAllTimeStats(undoState.allTimeStats);
     state.activeSession = undoState.activeSession && typeof undoState.activeSession === 'object'
         ? { ...undoState.activeSession, undoState: null }
         : buildEmptySession();
@@ -815,29 +904,27 @@ function buildCategoryBuckets(attempts) {
     return buckets;
 }
 
-function finishSession() {
-    ensureSession();
-    const session = state.activeSession;
-    const elapsedSeconds = Math.max(1, Math.round((Date.now() - session.startedAt) / 1000));
-
-    state.lastSessionStats = {
-        seen: session.seen,
-        correct: session.correct,
-        incorrect: session.incorrect,
-        newlyMastered: session.newlyMastered,
-        elapsedSeconds,
+function getSessionStatsSnapshot() {
+    if (state.activeSession) {
+        return {
+            seen: state.activeSession.seen,
+            correct: state.activeSession.correct,
+            incorrect: state.activeSession.incorrect,
+            newlyMastered: state.activeSession.newlyMastered,
+            elapsedSeconds: Math.max(0, Math.round((Date.now() - state.activeSession.startedAt) / 1000)),
+            masteredTotal: state.masteredIds.length,
+            attempts: state.activeSession.attempts.slice()
+        };
+    }
+    return state.lastSessionStats || {
+        seen: 0,
+        correct: 0,
+        incorrect: 0,
+        newlyMastered: 0,
+        elapsedSeconds: 0,
         masteredTotal: state.masteredIds.length,
-        attempts: session.attempts.slice()
+        attempts: []
     };
-    state.allTimeStats.sessions += 1;
-    state.allTimeStats.seen += session.seen;
-    state.allTimeStats.correct += session.correct;
-    state.allTimeStats.incorrect += session.incorrect;
-    state.allTimeStats.newlyMastered += session.newlyMastered;
-    state.allTimeStats.elapsedSeconds += elapsedSeconds;
-    state.activeSession = null;
-    saveState();
-    renderResultsScreen();
 }
 
 function renderResultsBuckets(attempts) {
@@ -851,17 +938,9 @@ function renderResultsBuckets(attempts) {
     });
 }
 
-function renderResultsScreen() {
+function renderStatsScreen() {
     closeDetailsModal();
-    const stats = state.lastSessionStats || {
-        seen: 0,
-        correct: 0,
-        incorrect: 0,
-        newlyMastered: 0,
-        elapsedSeconds: 0,
-        masteredTotal: state.masteredIds.length,
-        attempts: []
-    };
+    const stats = getSessionStatsSnapshot();
     const remaining = TOTAL_FACTS - state.masteredIds.length;
     const accuracy = stats.seen > 0 ? Math.round((stats.correct / stats.seen) * 100) : 0;
 
@@ -871,18 +950,27 @@ function renderResultsScreen() {
     document.getElementById('resultsNew').textContent = stats.newlyMastered;
     document.getElementById('resultsSummary').textContent = `${formatElapsed(stats.elapsedSeconds)} · ${accuracy}% accuracy · ${stats.masteredTotal} mastered total · ${remaining} remaining · time measured to flip`;
     document.getElementById('resultsIcon').textContent = remaining === 0 ? '🏆' : stats.newlyMastered > 0 ? '🧩' : '🎉';
+    updateProgress();
+    renderAllTimeSummary();
+    renderResultsBuckets(stats.attempts || []);
+    showScreen('stats');
+}
+
+function renderSettingsScreen() {
+    closeDetailsModal();
     updateImage();
     updateProgress();
     updateGameplayToggle();
-    renderAllTimeSummary();
-    renderResultsBuckets(stats.attempts || []);
-    showScreen('results');
+    showScreen('settings');
 }
 
 function renderAllTimeSummary() {
     const stats = state.allTimeStats || buildEmptyAllTimeStats();
+    const liveElapsedSeconds = state.activeSession
+        ? Math.max(0, Math.round((Date.now() - state.activeSession.startedAt) / 1000))
+        : 0;
     document.getElementById('allTimeSummary').textContent =
-        `All time: ${stats.seen} seen · ${stats.correct} correct · ${stats.incorrect} not yet · ${state.masteredIds.length} mastered · ${formatElapsed(stats.elapsedSeconds)}`;
+        `All time: ${stats.seen} seen · ${stats.correct} correct · ${stats.incorrect} not yet · ${state.masteredIds.length} mastered · ${formatElapsed(stats.elapsedSeconds + liveElapsedSeconds)}`;
 }
 
 function formatElapsed(totalSeconds) {
@@ -902,10 +990,11 @@ function formatResponseMs(ms) {
 }
 
 function openDetailsModal(categoryId) {
-    if (!state.lastSessionStats || !CATEGORY_META[categoryId]) {
+    if (!CATEGORY_META[categoryId]) {
         return;
     }
-    const attempts = (state.lastSessionStats.attempts || [])
+    const stats = getSessionStatsSnapshot();
+    const attempts = (stats.attempts || [])
         .filter((attempt) => attempt.category === categoryId)
         .sort((left, right) => right.responseMs - left.responseMs);
 
@@ -940,8 +1029,12 @@ function startFreshSession() {
 function setRotateUnmasteredOnly(enabled) {
     state.settings.rotateUnmasteredOnly = enabled;
     saveState();
-    if (document.getElementById('screen-results').classList.contains('active')) {
-        renderResultsScreen();
+    if (document.getElementById('screen-settings').classList.contains('active')) {
+        renderSettingsScreen();
+        return;
+    }
+    if (document.getElementById('screen-stats').classList.contains('active')) {
+        renderStatsScreen();
         return;
     }
     renderStudyScreen();
@@ -963,8 +1056,12 @@ function setPickCardMode(enabled) {
         }
     }
     saveState();
-    if (document.getElementById('screen-results').classList.contains('active')) {
-        renderResultsScreen();
+    if (document.getElementById('screen-settings').classList.contains('active')) {
+        renderSettingsScreen();
+        return;
+    }
+    if (document.getElementById('screen-stats').classList.contains('active')) {
+        renderStatsScreen();
         return;
     }
     renderStudyScreen({ instantReset: true });
@@ -982,8 +1079,10 @@ function clearOverlayProgress({ clearStats = false } = {}) {
 
 function resetAllProgressAndStats() {
     clearOverlayProgress({ clearStats: true });
+    state.imageUrls = [];
+    state.currentImageIndex = 0;
     saveState();
-    renderResultsScreen();
+    renderSettingsScreen();
     showNotice('Progress, overlay, and stats reset.');
 }
 
@@ -1015,6 +1114,10 @@ function initMenu() {
     const menuDropdown = document.getElementById('menuDropdown');
     const themeMenuItem = document.getElementById('themeMenuItem');
     const themeSubmenu = document.getElementById('themeSubmenu');
+    const closeMenu = () => {
+        menuDropdown.style.display = 'none';
+        themeSubmenu.style.display = 'none';
+    };
 
     menuBtn.addEventListener('click', (event) => {
         event.stopPropagation();
@@ -1034,46 +1137,26 @@ function initMenu() {
         button.addEventListener('click', (event) => {
             event.stopPropagation();
             applyTheme(button.dataset.theme);
-            themeSubmenu.style.display = 'none';
-            menuDropdown.style.display = 'none';
+            closeMenu();
         });
+    });
+
+    document.getElementById('menuStudyItem').addEventListener('click', () => {
+        closeMenu();
+        openStudyScreen();
+    });
+    document.getElementById('menuStatsItem').addEventListener('click', () => {
+        closeMenu();
+        openStatsScreen();
+    });
+    document.getElementById('menuSettingsItem').addEventListener('click', () => {
+        closeMenu();
+        openSettingsScreen();
     });
 
     menuDropdown.addEventListener('click', (event) => event.stopPropagation());
     document.addEventListener('click', () => {
-        menuDropdown.style.display = 'none';
-        themeSubmenu.style.display = 'none';
-    });
-}
-
-function resizeImage(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            const image = new Image();
-            image.onload = () => {
-                let width = image.width;
-                let height = image.height;
-                const ratio = Math.min(1, 1200 / width, 1200 / height);
-                width = Math.max(1, Math.round(width * ratio));
-                height = Math.max(1, Math.round(height * ratio));
-
-                const canvas = document.createElement('canvas');
-                canvas.width = width;
-                canvas.height = height;
-                const context = canvas.getContext('2d');
-                if (!context) {
-                    reject(new Error('Canvas is unavailable.'));
-                    return;
-                }
-                context.drawImage(image, 0, 0, width, height);
-                resolve(canvas.toDataURL('image/jpeg', 0.85));
-            };
-            image.onerror = () => reject(new Error('Image could not be loaded.'));
-            image.src = event.target.result;
-        };
-        reader.onerror = () => reject(new Error('Image could not be read.'));
-        reader.readAsDataURL(file);
+        closeMenu();
     });
 }
 
@@ -1084,8 +1167,10 @@ function getShareUrl() {
         [SHARE_ROTATION_HASH_KEY]: state.settings.rotateUnmasteredOnly ? '1' : '0',
         [SHARE_PICK_MODE_HASH_KEY]: state.settings.pickCardMode ? '1' : '0'
     });
-    if (state.imageDataUrl) {
-        params.set(SHARE_IMAGE_HASH_KEY, state.imageDataUrl);
+    const imageUrls = getConfiguredImageUrls();
+    if (imageUrls.length > 0) {
+        params.set(SHARE_IMAGE_LIST_HASH_KEY, imageUrls.join('\n'));
+        params.set(SHARE_IMAGE_INDEX_HASH_KEY, String(state.currentImageIndex));
     }
     url.hash = params.toString();
     return url.toString();
@@ -1097,17 +1182,22 @@ function loadSharedStateFromUrl() {
         return;
     }
     const params = new URLSearchParams(hash);
-    const sharedImage = params.get(SHARE_IMAGE_HASH_KEY);
+    const sharedImages = params.get(SHARE_IMAGE_LIST_HASH_KEY);
+    const sharedImageIndex = params.get(SHARE_IMAGE_INDEX_HASH_KEY);
     const rotationSetting = params.get(SHARE_ROTATION_HASH_KEY);
     const pickSetting = params.get(SHARE_PICK_MODE_HASH_KEY);
-    const hasSharedImage = Boolean(sharedImage && sharedImage.startsWith('data:image/'));
+    const sharedImageUrls = typeof sharedImages === 'string'
+        ? sharedImages.split('\n').map((value) => value.trim()).filter(Boolean)
+        : [];
+    const hasSharedImageList = sharedImageUrls.length > 0;
     const hasSharedSettings = rotationSetting !== null || pickSetting !== null;
 
-    if (!hasSharedImage && !hasSharedSettings) {
+    if (!hasSharedImageList && !hasSharedSettings) {
         return;
     }
-    if (hasSharedImage) {
-        state.imageDataUrl = sharedImage;
+    if (hasSharedImageList) {
+        state.imageUrls = sharedImageUrls;
+        state.currentImageIndex = sanitizeImageIndex(sharedImageIndex, sharedImageUrls);
     }
     if (rotationSetting !== null) {
         state.settings.rotateUnmasteredOnly = rotationSetting !== '0';
@@ -1134,32 +1224,27 @@ async function shareImageLink() {
     window.prompt('Copy this share link:', shareUrl);
 }
 
-async function handleImageUpload(event) {
-    const file = event.target.files && event.target.files[0];
-    event.target.value = '';
-    if (!file) {
-        return;
-    }
-    try {
-        state.imageDataUrl = await resizeImage(file);
-        clearOverlayProgress();
-        if (!saveState()) {
-            showNotice('Custom image loaded for now, but this browser could not save it.');
-        } else {
-            showNotice('Custom image saved and progress reset for the new picture.');
-        }
-        renderResultsScreen();
-    } catch (error) {
-        showNotice('That image could not be used here.');
-    }
-}
-
 function resetImage() {
-    state.imageDataUrl = '';
+    state.imageUrls = [];
+    state.currentImageIndex = 0;
     clearOverlayProgress();
     saveState();
-    renderResultsScreen();
+    renderSettingsScreen();
     showNotice('Using the default image with a fresh covered overlay.');
+}
+
+function saveImageUrls() {
+    const imageUrlsInput = document.getElementById('imageUrlsInput');
+    const nextUrls = imageUrlsInput.value
+        .split('\n')
+        .map((value) => value.trim())
+        .filter(Boolean);
+    state.imageUrls = nextUrls;
+    state.currentImageIndex = 0;
+    clearOverlayProgress();
+    saveState();
+    renderSettingsScreen();
+    showNotice(nextUrls.length > 0 ? 'Image list saved.' : 'Using the default image.');
 }
 
 function showNotice(message) {
@@ -1177,18 +1262,21 @@ function showNotice(message) {
 }
 
 function updateNotice() {
-    const uploadInput = document.getElementById('imageUploadInput');
-    const uploadLabel = document.getElementById('uploadLabel');
-
     if (!storage.available) {
         document.getElementById('storageNotice').textContent = 'Progress is only available during this visit.';
     }
+}
 
-    if (!window.FileReader) {
-        uploadInput.disabled = true;
-        uploadLabel.classList.add('disabled');
-        uploadLabel.textContent = 'Upload unavailable';
+function advanceToNextImageIfNeeded() {
+    const imageUrls = getConfiguredImageUrls();
+    if (getClearedTileCount() !== TOTAL_FACTS || state.currentImageIndex >= imageUrls.length - 1) {
+        return false;
     }
+    state.currentImageIndex += 1;
+    state.masteredIds = [];
+    state.factProgress = {};
+    showNotice(`Moved to image ${state.currentImageIndex + 1} of ${imageUrls.length}.`);
+    return true;
 }
 
 function initEvents() {
@@ -1204,11 +1292,10 @@ function initEvents() {
     document.getElementById('flipBtn').addEventListener('click', flipCard);
     document.getElementById('wrongBtn').addEventListener('click', () => markAnswer(false));
     document.getElementById('rightBtn').addEventListener('click', () => markAnswer(true));
-    document.getElementById('doneBtn').addEventListener('click', finishSession);
-    document.getElementById('resumeBtn').addEventListener('click', startFreshSession);
+    document.getElementById('resumeBtn').addEventListener('click', openStudyScreen);
     document.getElementById('resetImageBtn').addEventListener('click', resetImage);
     document.getElementById('shareImageBtn').addEventListener('click', shareImageLink);
-    document.getElementById('imageUploadInput').addEventListener('change', handleImageUpload);
+    document.getElementById('saveImageUrlsBtn').addEventListener('click', saveImageUrls);
     document.getElementById('undoBtn').addEventListener('click', undoLastAnswer);
     document.getElementById('resetAllTimeBtn').addEventListener('click', resetAllProgressAndStats);
     document.getElementById('rotateUnmasteredToggle').addEventListener('change', (event) => {

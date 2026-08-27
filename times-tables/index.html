@@ -36,6 +36,18 @@
                 <span class="menu-icon">💎</span>
                 <span class="menu-label">Apps</span>
             </a>
+            <button id="menuStudyItem" class="menu-item menu-item-button" type="button">
+                <span class="menu-icon">🧮</span>
+                <span class="menu-label">Study</span>
+            </button>
+            <button id="menuStatsItem" class="menu-item menu-item-button" type="button">
+                <span class="menu-icon">📊</span>
+                <span class="menu-label">Stats</span>
+            </button>
+            <button id="menuSettingsItem" class="menu-item menu-item-button" type="button">
+                <span class="menu-icon">⚙️</span>
+                <span class="menu-label">Settings</span>
+            </button>
             <button id="themeMenuItem" class="menu-item menu-item-button">
                 <span class="menu-icon" id="themeMenuIcon">💜</span>
                 <span class="menu-label">Change Theme</span>
@@ -79,7 +91,6 @@
             <div class="session-strip">
                 <div class="session-actions">
                     <button id="undoBtn" class="btn btn-secondary" type="button" disabled>Undo</button>
-                    <button id="doneBtn" class="btn btn-secondary" type="button">Done for now</button>
                 </div>
             </div>
 
@@ -118,7 +129,7 @@
             <div class="notice" id="storageNotice" aria-live="polite"></div>
         </div>
 
-        <div id="screen-results" class="screen">
+        <div id="screen-stats" class="screen">
             <div class="results-content">
                 <div class="results-icon" id="resultsIcon">🎉</div>
                 <h2>Session Stats</h2>
@@ -144,29 +155,6 @@
                 <div class="results-actions">
                     <button id="resumeBtn" class="btn btn-primary" type="button">Keep practicing</button>
                 </div>
-                <section class="image-section results-image-section">
-                    <div class="image-frame">
-                        <img id="resultsRewardImage" class="reward-image" src="default-image.svg" alt="Hidden reward image">
-                        <div id="resultsImageCover" class="image-cover" aria-hidden="true"></div>
-                    </div>
-                    <div class="image-caption" id="resultsImageCaption">Your current image progress.</div>
-                    <div class="image-controls">
-                        <label class="upload-btn" for="imageUploadInput" id="uploadLabel">Upload image</label>
-                        <input id="imageUploadInput" type="file" accept="image/*" hidden>
-                        <button id="resetImageBtn" class="btn btn-secondary" type="button">Use default image</button>
-                        <button id="shareImageBtn" class="btn btn-secondary" type="button">Share image</button>
-                    </div>
-                    <div class="gameplay-row results-gameplay-row">
-                        <label class="toggle-option" for="rotateUnmasteredToggle">
-                            <input id="rotateUnmasteredToggle" type="checkbox" checked>
-                            Keep learning or distracted in rotation
-                        </label>
-                        <label class="toggle-option" for="pickCardModeToggle">
-                            <input id="pickCardModeToggle" type="checkbox">
-                            Pick a card mode
-                        </label>
-                    </div>
-                </section>
                 <div class="results-buckets" id="resultsBuckets">
                     <button class="results-bucket" type="button" data-category="mastered">
                         <span class="results-bucket-count" id="resultsBucket-mastered">0</span>
@@ -192,6 +180,40 @@
                 <div class="all-time-row">
                     <div class="all-time-summary" id="allTimeSummary">All time: 0 seen · 0 correct · 0 not yet · 0 mastered · 0s</div>
                     <button id="resetAllTimeBtn" class="btn btn-secondary" type="button">Reset all progress and stats</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="screen-settings" class="screen">
+            <div class="results-content">
+                <h2>Settings</h2>
+                <section class="image-section results-image-section">
+                    <div class="image-frame">
+                        <img id="settingsRewardImage" class="reward-image" src="default-image.svg" alt="Current reward image">
+                        <div id="settingsImageCover" class="image-cover" aria-hidden="true"></div>
+                    </div>
+                    <div class="image-caption" id="settingsImageCaption">Using the default image.</div>
+                </section>
+
+                <section class="settings-panel">
+                    <label class="settings-label" for="imageUrlsInput">Image URLs (one per line)</label>
+                    <textarea id="imageUrlsInput" class="settings-textarea" rows="6" placeholder="https://example.com/image-1.jpg&#10;https://example.com/image-2.jpg"></textarea>
+                    <div class="image-controls">
+                        <button id="saveImageUrlsBtn" class="btn btn-primary" type="button">Save image list</button>
+                        <button id="resetImageBtn" class="btn btn-secondary" type="button">Use default image</button>
+                        <button id="shareImageBtn" class="btn btn-secondary" type="button">Share setup</button>
+                    </div>
+                </section>
+
+                <div class="gameplay-row results-gameplay-row">
+                    <label class="toggle-option" for="rotateUnmasteredToggle">
+                        <input id="rotateUnmasteredToggle" type="checkbox" checked>
+                        Keep learning or distracted in rotation
+                    </label>
+                    <label class="toggle-option" for="pickCardModeToggle">
+                        <input id="pickCardModeToggle" type="checkbox">
+                        Pick a card mode
+                    </label>
                 </div>
             </div>
         </div>
