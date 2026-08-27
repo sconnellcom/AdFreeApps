@@ -16,19 +16,18 @@ const DEFAULT_IMAGE = 'default-image.svg';
 const REVEAL_ORDER = buildRevealOrder(TOTAL_FACTS);
 const MASTERY_STREAK_REQUIRED = 2;
 const MASTERY_AVG_MS = 6000;
-const REALLY_FAST_MS = 2000;
-const KNOWN_MS = 3500;
-const FAST_MS = 5500;
-const SLOW_MS = 9000;
+const MASTERED_MS = 1000;
+const AUTOMATIC_MS = 2000;
+const SOLID_MS = 4000;
+const LEARNING_MS = 10000;
 const CATEGORY_META = {
     mastered: { label: 'Mastered' },
-    'really-fast': { label: 'Really Fast' },
-    known: { label: 'Known' },
-    fast: { label: 'Fast' },
-    'needs-work': { label: 'Needs Work' },
-    slow: { label: 'Slow' }
+    automatic: { label: 'Automatic' },
+    solid: { label: 'Solid' },
+    learning: { label: 'Learning' },
+    distracted: { label: 'Distracted' }
 };
-const CATEGORY_ORDER = ['mastered', 'really-fast', 'known', 'fast', 'needs-work', 'slow'];
+const CATEGORY_ORDER = ['mastered', 'automatic', 'solid', 'learning', 'distracted'];
 const themeIcons = {
     default: '💜',
     black: '⚫',
@@ -310,25 +309,19 @@ function isFactMastered(progress) {
 }
 
 function categorizeAttempt({ wasCorrect, responseMs, isNowMastered }) {
-    if (isNowMastered) {
+    if (responseMs <= MASTERED_MS) {
         return 'mastered';
     }
-    if (responseMs >= SLOW_MS) {
-        return 'slow';
+    if (responseMs <= AUTOMATIC_MS) {
+        return 'automatic';
     }
-    if (!wasCorrect) {
-        return 'needs-work';
+    if (responseMs <= SOLID_MS) {
+        return 'solid';
     }
-    if (responseMs <= REALLY_FAST_MS) {
-        return 'really-fast';
+    if (responseMs <= LEARNING_MS) {
+        return 'learning';
     }
-    if (responseMs <= KNOWN_MS) {
-        return 'known';
-    }
-    if (responseMs <= FAST_MS) {
-        return 'fast';
-    }
-    return 'needs-work';
+    return 'distracted';
 }
 
 function ensureSession() {
