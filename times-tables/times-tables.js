@@ -244,6 +244,7 @@ function loadState() {
     const baseState = {
         masteredIds: [],
         factProgress: {},
+        tileProgress: {},
         imageUrls: [],
         currentImageIndex: 0,
         settings: {
@@ -275,6 +276,9 @@ function loadState() {
 
 function sanitizeState(input) {
     const factProgress = sanitizeFactProgressMap(input.factProgress, input.masteredIds);
+    const tileProgress = input.tileProgress && typeof input.tileProgress === 'object'
+        ? sanitizeFactProgressMap(input.tileProgress, [])
+        : deepClone(factProgress);
     const masteredIds = Array.from(new Set(
         Object.keys(factProgress).filter((factId) => factProgress[factId].mastered)
     ));
@@ -327,6 +331,7 @@ function sanitizeState(input) {
     return {
         masteredIds,
         factProgress,
+        tileProgress,
         imageUrls: sanitizeImageUrls(input.imageUrls, input.imageDataUrl),
         currentImageIndex: sanitizeImageIndex(input.currentImageIndex, input.imageUrls, input.imageDataUrl),
         settings: {
@@ -390,6 +395,17 @@ function getFactProgress(factId) {
         state.factProgress[factId] = buildEmptyFactProgress();
     }
     return state.factProgress[factId];
+}
+
+function getTileProgress(factId) {
+    if (!state.tileProgress[factId]) {
+        state.tileProgress[factId] = buildEmptyFactProgress();
+    }
+    return state.tileProgress[factId];
+}
+
+function getDisplayProgress(factId) {
+    return state.tileProgress[factId] || null;
 }
 
 function getConfiguredImageUrls() {
@@ -509,6 +525,7 @@ function captureUndoState() {
     return {
         masteredIds: deepClone(state.masteredIds),
         factProgress: deepClone(state.factProgress),
+        tileProgress: deepClone(state.tileProgress),
         currentImageIndex: state.currentImageIndex,
         allTimeStats: deepClone(state.allTimeStats),
         activeSession
@@ -632,7 +649,7 @@ function isTileFullyCleared(progress) {
 }
 
 function getClearedTileCount() {
-    return FACTS.reduce((count, fact) => count + (countsTowardProgress(state.factProgress[fact.id]) ? 1 : 0), 0);
+    return FACTS.reduce((count, fact) => count + (countsTowardProgress(getDisplayProgress(fact.id)) ? 1 : 0), 0);
 }
 
 function getImageQueueLabel() {
@@ -730,7 +747,7 @@ function renderCoverTiles() {
             tile.className = 'cover-tile';
             const tileIndex = REVEAL_ORDER[factIndex];
             tile.style.order = tileIndex;
-            const progress = state.factProgress[fact.id];
+            const progress = getDisplayProgress(fact.id);
             if (isTileFullyCleared(progress)) {
                 tile.classList.add('revealed');
             } else if (progress && progress.correct > 0) {
@@ -954,12 +971,32 @@ function recordFactAttempt(factId, wasCorrect, responseMs) {
     return isNowMastered;
 }
 
+function recordTileAttempt(tileId, wasCorrect, responseMs) {
+    const progress = getTileProgress(tileId);
+    progress.attempts += 1;
+    progress.totalResponseMs += responseMs;
+    progress.lastResponseMs = responseMs;
+    progress.lastWasCorrect = wasCorrect;
+    if (wasCorrect && (progress.fastestResponseMs === null || responseMs < progress.fastestResponseMs)) {
+        progress.fastestResponseMs = responseMs;
+    }
+    if (wasCorrect) {
+        progress.correct += 1;
+        if (responseMs <= SOLID_MS) {
+            progress.cleared = true;
+        }
+    }
+    progress.recentResults.push({ correct: wasCorrect, responseMs });
+    progress.recentResults = progress.recentResults.slice(-5);
+}
+
 function markAnswer(wasCorrect) {
     ensureSession();
     recordSessionActivity();
     const session = state.activeSession;
     const undoState = captureUndoState();
     const currentFactId = session.currentFactId;
+    const currentTileId = session.currentPickTileId || currentFactId;
     const mastered = getMasteredSet();
     const responseMs = Math.min(
         ACTIVE_TIMER_CAP_MS,
@@ -975,6 +1012,7 @@ function markAnswer(wasCorrect) {
 
     const alreadyMastered = mastered.has(currentFactId);
     const isNowMastered = recordFactAttempt(currentFactId, wasCorrect, responseMs);
+    recordTileAttempt(currentTileId, wasCorrect, responseMs);
     if (isNowMastered && !alreadyMastered) {
         mastered.add(currentFactId);
         state.masteredIds = Array.from(mastered);
@@ -1035,6 +1073,7 @@ function undoLastAnswer() {
     const undoState = deepClone(state.activeSession.undoState);
     state.masteredIds = Array.isArray(undoState.masteredIds) ? undoState.masteredIds : [];
     state.factProgress = undoState.factProgress && typeof undoState.factProgress === 'object' ? undoState.factProgress : {};
+    state.tileProgress = undoState.tileProgress && typeof undoState.tileProgress === 'object' ? undoState.tileProgress : {};
     state.currentImageIndex = Math.max(0, Number(undoState.currentImageIndex) || 0);
     state.allTimeStats = sanitizeAllTimeStats(undoState.allTimeStats);
     state.activeSession = undoState.activeSession && typeof undoState.activeSession === 'object'
@@ -1252,6 +1291,7 @@ function setPickCardMode(enabled) {
 function clearOverlayProgress({ clearStats = false } = {}) {
     state.masteredIds = [];
     state.factProgress = {};
+    state.tileProgress = {};
     state.activeSession = null;
     if (clearStats) {
         state.lastSessionStats = null;
@@ -1464,6 +1504,7 @@ function advanceToNextImageIfNeeded() {
     state.currentImageIndex += 1;
     state.masteredIds = [];
     state.factProgress = {};
+    state.tileProgress = {};
     showNotice(`Moved to image ${state.currentImageIndex + 1} of ${imageUrls.length}.`);
     return true;
 }
