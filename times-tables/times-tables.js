@@ -108,6 +108,7 @@ function buildEmptySession() {
         currentFactId: null,
         isFlipped: false,
         questionShownAt: Date.now(),
+        answerShownAt: null,
         attempts: []
     };
 }
@@ -235,6 +236,7 @@ function sanitizeState(input) {
             currentFactId: FACT_BY_ID[input.activeSession.currentFactId] ? input.activeSession.currentFactId : null,
             isFlipped: Boolean(input.activeSession.isFlipped),
             questionShownAt: sanitizeTimestamp(input.activeSession.questionShownAt, 30 * 60 * 1000),
+            answerShownAt: input.activeSession.answerShownAt ? sanitizeTimestamp(input.activeSession.answerShownAt, 30 * 60 * 1000) : null,
             attempts: Array.isArray(input.activeSession.attempts)
                 ? input.activeSession.attempts.map(sanitizeAttemptEntry).filter(Boolean)
                 : []
@@ -337,6 +339,7 @@ function ensureSession() {
     if (!FACT_BY_ID[state.activeSession.currentFactId]) {
         state.activeSession.currentFactId = pickNextFactId();
         state.activeSession.questionShownAt = Date.now();
+        state.activeSession.answerShownAt = null;
     }
 }
 
@@ -358,15 +361,28 @@ function pickNextFactId(previousFactId) {
     return pool[Math.floor(Math.random() * pool.length)].id;
 }
 
-function updateStudyCard() {
+function updateStudyCard(options = {}) {
     ensureSession();
+    const { instantReset = false } = options;
     const session = state.activeSession;
+    const flashcard = document.getElementById('flashcard');
+    if (instantReset) {
+        flashcard.classList.add('no-transition');
+        flashcard.classList.remove('flipped');
+        // eslint-disable-next-line no-unused-expressions
+        flashcard.offsetWidth;
+    }
+
     const fact = FACT_BY_ID[session.currentFactId];
     document.getElementById('cardFrontText').textContent = fact.expression;
     document.getElementById('cardBackText').textContent = fact.answer;
 
-    const flashcard = document.getElementById('flashcard');
     flashcard.classList.toggle('flipped', session.isFlipped);
+    if (instantReset) {
+        // eslint-disable-next-line no-unused-expressions
+        flashcard.offsetWidth;
+        flashcard.classList.remove('no-transition');
+    }
     document.getElementById('ratingRow').style.display = session.isFlipped ? 'flex' : 'none';
     document.getElementById('flipBtn').style.display = session.isFlipped ? 'none' : 'block';
 }
@@ -419,7 +435,7 @@ function updateGameplayToggle() {
     document.getElementById('rotateUnmasteredToggle').checked = state.settings.rotateUnmasteredOnly;
 }
 
-function renderStudyScreen() {
+function renderStudyScreen(options = {}) {
     closeDetailsModal();
     showScreen('study');
     ensureSession();
@@ -427,7 +443,7 @@ function renderStudyScreen() {
     updateProgress();
     updateSessionText();
     updateGameplayToggle();
-    updateStudyCard();
+    updateStudyCard(options);
     updateNotice();
 }
 
@@ -442,6 +458,9 @@ function showScreen(name) {
 function flipCard() {
     ensureSession();
     state.activeSession.isFlipped = !state.activeSession.isFlipped;
+    if (state.activeSession.isFlipped && !state.activeSession.answerShownAt) {
+        state.activeSession.answerShownAt = Date.now();
+    }
     saveState();
     updateStudyCard();
 }
@@ -473,7 +492,7 @@ function markAnswer(wasCorrect) {
     const session = state.activeSession;
     const currentFactId = session.currentFactId;
     const mastered = getMasteredSet();
-    const responseMs = Math.max(0, Date.now() - session.questionShownAt);
+    const responseMs = Math.max(0, (session.answerShownAt || Date.now()) - session.questionShownAt);
 
     session.seen += 1;
     if (wasCorrect) {
@@ -504,12 +523,13 @@ function markAnswer(wasCorrect) {
     session.currentFactId = pickNextFactId(currentFactId);
     session.isFlipped = false;
     session.questionShownAt = Date.now();
+    session.answerShownAt = null;
 
     if (!saveState()) {
         showNotice('Progress is only available during this visit.');
     }
 
-    renderStudyScreen();
+    renderStudyScreen({ instantReset: true });
 }
 
 function buildCategoryBuckets(attempts) {

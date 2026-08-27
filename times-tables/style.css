@@ -329,6 +329,10 @@ body {
     outline: none;
 }
 
+.flashcard.no-transition {
+    transition: none;
+}
+
 .flashcard.flipped {
     transform: rotateY(180deg);
 }
