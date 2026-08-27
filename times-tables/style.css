@@ -383,8 +383,6 @@ body {
 
 .cover-tile.pickable {
     cursor: pointer;
-    outline: 2px solid rgba(255, 255, 255, 0.35);
-    outline-offset: -2px;
 }
 
 .cover-tile.pickable:hover {
