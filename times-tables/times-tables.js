@@ -126,7 +126,7 @@ function buildEmptySession() {
         answerShownAt: null,
         attempts: [],
         undoState: null,
-        awaitingPick: false
+        awaitingPick: isPickCardModeActive()
     };
 }
 
@@ -411,6 +411,14 @@ function ensureSession() {
         !FACT_BY_ID[state.activeSession.currentFactId] ||
         (state.settings.rotateUnmasteredOnly && currentFactProgress && !shouldKeepInRotation(currentFactProgress));
 
+    if (isPickCardModeActive() && shouldReplaceCurrent) {
+        state.activeSession.currentFactId = null;
+        state.activeSession.questionShownAt = Date.now();
+        state.activeSession.answerShownAt = null;
+        state.activeSession.awaitingPick = true;
+        return;
+    }
+
     if (shouldReplaceCurrent) {
         state.activeSession.currentFactId = pickNextFactId();
         state.activeSession.questionShownAt = Date.now();
@@ -501,8 +509,8 @@ function updateStudyCard(options = {}) {
     }
 
     const fact = FACT_BY_ID[session.currentFactId];
-    document.getElementById('cardFrontText').textContent = fact.expression;
-    document.getElementById('cardBackText').textContent = fact.answer;
+    document.getElementById('cardFrontText').textContent = fact ? fact.expression : '';
+    document.getElementById('cardBackText').textContent = fact ? fact.answer : '';
 
     flashcard.classList.toggle('flipped', session.isFlipped);
     if (instantReset) {
@@ -517,6 +525,7 @@ function updateStudyCard(options = {}) {
         document.getElementById('ratingRow').style.display = 'none';
         document.getElementById('flipBtn').style.display = 'none';
     }
+    updatePickModeActionsPosition();
 }
 
 function updateProgress() {
@@ -602,6 +611,28 @@ function updateUndoButton() {
     document.getElementById('undoBtn').disabled = !hasUndoState();
 }
 
+function updatePickModeActionsPosition() {
+    const imageHost = document.getElementById('imageCardHost');
+    const wrap = document.getElementById('flashcardWrap');
+    const pickModeActionsHost = document.getElementById('pickModeActionsHost');
+    const ratingRow = document.getElementById('ratingRow');
+
+    if (!imageHost || !wrap || !pickModeActionsHost || !ratingRow) {
+        return;
+    }
+
+    if (!isPickCardModeActive() || wrap.classList.contains('is-hidden') || ratingRow.style.display === 'none') {
+        pickModeActionsHost.style.top = '';
+        pickModeActionsHost.style.left = '';
+        pickModeActionsHost.style.width = '';
+        return;
+    }
+
+    pickModeActionsHost.style.top = `${wrap.offsetTop + wrap.offsetHeight + 12}px`;
+    pickModeActionsHost.style.left = `${wrap.offsetLeft}px`;
+    pickModeActionsHost.style.width = `${wrap.offsetWidth}px`;
+}
+
 function updateFlashcardPlacement() {
     const wrap = document.getElementById('flashcardWrap');
     const standardHost = document.getElementById('flashcardHost');
@@ -625,6 +656,7 @@ function updateFlashcardPlacement() {
 
     document.body.classList.toggle('pick-card-mode', useImageHost);
     document.body.classList.toggle('awaiting-pick', isAwaitingPick());
+    updatePickModeActionsPosition();
 }
 
 function renderStudyScreen(options = {}) {
@@ -920,6 +952,9 @@ function setPickCardMode(enabled) {
         }
         if (enabled) {
             state.activeSession.isFlipped = false;
+            state.activeSession.currentFactId = null;
+            state.activeSession.awaitingPick = true;
+            state.activeSession.answerShownAt = null;
         }
     }
     saveState();
@@ -1194,6 +1229,8 @@ function initEvents() {
             closeDetailsModal();
         }
     });
+
+    window.addEventListener('resize', updatePickModeActionsPosition);
 }
 
 document.addEventListener('DOMContentLoaded', () => {

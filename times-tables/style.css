@@ -11,23 +11,23 @@
 }
 
 .pick-card-mode .image-card-host {
-    flex-direction: column;
+    align-items: center;
     justify-content: center;
-    gap: 12px;
 }
 
 .image-card-host .flashcard-wrap {
     margin: 0;
     pointer-events: auto;
     order: 1;
+    position: relative;
+    z-index: 2;
 }
 
 .pick-mode-actions-host {
     display: none;
-    width: 100%;
-    max-width: 320px;
+    position: absolute;
     pointer-events: none;
-    order: 2;
+    z-index: 4;
 }
 
 .pick-card-mode .pick-mode-actions-host {
@@ -38,6 +38,23 @@
     width: 100%;
     justify-content: center;
     pointer-events: auto;
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 12px;
+}
+
+.pick-mode-actions-host .btn {
+    flex: 1 1 0;
+    min-width: 0;
+    color: #fff;
+}
+
+.pick-mode-actions-host .btn-warning {
+    background: var(--warning-color);
+}
+
+.pick-mode-actions-host .btn-success {
+    background: var(--success-color);
 }
 
 :root {
