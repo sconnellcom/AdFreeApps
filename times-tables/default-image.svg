@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" role="img" aria-label="Colorful landscape illustration">
+  <defs>
+    <linearGradient id="sky" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#7dd3fc"/>
+      <stop offset="100%" stop-color="#dbeafe"/>
+    </linearGradient>
+    <linearGradient id="hill" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#86efac"/>
+      <stop offset="100%" stop-color="#16a34a"/>
+    </linearGradient>
+    <linearGradient id="hill2" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#4ade80"/>
+      <stop offset="100%" stop-color="#15803d"/>
+    </linearGradient>
+    <linearGradient id="sun" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#fde68a"/>
+      <stop offset="100%" stop-color="#f59e0b"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="600" fill="url(#sky)"/>
+  <circle cx="472" cy="126" r="64" fill="url(#sun)"/>
+  <path d="M0 360L120 240L220 330L320 190L430 310L520 220L600 310V600H0Z" fill="#a5b4fc"/>
+  <path d="M0 410C70 350 130 338 200 380C250 408 312 418 370 392C440 360 500 360 600 428V600H0Z" fill="url(#hill2)"/>
+  <path d="M0 454C92 388 188 386 268 430C330 462 416 474 486 440C530 418 570 418 600 430V600H0Z" fill="url(#hill)"/>
+  <path d="M128 368L166 302L204 368Z" fill="#14532d"/>
+  <rect x="160" y="368" width="12" height="62" fill="#166534"/>
+  <path d="M412 386L454 308L496 386Z" fill="#166534"/>
+  <rect x="447" y="386" width="14" height="74" fill="#14532d"/>
+  <path d="M262 418L294 360L326 418Z" fill="#15803d"/>
+  <rect x="289" y="418" width="10" height="56" fill="#166534"/>
+  <path d="M70 470C170 422 262 418 352 452C416 476 506 500 600 474V600H0Z" fill="#22c55e" opacity="0.34"/>
+  <circle cx="104" cy="118" r="12" fill="#ffffff" opacity="0.85"/>
+  <circle cx="132" cy="104" r="16" fill="#ffffff" opacity="0.88"/>
+  <circle cx="160" cy="118" r="12" fill="#ffffff" opacity="0.85"/>
+</svg>

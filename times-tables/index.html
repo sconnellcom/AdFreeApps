@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Times Tables - Ad-free multiplication flash cards with a hidden image to uncover as you master 2 through 12.">
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="../manifest.json">
+    <link rel="apple-touch-icon" href="../icons/icon-152x152.png">
+    <title>Times Tables</title>
+    <link rel="stylesheet" href="style.css?v=3">
+</head>
+
+<body>
+    <div class="container">
+        <div class="header-row">
+            <div class="header-left">
+                <span class="app-icon">🧮</span>
+                <h1>Times Tables</h1>
+            </div>
+            <div class="header-right">
+                <button id="menuBtn" class="menu-btn" title="Menu" aria-label="Menu">
+                    <span class="hamburger-icon">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </span>
+                </button>
+            </div>
+        </div>
+
+        <div id="menuDropdown" class="menu-dropdown" style="display: none;">
+            <a href="../" class="menu-item">
+                <span class="menu-icon">💎</span>
+                <span class="menu-label">Apps</span>
+            </a>
+            <button id="themeMenuItem" class="menu-item menu-item-button">
+                <span class="menu-icon" id="themeMenuIcon">💜</span>
+                <span class="menu-label">Change Theme</span>
+            </button>
+            <div id="themeSubmenu" class="theme-submenu" style="display: none;">
+                <button class="theme-btn theme-default" data-theme="default" title="Purple Theme"></button>
+                <button class="theme-btn theme-black" data-theme="black" title="Black Theme"></button>
+                <button class="theme-btn theme-blue" data-theme="blue" title="Blue Theme"></button>
+                <button class="theme-btn theme-blue-dark" data-theme="blue-dark" title="Dark Blue Theme"></button>
+                <button class="theme-btn theme-light" data-theme="light" title="Olive Theme"></button>
+                <button class="theme-btn theme-dark" data-theme="dark" title="Dark Olive Theme"></button>
+                <button class="theme-btn theme-warm-light" data-theme="warm-light" title="Warm Light Theme"></button>
+                <button class="theme-btn theme-warm-dark" data-theme="warm-dark" title="Warm Dark Theme"></button>
+                <button class="theme-btn theme-red" data-theme="red" title="Red Theme"></button>
+                <button class="theme-btn theme-red-dark" data-theme="red-dark" title="Dark Red Theme"></button>
+                <button class="theme-btn theme-pink" data-theme="pink" title="Pink Theme"></button>
+                <button class="theme-btn theme-pink-dark" data-theme="pink-dark" title="Dark Pink Theme"></button>
+            </div>
+            <a href="about/" class="menu-item">
+                <span class="menu-icon">ⓘ</span>
+                <span class="menu-label">About This App</span>
+            </a>
+        </div>
+
+        <div id="screen-study" class="screen active">
+            <div class="status-bar">
+                <div>
+                    <div class="status-label">Progress</div>
+                    <div class="status-value" id="masteryText">0 of 121 mastered</div>
+                </div>
+                <div>
+                    <div class="status-label">Remaining</div>
+                    <div class="status-value" id="remainingText">121 facts left</div>
+                </div>
+            </div>
+
+            <div class="progress-bar-wrap" aria-hidden="true">
+                <div class="progress-bar-fill" id="masteryFill"></div>
+            </div>
+
+            <section class="image-section">
+                <div class="image-frame">
+                    <img id="rewardImage" class="reward-image" src="default-image.svg" alt="Hidden reward image">
+                    <div id="imageCover" class="image-cover" aria-hidden="true"></div>
+                </div>
+                <div class="image-caption" id="imageCaption">Each new correct answer uncovers one part of the picture.</div>
+                <div class="image-controls">
+                    <label class="upload-btn" for="imageUploadInput" id="uploadLabel">Upload image</label>
+                    <input id="imageUploadInput" type="file" accept="image/*" hidden>
+                    <button id="resetImageBtn" class="btn btn-secondary" type="button">Use default image</button>
+                </div>
+            </section>
+
+            <div class="session-strip">
+                <span id="sessionText">Session: 0 seen · 0 right · 0 not yet</span>
+                <button id="doneBtn" class="btn btn-secondary" type="button">Done for now</button>
+            </div>
+
+            <div class="flashcard-wrap">
+                <div id="flashcard" class="flashcard" role="button" tabindex="0" aria-label="Flip flash card">
+                    <div class="card-face card-face-front">
+                        <div class="card-text" id="cardFrontText"></div>
+                    </div>
+                    <div class="card-face card-face-back">
+                        <div class="card-text" id="cardBackText"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="study-actions">
+                <button id="flipBtn" class="btn btn-primary" type="button">Flip card</button>
+                <div class="rating-row" id="ratingRow">
+                    <button id="wrongBtn" class="btn btn-warning" type="button">Not yet</button>
+                    <button id="rightBtn" class="btn btn-success" type="button">Got it right</button>
+                </div>
+            </div>
+
+            <div class="notice" id="storageNotice" aria-live="polite"></div>
+        </div>
+
+        <div id="screen-results" class="screen">
+            <div class="results-content">
+                <div class="results-icon" id="resultsIcon">🎉</div>
+                <h2>Session Stats</h2>
+                <div class="results-stats">
+                    <div class="stat-box">
+                        <div class="stat-value" id="resultsSeen">0</div>
+                        <div class="stat-label">Seen</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="resultsCorrect">0</div>
+                        <div class="stat-label">Right</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="resultsIncorrect">0</div>
+                        <div class="stat-label">Not Yet</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="resultsNew">0</div>
+                        <div class="stat-label">New Tiles</div>
+                    </div>
+                </div>
+                <div class="results-summary" id="resultsSummary"></div>
+                <div class="results-actions">
+                    <button id="resumeBtn" class="btn btn-primary" type="button">Keep practicing</button>
+                    <button class="btn btn-secondary" type="button" onclick="window.location.href='../'">Back to apps</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="times-tables.js?v=3"></script>
+</body>
+
+</html>
