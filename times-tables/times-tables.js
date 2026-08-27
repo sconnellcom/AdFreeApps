@@ -93,6 +93,7 @@ function buildEmptyFactProgress() {
         totalResponseMs: 0,
         fastestResponseMs: null,
         lastResponseMs: null,
+        lastWasCorrect: false,
         recentResults: [],
         mastered: false
     };
@@ -197,6 +198,7 @@ function sanitizeFactProgressMap(rawMap, fallbackMasteredIds) {
             totalResponseMs: Math.max(0, Number(input.totalResponseMs) || 0),
             fastestResponseMs: Number.isFinite(Number(input.fastestResponseMs)) ? Math.max(0, Number(input.fastestResponseMs)) : null,
             lastResponseMs: Number.isFinite(Number(input.lastResponseMs)) ? Math.max(0, Number(input.lastResponseMs)) : null,
+            lastWasCorrect: Boolean(input.lastWasCorrect),
             recentResults,
             mastered: Boolean(input.mastered) || masteredSet.has(factId)
         };
@@ -374,6 +376,9 @@ function captureUndoState() {
 }
 
 function categorizeAttempt({ wasCorrect, responseMs, isNowMastered }) {
+    if (!wasCorrect) {
+        return null;
+    }
     if (responseMs <= MASTERED_MS) {
         return 'mastered';
     }
@@ -397,13 +402,36 @@ function ensureSession() {
     const currentFactProgress = state.activeSession.currentFactId ? state.factProgress[state.activeSession.currentFactId] : null;
     const shouldReplaceCurrent =
         !FACT_BY_ID[state.activeSession.currentFactId] ||
-        (state.settings.rotateUnmasteredOnly && currentFactProgress && currentFactProgress.mastered);
+        (state.settings.rotateUnmasteredOnly && currentFactProgress && !shouldKeepInRotation(currentFactProgress));
 
     if (shouldReplaceCurrent) {
         state.activeSession.currentFactId = pickNextFactId();
         state.activeSession.questionShownAt = Date.now();
         state.activeSession.answerShownAt = null;
         state.activeSession.awaitingPick = false;
+    }
+
+    function shouldKeepInRotation(progress) {
+        if (!progress || !progress.attempts) {
+            return true;
+        }
+        return isLearningOrDistracted(progress);
+    }
+
+    function isLearningOrDistracted(progress) {
+        const category = getProgressCategory(progress);
+        return category === 'learning' || category === 'distracted';
+    }
+
+    function getProgressCategory(progress) {
+        if (!progress || progress.lastResponseMs === null || progress.lastResponseMs === undefined) {
+            return null;
+        }
+        return categorizeAttempt({
+            wasCorrect: progress.lastWasCorrect,
+            responseMs: progress.lastResponseMs,
+            isNowMastered: progress.mastered
+        });
     }
 }
 
@@ -416,9 +444,8 @@ function isAwaitingPick() {
 }
 
 function pickNextFactId(previousFactId) {
-    const mastered = getMasteredSet();
     let pool = state.settings.rotateUnmasteredOnly
-        ? FACTS.filter((fact) => !mastered.has(fact.id))
+        ? FACTS.filter((fact) => shouldKeepInRotation(state.factProgress[fact.id]))
         : FACTS.slice();
 
     if (pool.length === 0) {
@@ -591,6 +618,7 @@ function recordFactAttempt(factId, wasCorrect, responseMs) {
     progress.attempts += 1;
     progress.totalResponseMs += responseMs;
     progress.lastResponseMs = responseMs;
+    progress.lastWasCorrect = wasCorrect;
     if (progress.fastestResponseMs === null || responseMs < progress.fastestResponseMs) {
         progress.fastestResponseMs = responseMs;
     }
@@ -679,7 +707,7 @@ function undoLastAnswer() {
 function buildCategoryBuckets(attempts) {
     const buckets = Object.fromEntries(CATEGORY_ORDER.map((categoryId) => [categoryId, []]));
     attempts.forEach((attempt) => {
-        if (buckets[attempt.category]) {
+        if (attempt.wasCorrect && attempt.category && buckets[attempt.category]) {
             buckets[attempt.category].push(attempt);
         }
     });
@@ -750,7 +778,7 @@ function renderResultsScreen() {
 function renderAllTimeSummary() {
     const stats = state.allTimeStats || buildEmptyAllTimeStats();
     document.getElementById('allTimeSummary').textContent =
-        `All time: ${stats.seen} seen · ${stats.correct} right · ${stats.incorrect} not yet · ${state.masteredIds.length} mastered · ${formatElapsed(stats.elapsedSeconds)}`;
+        `All time: ${stats.seen} seen · ${stats.correct} correct · ${stats.incorrect} not yet · ${state.masteredIds.length} mastered · ${formatElapsed(stats.elapsedSeconds)}`;
 }
 
 function formatElapsed(totalSeconds) {
