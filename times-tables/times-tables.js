@@ -24,7 +24,7 @@ const SHARE_IMAGE_HASH_KEY = 'image';
 const SHARE_ROTATION_HASH_KEY = 'rotation';
 const SHARE_PICK_MODE_HASH_KEY = 'pick';
 const CATEGORY_META = {
-    mastered: { label: 'Mastered' },
+    mastered: { label: 'Super Fast' },
     automatic: { label: 'Automatic' },
     solid: { label: 'Solid' },
     learning: { label: 'Learning' },
@@ -597,9 +597,13 @@ function updateImage() {
 }
 
 function updateSessionText() {
+    const sessionText = document.getElementById('sessionText');
+    if (!sessionText) {
+        return;
+    }
     ensureSession();
     const session = state.activeSession;
-    document.getElementById('sessionText').textContent = `Session: ${session.seen} seen · ${session.correct} correct · ${session.incorrect} not yet`;
+    sessionText.textContent = `Session: ${session.seen} seen · ${session.correct} correct · ${session.incorrect} not yet`;
 }
 
 function updateGameplayToggle() {
