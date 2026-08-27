@@ -388,6 +388,10 @@ function recordSessionActivity() {
         return;
     }
     const now = Date.now();
+    if (!isStudyScreenActive()) {
+        state.activeSession.lastActivityAt = now;
+        return;
+    }
     const lastActivityAt = Number(state.activeSession.lastActivityAt) || now;
     const delta = Math.max(0, now - lastActivityAt);
     const creditedMs = Math.min(delta, ACTIVE_TIMER_CAP_MS);
@@ -396,6 +400,13 @@ function recordSessionActivity() {
         state.activeSession.currentCardActiveMs += creditedMs;
     }
     state.activeSession.lastActivityAt = now;
+}
+
+function resetSessionActivityTimestamp() {
+    if (!state.activeSession) {
+        return;
+    }
+    state.activeSession.lastActivityAt = Date.now();
 }
 
 function resetCurrentCardTimer() {
@@ -414,11 +425,19 @@ function getSessionElapsedSeconds() {
     if (!state.activeSession) {
         return 0;
     }
+    if (!isStudyScreenActive()) {
+        return Math.round(state.activeSession.activeElapsedMs / 1000);
+    }
     const now = Date.now();
     const lastActivityAt = Number(state.activeSession.lastActivityAt) || now;
     const delta = Math.max(0, now - lastActivityAt);
     const creditedMs = Math.min(delta, ACTIVE_TIMER_CAP_MS);
     return Math.round((state.activeSession.activeElapsedMs + creditedMs) / 1000);
+}
+
+function isStudyScreenActive() {
+    const studyScreen = document.getElementById('screen-study');
+    return !studyScreen || studyScreen.classList.contains('active');
 }
 
 function isFactMastered(progress) {
@@ -838,17 +857,23 @@ function showScreen(name) {
 }
 
 function openStudyScreen() {
-    recordSessionActivity();
+    resetSessionActivityTimestamp();
     renderStudyScreen();
 }
 
 function openStatsScreen() {
-    recordSessionActivity();
+    if (isStudyScreenActive()) {
+        recordSessionActivity();
+    }
+    resetSessionActivityTimestamp();
     renderStatsScreen();
 }
 
 function openSettingsScreen() {
-    recordSessionActivity();
+    if (isStudyScreenActive()) {
+        recordSessionActivity();
+    }
+    resetSessionActivityTimestamp();
     renderSettingsScreen();
 }
 
@@ -1393,7 +1418,6 @@ function initEvents() {
     document.getElementById('flipBtn').addEventListener('click', flipCard);
     document.getElementById('wrongBtn').addEventListener('click', () => markAnswer(false));
     document.getElementById('rightBtn').addEventListener('click', () => markAnswer(true));
-    document.getElementById('resumeBtn').addEventListener('click', openStudyScreen);
     document.getElementById('resetImageBtn').addEventListener('click', resetImage);
     document.getElementById('shareImageBtn').addEventListener('click', shareImageLink);
     document.getElementById('saveImageUrlsBtn').addEventListener('click', saveImageUrls);

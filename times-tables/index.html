@@ -10,7 +10,7 @@
     <link rel="manifest" href="../manifest.json">
     <link rel="apple-touch-icon" href="../icons/icon-152x152.png">
     <title>Times Tables</title>
-    <link rel="stylesheet" href="style.css?v=5">
+    <link rel="stylesheet" href="style.css?v=6">
 </head>
 
 <body>
@@ -35,7 +35,7 @@
                     </a>
                     <button id="menuStudyItem" class="menu-item menu-item-button" type="button">
                         <span class="menu-icon">🧮</span>
-                        <span class="menu-label">Study</span>
+                        <span class="menu-label">Flash Cards</span>
                     </button>
                     <button id="menuStatsItem" class="menu-item menu-item-button" type="button">
                         <span class="menu-icon">📊</span>
@@ -151,9 +151,6 @@
                     </div>
                 </div>
                 <div class="results-summary" id="resultsSummary"></div>
-                <div class="results-actions">
-                    <button id="resumeBtn" class="btn btn-primary" type="button">Keep practicing</button>
-                </div>
                 <div class="results-buckets" id="resultsBuckets">
                     <button class="results-bucket" type="button" data-category="mastered">
                         <span class="results-bucket-count" id="resultsBucket-mastered">0</span>
@@ -177,6 +174,7 @@
                     </button>
                 </div>
                 <div class="all-time-row">
+                    <h3 class="all-time-title">All Time Stats</h3>
                     <div class="all-time-summary" id="allTimeSummary">All time: 0 seen · 0 correct · 0 not yet · 0 mastered · 0s</div>
                     <button id="resetAllTimeBtn" class="btn btn-secondary" type="button">Reset all progress and stats</button>
                 </div>
@@ -233,7 +231,7 @@
         </div>
     </div>
 
-    <script src="times-tables.js?v=5"></script>
+    <script src="times-tables.js?v=6"></script>
 </body>
 
 </html>
