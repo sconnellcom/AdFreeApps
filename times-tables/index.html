@@ -80,6 +80,7 @@
                 <div class="image-frame">
                     <img id="rewardImage" class="reward-image" src="default-image.svg" alt="Hidden reward image">
                     <div id="imageCover" class="image-cover" aria-hidden="true"></div>
+                    <div id="imageCardHost" class="image-card-host"></div>
                 </div>
                 <div class="image-caption" id="imageCaption">Each new correct answer uncovers one part of the picture.</div>
                 <div class="image-controls">
@@ -103,15 +104,21 @@
                     <input id="rotateUnmasteredToggle" type="checkbox" checked>
                     Keep unmastered in rotation
                 </label>
+                <label class="toggle-option" for="pickCardModeToggle">
+                    <input id="pickCardModeToggle" type="checkbox">
+                    Pick a card mode
+                </label>
             </div>
 
-            <div class="flashcard-wrap">
-                <div id="flashcard" class="flashcard" role="button" tabindex="0" aria-label="Flip flash card">
-                    <div class="card-face card-face-front">
-                        <div class="card-text" id="cardFrontText"></div>
-                    </div>
-                    <div class="card-face card-face-back">
-                        <div class="card-text" id="cardBackText"></div>
+            <div id="flashcardHost" class="flashcard-host">
+                <div id="flashcardWrap" class="flashcard-wrap">
+                    <div id="flashcard" class="flashcard" role="button" tabindex="0" aria-label="Flip flash card">
+                        <div class="card-face card-face-front">
+                            <div class="card-text" id="cardFrontText"></div>
+                        </div>
+                        <div class="card-face card-face-back">
+                            <div class="card-text" id="cardBackText"></div>
+                        </div>
                     </div>
                 </div>
             </div>

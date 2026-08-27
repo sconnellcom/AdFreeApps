@@ -121,7 +121,8 @@ function buildEmptySession() {
         questionShownAt: Date.now(),
         answerShownAt: null,
         attempts: [],
-        undoState: null
+        undoState: null,
+        awaitingPick: false
     };
 }
 
@@ -222,7 +223,8 @@ function loadState() {
         factProgress: {},
         imageDataUrl: '',
         settings: {
-            rotateUnmasteredOnly: true
+            rotateUnmasteredOnly: true,
+            pickCardMode: false
         },
         activeSession: null,
         lastSessionStats: null,
@@ -265,7 +267,8 @@ function sanitizeState(input) {
             attempts: Array.isArray(input.activeSession.attempts)
                 ? input.activeSession.attempts.map(sanitizeAttemptEntry).filter(Boolean)
                 : [],
-            undoState: null
+            undoState: null,
+            awaitingPick: Boolean(input.activeSession.awaitingPick)
         }
         : null;
 
@@ -288,7 +291,8 @@ function sanitizeState(input) {
         factProgress,
         imageDataUrl: typeof input.imageDataUrl === 'string' ? input.imageDataUrl : '',
         settings: {
-            rotateUnmasteredOnly: !input.settings || input.settings.rotateUnmasteredOnly !== false
+            rotateUnmasteredOnly: !input.settings || input.settings.rotateUnmasteredOnly !== false,
+            pickCardMode: Boolean(input.settings && input.settings.pickCardMode)
         },
         activeSession: session,
         lastSessionStats,
@@ -358,7 +362,8 @@ function captureUndoState() {
         isFlipped: state.activeSession.isFlipped,
         questionShownAt: state.activeSession.questionShownAt,
         answerShownAt: state.activeSession.answerShownAt,
-        attempts: state.activeSession.attempts
+        attempts: state.activeSession.attempts,
+        awaitingPick: state.activeSession.awaitingPick
     });
 
     return {
@@ -398,7 +403,16 @@ function ensureSession() {
         state.activeSession.currentFactId = pickNextFactId();
         state.activeSession.questionShownAt = Date.now();
         state.activeSession.answerShownAt = null;
+        state.activeSession.awaitingPick = false;
     }
+}
+
+function isPickCardModeActive() {
+    return Boolean(state.settings.pickCardMode);
+}
+
+function isAwaitingPick() {
+    return Boolean(state.activeSession && state.activeSession.awaitingPick && isPickCardModeActive());
 }
 
 function pickNextFactId(previousFactId) {
@@ -424,6 +438,7 @@ function updateStudyCard(options = {}) {
     const { instantReset = false } = options;
     const session = state.activeSession;
     const flashcard = document.getElementById('flashcard');
+    const flashcardWrap = document.getElementById('flashcardWrap');
     if (instantReset) {
         flashcard.classList.add('no-transition');
         flashcard.classList.remove('flipped');
@@ -441,19 +456,27 @@ function updateStudyCard(options = {}) {
         flashcard.offsetWidth;
         flashcard.classList.remove('no-transition');
     }
+    flashcardWrap.classList.toggle('is-hidden', isAwaitingPick());
     document.getElementById('ratingRow').style.display = session.isFlipped ? 'flex' : 'none';
     document.getElementById('flipBtn').style.display = session.isFlipped ? 'none' : 'block';
+    if (isAwaitingPick()) {
+        document.getElementById('ratingRow').style.display = 'none';
+        document.getElementById('flipBtn').style.display = 'none';
+    }
 }
 
 function updateProgress() {
     const masteredCount = state.masteredIds.length;
     const remainingCount = TOTAL_FACTS - masteredCount;
     const percent = Math.round((masteredCount / TOTAL_FACTS) * 100);
+    const waitingForPick = isAwaitingPick();
 
     document.getElementById('masteryText').textContent = `${masteredCount} of ${TOTAL_FACTS} mastered`;
     document.getElementById('remainingText').textContent = `${remainingCount} facts left`;
     document.getElementById('masteryFill').style.width = `${percent}%`;
-    document.getElementById('imageCaption').textContent = remainingCount === 0
+    document.getElementById('imageCaption').textContent = waitingForPick
+        ? 'Pick a box on the image to show the next card.'
+        : remainingCount === 0
         ? 'You uncovered the whole picture. Keep practicing as long as you like.'
         : 'Each correct answer uncovers more, and mastered facts fully clear their tile.';
 
@@ -463,6 +486,8 @@ function updateProgress() {
 function renderCoverTiles() {
     const imageCover = document.getElementById('imageCover');
     imageCover.innerHTML = '';
+    const canPick = isAwaitingPick();
+    const allMastered = state.masteredIds.length === TOTAL_FACTS;
 
     FACTS.forEach((fact, factIndex) => {
         const tile = document.createElement('div');
@@ -474,6 +499,10 @@ function renderCoverTiles() {
             tile.classList.add('revealed');
         } else if (progress && progress.correct > 0) {
             tile.classList.add('partial');
+        }
+        if (canPick && (allMastered || !progress || !progress.mastered)) {
+            tile.classList.add('pickable');
+            tile.addEventListener('click', handleCoverTilePick);
         }
         imageCover.appendChild(tile);
     });
@@ -491,16 +520,33 @@ function updateSessionText() {
 
 function updateGameplayToggle() {
     document.getElementById('rotateUnmasteredToggle').checked = state.settings.rotateUnmasteredOnly;
+    document.getElementById('pickCardModeToggle').checked = isPickCardModeActive();
 }
 
 function updateUndoButton() {
     document.getElementById('undoBtn').disabled = !hasUndoState();
 }
 
+function updateFlashcardPlacement() {
+    const wrap = document.getElementById('flashcardWrap');
+    const standardHost = document.getElementById('flashcardHost');
+    const imageHost = document.getElementById('imageCardHost');
+    const useImageHost = isPickCardModeActive();
+
+    if (useImageHost && wrap.parentElement !== imageHost) {
+        imageHost.appendChild(wrap);
+    } else if (!useImageHost && wrap.parentElement !== standardHost) {
+        standardHost.appendChild(wrap);
+    }
+
+    document.body.classList.toggle('pick-card-mode', useImageHost);
+}
+
 function renderStudyScreen(options = {}) {
     closeDetailsModal();
     showScreen('study');
     ensureSession();
+    updateFlashcardPlacement();
     updateImage();
     updateProgress();
     updateSessionText();
@@ -508,6 +554,18 @@ function renderStudyScreen(options = {}) {
     updateUndoButton();
     updateStudyCard(options);
     updateNotice();
+}
+
+function handleCoverTilePick() {
+    if (!isAwaitingPick()) {
+        return;
+    }
+    state.activeSession.awaitingPick = false;
+    state.activeSession.isFlipped = false;
+    state.activeSession.questionShownAt = Date.now();
+    state.activeSession.answerShownAt = null;
+    saveState();
+    renderStudyScreen({ instantReset: true });
 }
 
 function showScreen(name) {
@@ -585,10 +643,16 @@ function markAnswer(wasCorrect) {
     });
 
     session.currentFactId = pickNextFactId(currentFactId);
-    session.isFlipped = false;
-    session.questionShownAt = Date.now();
-    session.answerShownAt = null;
     session.undoState = undoState;
+    session.isFlipped = false;
+    session.answerShownAt = null;
+
+    if (isPickCardModeActive()) {
+        session.awaitingPick = true;
+    } else {
+        session.awaitingPick = false;
+        session.questionShownAt = Date.now();
+    }
 
     if (!saveState()) {
         showNotice('Progress is only available during this visit.');
@@ -745,6 +809,22 @@ function setRotateUnmasteredOnly(enabled) {
     state.settings.rotateUnmasteredOnly = enabled;
     saveState();
     renderStudyScreen();
+}
+
+function setPickCardMode(enabled) {
+    state.settings.pickCardMode = enabled;
+    if (state.activeSession) {
+        if (!enabled && state.activeSession.awaitingPick) {
+            state.activeSession.awaitingPick = false;
+            state.activeSession.questionShownAt = Date.now();
+            state.activeSession.answerShownAt = null;
+        }
+        if (enabled) {
+            state.activeSession.isFlipped = false;
+        }
+    }
+    saveState();
+    renderStudyScreen({ instantReset: true });
 }
 
 function resetAllTimeStats() {
@@ -960,6 +1040,9 @@ function initEvents() {
     document.getElementById('resetAllTimeBtn').addEventListener('click', resetAllTimeStats);
     document.getElementById('rotateUnmasteredToggle').addEventListener('change', (event) => {
         setRotateUnmasteredOnly(event.target.checked);
+    });
+    document.getElementById('pickCardModeToggle').addEventListener('change', (event) => {
+        setPickCardMode(event.target.checked);
     });
 
     document.querySelectorAll('.results-bucket').forEach((button) => {

@@ -4,6 +4,20 @@
     box-sizing: border-box;
 }
 
+.pick-card-mode .image-card-host {
+    pointer-events: auto;
+}
+
+.pick-card-mode .flashcard-wrap {
+    width: 100%;
+    max-width: 320px;
+    margin: 0;
+}
+
+.image-card-host .flashcard-wrap {
+    margin: 0;
+}
+
 :root {
     --bg-gradient-start: #667eea;
     --bg-gradient-end: #764ba2;
@@ -206,6 +220,9 @@ body {
 
 .gameplay-row {
     margin: 12px 0 4px;
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
 }
 
 .toggle-option {
@@ -284,6 +301,17 @@ body {
     display: block;
 }
 
+.image-card-host {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    pointer-events: none;
+    z-index: 3;
+}
+
 .image-cover {
     position: absolute;
     inset: 0;
@@ -297,6 +325,16 @@ body {
 .cover-tile {
     background: var(--cover-color);
     transition: opacity 0.25s ease;
+}
+
+.cover-tile.pickable {
+    cursor: pointer;
+    outline: 2px solid rgba(255, 255, 255, 0.35);
+    outline-offset: -2px;
+}
+
+.cover-tile.pickable:hover {
+    background: rgba(15, 23, 42, 0.72);
 }
 
 .cover-tile.partial {
@@ -321,18 +359,29 @@ body {
     flex-wrap: wrap;
 }
 
+.flashcard-host {
+    display: flex;
+    justify-content: center;
+}
+
 .flashcard-wrap {
     perspective: 1200px;
     margin: 18px 0;
+    width: min(100%, 420px);
 }
 
 .flashcard {
-    min-height: 220px;
+    width: 100%;
+    aspect-ratio: 1 / 1;
     position: relative;
     transform-style: preserve-3d;
     transition: transform 0.5s ease;
     cursor: pointer;
     outline: none;
+}
+
+.flashcard-wrap.is-hidden {
+    display: none;
 }
 
 .flashcard.no-transition {
@@ -614,7 +663,7 @@ body {
     }
 
     .flashcard {
-        min-height: 180px;
+        width: 100%;
     }
 
     .rating-row {
