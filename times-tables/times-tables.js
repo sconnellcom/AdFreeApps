@@ -19,7 +19,8 @@ const MASTERY_AVG_MS = 6000;
 const MASTERED_MS = 1250;
 const AUTOMATIC_MS = 2000;
 const SOLID_MS = 4000;
-const LEARNING_MS = 10000;
+const LEARNING_MS = 20000;
+const ACTIVE_TIMER_CAP_MS = 20000;
 const SHARE_IMAGE_LIST_HASH_KEY = 'images';
 const SHARE_IMAGE_INDEX_HASH_KEY = 'imageIndex';
 const SHARE_ROTATION_HASH_KEY = 'rotation';
@@ -115,16 +116,21 @@ function buildEmptyAllTimeStats() {
 }
 
 function buildEmptySession() {
+    const now = Date.now();
     return {
-        startedAt: Date.now(),
+        startedAt: now,
         seen: 0,
         correct: 0,
         incorrect: 0,
         newlyMastered: 0,
         currentFactId: null,
         isFlipped: false,
-        questionShownAt: Date.now(),
+        questionShownAt: now,
         answerShownAt: null,
+        answerShownResponseMs: null,
+        activeElapsedMs: 0,
+        currentCardActiveMs: 0,
+        lastActivityAt: now,
         attempts: [],
         undoState: null,
         awaitingPick: isPickCardModeActive()
@@ -275,6 +281,12 @@ function sanitizeState(input) {
             isFlipped: Boolean(input.activeSession.isFlipped),
             questionShownAt: sanitizeTimestamp(input.activeSession.questionShownAt, 30 * 60 * 1000),
             answerShownAt: input.activeSession.answerShownAt ? sanitizeTimestamp(input.activeSession.answerShownAt, 30 * 60 * 1000) : null,
+            answerShownResponseMs: Number.isFinite(Number(input.activeSession.answerShownResponseMs))
+                ? Math.max(0, Number(input.activeSession.answerShownResponseMs))
+                : null,
+            activeElapsedMs: Math.max(0, Number(input.activeSession.activeElapsedMs) || 0),
+            currentCardActiveMs: Math.max(0, Number(input.activeSession.currentCardActiveMs) || 0),
+            lastActivityAt: sanitizeTimestamp(input.activeSession.lastActivityAt, 30 * 60 * 1000),
             attempts: Array.isArray(input.activeSession.attempts)
                 ? input.activeSession.attempts.map(sanitizeAttemptEntry).filter(Boolean)
                 : [],
@@ -368,6 +380,44 @@ function getCurrentImageSource() {
     return imageUrls[state.currentImageIndex] || DEFAULT_IMAGE;
 }
 
+function recordSessionActivity() {
+    if (!state.activeSession) {
+        return;
+    }
+    const now = Date.now();
+    const lastActivityAt = Number(state.activeSession.lastActivityAt) || now;
+    const delta = Math.max(0, now - lastActivityAt);
+    const creditedMs = Math.min(delta, ACTIVE_TIMER_CAP_MS);
+    state.activeSession.activeElapsedMs += creditedMs;
+    if (!state.activeSession.answerShownAt) {
+        state.activeSession.currentCardActiveMs += creditedMs;
+    }
+    state.activeSession.lastActivityAt = now;
+}
+
+function resetCurrentCardTimer() {
+    if (!state.activeSession) {
+        return;
+    }
+    const now = Date.now();
+    state.activeSession.questionShownAt = now;
+    state.activeSession.answerShownAt = null;
+    state.activeSession.answerShownResponseMs = null;
+    state.activeSession.currentCardActiveMs = 0;
+    state.activeSession.lastActivityAt = now;
+}
+
+function getSessionElapsedSeconds() {
+    if (!state.activeSession) {
+        return 0;
+    }
+    const now = Date.now();
+    const lastActivityAt = Number(state.activeSession.lastActivityAt) || now;
+    const delta = Math.max(0, now - lastActivityAt);
+    const creditedMs = Math.min(delta, ACTIVE_TIMER_CAP_MS);
+    return Math.round((state.activeSession.activeElapsedMs + creditedMs) / 1000);
+}
+
 function isFactMastered(progress) {
     if (!progress) {
         return false;
@@ -404,6 +454,10 @@ function captureUndoState() {
         isFlipped: state.activeSession.isFlipped,
         questionShownAt: state.activeSession.questionShownAt,
         answerShownAt: state.activeSession.answerShownAt,
+        answerShownResponseMs: state.activeSession.answerShownResponseMs,
+        activeElapsedMs: state.activeSession.activeElapsedMs,
+        currentCardActiveMs: state.activeSession.currentCardActiveMs,
+        lastActivityAt: state.activeSession.lastActivityAt,
         attempts: state.activeSession.attempts,
         awaitingPick: state.activeSession.awaitingPick
     });
@@ -452,16 +506,14 @@ function ensureSession() {
 
     if (isPickCardModeActive() && !hasValidCurrentFact) {
         state.activeSession.currentFactId = null;
-        state.activeSession.questionShownAt = Date.now();
-        state.activeSession.answerShownAt = null;
+        resetCurrentCardTimer();
         state.activeSession.awaitingPick = true;
         return;
     }
 
     if (!hasValidCurrentFact || shouldReplaceForRotation) {
         state.activeSession.currentFactId = pickNextFactId();
-        state.activeSession.questionShownAt = Date.now();
-        state.activeSession.answerShownAt = null;
+        resetCurrentCardTimer();
         state.activeSession.awaitingPick = false;
     }
 }
@@ -746,13 +798,13 @@ function handleCoverTilePick(factId) {
     if (!isAwaitingPick()) {
         return;
     }
+    recordSessionActivity();
     if (FACT_BY_ID[factId]) {
         state.activeSession.currentFactId = factId;
     }
     state.activeSession.awaitingPick = false;
     state.activeSession.isFlipped = false;
-    state.activeSession.questionShownAt = Date.now();
-    state.activeSession.answerShownAt = null;
+    resetCurrentCardTimer();
     saveState();
     renderStudyScreen({ instantReset: true });
 }
@@ -766,22 +818,27 @@ function showScreen(name) {
 }
 
 function openStudyScreen() {
+    recordSessionActivity();
     renderStudyScreen();
 }
 
 function openStatsScreen() {
+    recordSessionActivity();
     renderStatsScreen();
 }
 
 function openSettingsScreen() {
+    recordSessionActivity();
     renderSettingsScreen();
 }
 
 function flipCard() {
     ensureSession();
+    recordSessionActivity();
     state.activeSession.isFlipped = !state.activeSession.isFlipped;
     if (state.activeSession.isFlipped && !state.activeSession.answerShownAt) {
         state.activeSession.answerShownAt = Date.now();
+        state.activeSession.answerShownResponseMs = state.activeSession.currentCardActiveMs;
     }
     saveState();
     updateStudyCard();
@@ -815,11 +872,15 @@ function recordFactAttempt(factId, wasCorrect, responseMs) {
 
 function markAnswer(wasCorrect) {
     ensureSession();
+    recordSessionActivity();
     const session = state.activeSession;
     const undoState = captureUndoState();
     const currentFactId = session.currentFactId;
     const mastered = getMasteredSet();
-    const responseMs = Math.max(0, (session.answerShownAt || Date.now()) - session.questionShownAt);
+    const responseMs = Math.min(
+        ACTIVE_TIMER_CAP_MS,
+        Math.max(0, Number(session.answerShownResponseMs ?? session.currentCardActiveMs) || 0)
+    );
 
     session.seen += 1;
     if (wasCorrect) {
@@ -859,15 +920,15 @@ function markAnswer(wasCorrect) {
     const advancedToNextImage = advanceToNextImageIfNeeded();
     session.undoState = undoState;
     session.isFlipped = false;
-    session.answerShownAt = null;
 
     if (isPickCardModeActive()) {
         session.currentFactId = null;
         session.awaitingPick = true;
+        resetCurrentCardTimer();
     } else {
         session.currentFactId = pickNextFactId(advancedToNextImage ? null : currentFactId);
         session.awaitingPick = false;
-        session.questionShownAt = Date.now();
+        resetCurrentCardTimer();
     }
 
     if (!saveState()) {
@@ -881,6 +942,7 @@ function undoLastAnswer() {
     if (!hasUndoState()) {
         return;
     }
+    recordSessionActivity();
     const undoState = deepClone(state.activeSession.undoState);
     state.masteredIds = Array.isArray(undoState.masteredIds) ? undoState.masteredIds : [];
     state.factProgress = undoState.factProgress && typeof undoState.factProgress === 'object' ? undoState.factProgress : {};
@@ -911,7 +973,7 @@ function getSessionStatsSnapshot() {
             correct: state.activeSession.correct,
             incorrect: state.activeSession.incorrect,
             newlyMastered: state.activeSession.newlyMastered,
-            elapsedSeconds: Math.max(0, Math.round((Date.now() - state.activeSession.startedAt) / 1000)),
+            elapsedSeconds: getSessionElapsedSeconds(),
             masteredTotal: state.masteredIds.length,
             attempts: state.activeSession.attempts.slice()
         };
@@ -966,11 +1028,8 @@ function renderSettingsScreen() {
 
 function renderAllTimeSummary() {
     const stats = state.allTimeStats || buildEmptyAllTimeStats();
-    const liveElapsedSeconds = state.activeSession
-        ? Math.max(0, Math.round((Date.now() - state.activeSession.startedAt) / 1000))
-        : 0;
     document.getElementById('allTimeSummary').textContent =
-        `All time: ${stats.seen} seen · ${stats.correct} correct · ${stats.incorrect} not yet · ${state.masteredIds.length} mastered · ${formatElapsed(stats.elapsedSeconds + liveElapsedSeconds)}`;
+        `All time: ${stats.seen} seen · ${stats.correct} correct · ${stats.incorrect} not yet · ${state.masteredIds.length} mastered · ${formatElapsed(stats.elapsedSeconds)}`;
 }
 
 function formatElapsed(totalSeconds) {
@@ -1019,6 +1078,7 @@ function closeDetailsModal() {
 
 function startFreshSession() {
     closeDetailsModal();
+    recordSessionActivity();
     state.activeSession = null;
     state.lastSessionStats = null;
     ensureSession();
@@ -1027,6 +1087,7 @@ function startFreshSession() {
 }
 
 function setRotateUnmasteredOnly(enabled) {
+    recordSessionActivity();
     state.settings.rotateUnmasteredOnly = enabled;
     saveState();
     if (document.getElementById('screen-settings').classList.contains('active')) {
@@ -1041,18 +1102,18 @@ function setRotateUnmasteredOnly(enabled) {
 }
 
 function setPickCardMode(enabled) {
+    recordSessionActivity();
     state.settings.pickCardMode = enabled;
     if (state.activeSession) {
         if (!enabled && state.activeSession.awaitingPick) {
             state.activeSession.awaitingPick = false;
-            state.activeSession.questionShownAt = Date.now();
-            state.activeSession.answerShownAt = null;
+            resetCurrentCardTimer();
         }
         if (enabled) {
             state.activeSession.isFlipped = false;
             state.activeSession.currentFactId = null;
             state.activeSession.awaitingPick = true;
-            state.activeSession.answerShownAt = null;
+            resetCurrentCardTimer();
         }
     }
     saveState();
