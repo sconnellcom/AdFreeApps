@@ -410,29 +410,29 @@ function ensureSession() {
         state.activeSession.answerShownAt = null;
         state.activeSession.awaitingPick = false;
     }
+}
 
-    function shouldKeepInRotation(progress) {
-        if (!progress || !progress.attempts) {
-            return true;
-        }
-        return isLearningOrDistracted(progress);
+function shouldKeepInRotation(progress) {
+    if (!progress || !progress.attempts) {
+        return true;
     }
+    return isLearningOrDistracted(progress);
+}
 
-    function isLearningOrDistracted(progress) {
-        const category = getProgressCategory(progress);
-        return category === 'learning' || category === 'distracted';
-    }
+function isLearningOrDistracted(progress) {
+    const category = getProgressCategory(progress);
+    return category === 'learning' || category === 'distracted';
+}
 
-    function getProgressCategory(progress) {
-        if (!progress || progress.lastResponseMs === null || progress.lastResponseMs === undefined) {
-            return null;
-        }
-        return categorizeAttempt({
-            wasCorrect: progress.lastWasCorrect,
-            responseMs: progress.lastResponseMs,
-            isNowMastered: progress.mastered
-        });
+function getProgressCategory(progress) {
+    if (!progress || progress.lastResponseMs === null || progress.lastResponseMs === undefined) {
+        return null;
     }
+    return categorizeAttempt({
+        wasCorrect: progress.lastWasCorrect,
+        responseMs: progress.lastResponseMs,
+        isNowMastered: progress.mastered
+    });
 }
 
 function isPickCardModeActive() {
