@@ -406,12 +406,16 @@ function ensureSession() {
         state.activeSession = buildEmptySession();
     }
 
-    const currentFactProgress = state.activeSession.currentFactId ? state.factProgress[state.activeSession.currentFactId] : null;
-    const shouldReplaceCurrent =
-        !FACT_BY_ID[state.activeSession.currentFactId] ||
-        (state.settings.rotateUnmasteredOnly && currentFactProgress && !shouldKeepInRotation(currentFactProgress));
+    const currentFactId = state.activeSession.currentFactId;
+    const currentFactProgress = currentFactId ? state.factProgress[currentFactId] : null;
+    const hasValidCurrentFact = Boolean(FACT_BY_ID[currentFactId]);
+    const shouldReplaceForRotation =
+        !isPickCardModeActive() &&
+        state.settings.rotateUnmasteredOnly &&
+        currentFactProgress &&
+        !shouldKeepInRotation(currentFactProgress);
 
-    if (isPickCardModeActive() && shouldReplaceCurrent) {
+    if (isPickCardModeActive() && !hasValidCurrentFact) {
         state.activeSession.currentFactId = null;
         state.activeSession.questionShownAt = Date.now();
         state.activeSession.answerShownAt = null;
@@ -419,7 +423,7 @@ function ensureSession() {
         return;
     }
 
-    if (shouldReplaceCurrent) {
+    if (!hasValidCurrentFact || shouldReplaceForRotation) {
         state.activeSession.currentFactId = pickNextFactId();
         state.activeSession.questionShownAt = Date.now();
         state.activeSession.answerShownAt = null;
@@ -557,7 +561,6 @@ function renderCoverTiles() {
     ].filter(Boolean);
     const canPick = isAwaitingPick();
     const allCleared = getClearedTileCount() === TOTAL_FACTS;
-    const highlightNextReveal = !isPickCardModeActive() && !canPick;
 
     covers.forEach((cover) => {
         cover.innerHTML = '';
@@ -572,10 +575,7 @@ function renderCoverTiles() {
             } else if (progress && progress.correct > 0) {
                 tile.classList.add('partial');
             }
-            if (isPickCardModeActive() && !canPick && isCurrentFact(fact.id) && !isTileFullyCleared(progress)) {
-                tile.classList.add('preview-reveal');
-            }
-            if (highlightNextReveal && isCurrentFact(fact.id) && !isTileFullyCleared(progress)) {
+            if (!canPick && isCurrentFact(fact.id) && !isTileFullyCleared(progress)) {
                 tile.classList.add('next-reveal');
             }
             if (cover.id === 'imageCover' && canPick && (allCleared || !isTileFullyCleared(progress))) {
@@ -766,14 +766,15 @@ function markAnswer(wasCorrect) {
         answeredAt: Date.now()
     });
 
-    session.currentFactId = pickNextFactId(currentFactId);
     session.undoState = undoState;
     session.isFlipped = false;
     session.answerShownAt = null;
 
     if (isPickCardModeActive()) {
+        session.currentFactId = null;
         session.awaitingPick = true;
     } else {
+        session.currentFactId = pickNextFactId(currentFactId);
         session.awaitingPick = false;
         session.questionShownAt = Date.now();
     }
