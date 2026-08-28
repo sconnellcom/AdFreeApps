@@ -386,6 +386,22 @@ function arraysEqual(left, right) {
     return true;
 }
 
+function clearShareHash() {
+    if (window.history && typeof window.history.replaceState === 'function') {
+        window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
+    }
+}
+
+function shouldConfirmSharedOverwrite(hasChanges, shouldResetProgress) {
+    if (!hasChanges) {
+        return true;
+    }
+    const message = shouldResetProgress
+        ? 'Replace your current Times Tables setup with this shared setup? This will overwrite your current settings and reset your current image progress.'
+        : 'Replace your current Times Tables setup with this shared setup? This will overwrite your current settings.';
+    return typeof window.confirm === 'function' ? window.confirm(message) : true;
+}
+
 function saveState() {
     if (!storage.available) {
         return false;
@@ -1455,13 +1471,19 @@ function loadSharedStateFromUrl() {
         : state.settings.keepDistractedInRotation !== false;
     const nextPickCardMode = pickSetting !== null ? pickSetting === '1' : state.settings.pickCardMode;
     const nextProgressSolidOrBetter = progressSetting !== null ? progressSetting !== '0' : isProgressBasedOnSolidOrBetter();
-    const shouldResetProgress =
+    const hasChanges =
         (hasSharedImageList && !arraysEqual(nextImageUrls, currentImageUrls)) ||
         (hasSharedImageList && nextImageIndex !== state.currentImageIndex) ||
         nextKeepLearningInRotation !== (state.settings.keepLearningInRotation !== false) ||
         nextKeepDistractedInRotation !== (state.settings.keepDistractedInRotation !== false) ||
         nextPickCardMode !== state.settings.pickCardMode ||
         nextProgressSolidOrBetter !== isProgressBasedOnSolidOrBetter();
+    const shouldResetProgress = hasChanges;
+
+    if (!shouldConfirmSharedOverwrite(hasChanges, shouldResetProgress)) {
+        clearShareHash();
+        return;
+    }
 
     if (hasSharedImageList) {
         state.imageUrls = nextImageUrls;
@@ -1477,9 +1499,7 @@ function loadSharedStateFromUrl() {
         state.lastSessionStats = null;
     }
 
-    if (window.history && typeof window.history.replaceState === 'function') {
-        window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
-    }
+    clearShareHash();
     saveState();
 }
 

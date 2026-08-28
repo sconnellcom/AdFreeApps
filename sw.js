@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ad-free-apps-v14';
+const CACHE_NAME = 'ad-free-apps-v15';
 const urlsToCache = [
     '/',
     '/index.html',
@@ -37,7 +37,7 @@ const urlsToCache = [
     '/times-tables/',
     '/times-tables/index.html',
     '/times-tables/style.css?v=8',
-    '/times-tables/times-tables.js?v=9',
+    '/times-tables/times-tables.js?v=10',
     '/times-tables/default-image.svg',
     '/scrollfix/',
     '/scrollfix/index.html',
