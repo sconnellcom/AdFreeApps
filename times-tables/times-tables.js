@@ -371,6 +371,21 @@ function sanitizeImageIndex(imageIndex, imageUrls, legacyImageDataUrl) {
     return Math.min(parsed, availableUrls.length - 1);
 }
 
+function arraysEqual(left, right) {
+    if (left === right) {
+        return true;
+    }
+    if (!Array.isArray(left) || !Array.isArray(right) || left.length !== right.length) {
+        return false;
+    }
+    for (let index = 0; index < left.length; index += 1) {
+        if (left[index] !== right[index]) {
+            return false;
+        }
+    }
+    return true;
+}
+
 function saveState() {
     if (!storage.available) {
         return false;
@@ -1423,28 +1438,48 @@ function loadSharedStateFromUrl() {
     if (!hasSharedImageList && !hasSharedSettings) {
         return;
     }
+    const currentImageUrls = getConfiguredImageUrls();
+    const nextImageUrls = hasSharedImageList ? sharedImageUrls : currentImageUrls;
+    const nextImageIndex = hasSharedImageList
+        ? sanitizeImageIndex(sharedImageIndex, sharedImageUrls)
+        : state.currentImageIndex;
+    const nextKeepLearningInRotation = learningSetting !== null
+        ? learningSetting !== '0'
+        : rotationSetting !== null
+        ? rotationSetting !== '0'
+        : state.settings.keepLearningInRotation !== false;
+    const nextKeepDistractedInRotation = distractedSetting !== null
+        ? distractedSetting !== '0'
+        : rotationSetting !== null
+        ? rotationSetting !== '0'
+        : state.settings.keepDistractedInRotation !== false;
+    const nextPickCardMode = pickSetting !== null ? pickSetting === '1' : state.settings.pickCardMode;
+    const nextProgressSolidOrBetter = progressSetting !== null ? progressSetting !== '0' : isProgressBasedOnSolidOrBetter();
+    const shouldResetProgress =
+        (hasSharedImageList && !arraysEqual(nextImageUrls, currentImageUrls)) ||
+        (hasSharedImageList && nextImageIndex !== state.currentImageIndex) ||
+        nextKeepLearningInRotation !== (state.settings.keepLearningInRotation !== false) ||
+        nextKeepDistractedInRotation !== (state.settings.keepDistractedInRotation !== false) ||
+        nextPickCardMode !== state.settings.pickCardMode ||
+        nextProgressSolidOrBetter !== isProgressBasedOnSolidOrBetter();
+
     if (hasSharedImageList) {
-        state.imageUrls = sharedImageUrls;
-        state.currentImageIndex = sanitizeImageIndex(sharedImageIndex, sharedImageUrls);
+        state.imageUrls = nextImageUrls;
+        state.currentImageIndex = nextImageIndex;
     }
-    if (learningSetting !== null) {
-        state.settings.keepLearningInRotation = learningSetting !== '0';
-    } else if (rotationSetting !== null) {
-        state.settings.keepLearningInRotation = rotationSetting !== '0';
+    state.settings.keepLearningInRotation = nextKeepLearningInRotation;
+    state.settings.keepDistractedInRotation = nextKeepDistractedInRotation;
+    state.settings.pickCardMode = nextPickCardMode;
+    state.settings.progressSolidOrBetter = nextProgressSolidOrBetter;
+
+    if (shouldResetProgress) {
+        clearOverlayProgress();
+        state.lastSessionStats = null;
     }
-    if (distractedSetting !== null) {
-        state.settings.keepDistractedInRotation = distractedSetting !== '0';
-    } else if (rotationSetting !== null) {
-        state.settings.keepDistractedInRotation = rotationSetting !== '0';
+
+    if (window.history && typeof window.history.replaceState === 'function') {
+        window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
     }
-    if (pickSetting !== null) {
-        state.settings.pickCardMode = pickSetting === '1';
-    }
-    if (progressSetting !== null) {
-        state.settings.progressSolidOrBetter = progressSetting !== '0';
-    }
-    clearOverlayProgress();
-    state.lastSessionStats = null;
     saveState();
 }
 
