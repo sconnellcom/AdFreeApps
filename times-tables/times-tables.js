@@ -1339,6 +1339,19 @@ function resetAllProgressAndStats() {
     showNotice('Progress, overlay, and stats reset.');
 }
 
+function restartImageProgress() {
+    const shouldRestart = typeof window.confirm === 'function'
+        ? window.confirm('Restart the current image progress and play again? Your stats will be kept.')
+        : true;
+    if (!shouldRestart) {
+        return;
+    }
+    clearOverlayProgress({ clearStats: false });
+    saveState();
+    renderSettingsScreen();
+    showNotice('Image progress restarted.');
+}
+
 function applyTheme(theme) {
     document.body.className = theme !== 'default' ? `theme-${theme}` : '';
     try {
@@ -1579,6 +1592,7 @@ function initEvents() {
     document.getElementById('rightBtn').addEventListener('click', () => markAnswer(true));
     document.getElementById('shareImageBtn').addEventListener('click', shareImageLink);
     document.getElementById('saveImageUrlsBtn').addEventListener('click', saveImageUrls);
+    document.getElementById('restartBtn').addEventListener('click', restartImageProgress);
     document.getElementById('undoBtn').addEventListener('click', undoLastAnswer);
     document.getElementById('resetAllTimeBtn').addEventListener('click', resetAllProgressAndStats);
     document.getElementById('keepLearningToggle').addEventListener('change', (event) => {
