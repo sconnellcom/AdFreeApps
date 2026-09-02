@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Times Tables - Ad-free multiplication flash cards with a hidden image to uncover as you master 2 through 12.">
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="../manifest.json">
+    <link rel="apple-touch-icon" href="../icons/icon-152x152.png">
+    <title>Times Tables</title>
+    <link rel="stylesheet" href="style.css?v=8">
+</head>
+
+<body>
+    <div class="container">
+        <div class="header-row">
+            <div class="header-left">
+                <span class="app-icon">🧮</span>
+                <h1>Times Tables</h1>
+            </div>
+            <div class="header-right">
+                <button id="menuBtn" class="menu-btn" title="Menu" aria-label="Menu">
+                    <span class="hamburger-icon">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </span>
+                </button>
+                <div id="menuDropdown" class="menu-dropdown" style="display: none;">
+                    <a href="../" class="menu-item">
+                        <span class="menu-icon">💎</span>
+                        <span class="menu-label">Apps</span>
+                    </a>
+                    <button id="menuStudyItem" class="menu-item menu-item-button" type="button">
+                        <span class="menu-icon">🧮</span>
+                        <span class="menu-label">Flash Cards</span>
+                    </button>
+                    <button id="menuStatsItem" class="menu-item menu-item-button" type="button">
+                        <span class="menu-icon">📊</span>
+                        <span class="menu-label">Stats</span>
+                    </button>
+                    <button id="menuSettingsItem" class="menu-item menu-item-button" type="button">
+                        <span class="menu-icon">⚙️</span>
+                        <span class="menu-label">Settings</span>
+                    </button>
+                    <button id="themeMenuItem" class="menu-item menu-item-button">
+                        <span class="menu-icon" id="themeMenuIcon">💜</span>
+                        <span class="menu-label">Change Theme</span>
+                    </button>
+                    <div id="themeSubmenu" class="theme-submenu" style="display: none;">
+                        <button class="theme-btn theme-default" data-theme="default" title="Purple Theme"></button>
+                        <button class="theme-btn theme-black" data-theme="black" title="Black Theme"></button>
+                        <button class="theme-btn theme-blue" data-theme="blue" title="Blue Theme"></button>
+                        <button class="theme-btn theme-blue-dark" data-theme="blue-dark" title="Dark Blue Theme"></button>
+                        <button class="theme-btn theme-light" data-theme="light" title="Olive Theme"></button>
+                        <button class="theme-btn theme-dark" data-theme="dark" title="Dark Olive Theme"></button>
+                        <button class="theme-btn theme-warm-light" data-theme="warm-light" title="Warm Light Theme"></button>
+                        <button class="theme-btn theme-warm-dark" data-theme="warm-dark" title="Warm Dark Theme"></button>
+                        <button class="theme-btn theme-red" data-theme="red" title="Red Theme"></button>
+                        <button class="theme-btn theme-red-dark" data-theme="red-dark" title="Dark Red Theme"></button>
+                        <button class="theme-btn theme-pink" data-theme="pink" title="Pink Theme"></button>
+                        <button class="theme-btn theme-pink-dark" data-theme="pink-dark" title="Dark Pink Theme"></button>
+                    </div>
+                    <a href="about/" class="menu-item">
+                        <span class="menu-icon">ⓘ</span>
+                        <span class="menu-label">About This App</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div id="screen-study" class="screen active">
+            <div class="status-bar">
+                <div>
+                    <div class="status-label">Progress</div>
+                    <div class="status-value" id="masteryText">0 of 121 solid or better</div>
+                </div>
+                <div>
+                    <div class="status-label">Remaining</div>
+                    <div class="status-value" id="remainingText">121 problems left</div>
+                </div>
+            </div>
+
+            <div class="progress-bar-wrap" aria-hidden="true">
+                <div class="progress-bar-fill" id="masteryFill"></div>
+            </div>
+
+            <div class="session-strip">
+                <div class="session-actions">
+                    <button id="undoBtn" class="btn btn-secondary" type="button" disabled>Undo</button>
+                </div>
+            </div>
+
+            <section class="image-section">
+                <div class="image-frame">
+                    <img id="rewardImage" class="reward-image" src="default-image.svg" alt="Hidden reward image">
+                    <div id="imageCover" class="image-cover" aria-hidden="true"></div>
+                    <div id="imageCardHost" class="image-card-host">
+                        <div id="pickModeActionsHost" class="pick-mode-actions-host"></div>
+                    </div>
+                </div>
+                <div class="image-caption" id="imageCaption">Each new correct answer uncovers one part of the picture.</div>
+            </section>
+
+            <div id="flashcardHost" class="flashcard-host">
+                <div id="flashcardWrap" class="flashcard-wrap">
+                    <div id="flashcard" class="flashcard" role="button" tabindex="0" aria-label="Flip flash card">
+                        <div class="card-face card-face-front">
+                            <div class="card-text" id="cardFrontText"></div>
+                        </div>
+                        <div class="card-face card-face-back">
+                            <div class="card-text" id="cardBackText"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="study-actions" id="studyActions">
+                <button id="flipBtn" class="btn btn-primary" type="button">Flip card</button>
+                <div class="rating-row" id="ratingRow">
+                    <button id="wrongBtn" class="btn btn-warning" type="button">Not yet</button>
+                    <button id="rightBtn" class="btn btn-success" type="button">Got it right</button>
+                </div>
+            </div>
+
+            <div class="notice" id="storageNotice" aria-live="polite"></div>
+        </div>
+
+        <div id="screen-stats" class="screen">
+            <div class="results-content">
+                <div class="results-icon" id="resultsIcon">🎉</div>
+                <h2>Session Stats</h2>
+                <div class="results-stats">
+                    <div class="stat-box">
+                        <div class="stat-value" id="resultsSeen">0</div>
+                        <div class="stat-label">Seen</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="resultsCorrect">0</div>
+                        <div class="stat-label">Correct</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="resultsIncorrect">0</div>
+                        <div class="stat-label">Not Yet</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="resultsNew">0</div>
+                        <div class="stat-label">Newly Mastered</div>
+                    </div>
+                </div>
+                <div class="results-summary" id="resultsSummary"></div>
+                <h3 class="all-time-title">All Time Stats</h3>
+                <div class="results-buckets" id="resultsBuckets">
+                    <button class="results-bucket" type="button" data-category="mastered">
+                        <span class="results-bucket-count" id="resultsBucket-mastered">0</span>
+                        <span class="results-bucket-label">Insainly Fast</span>
+                    </button>
+                    <button class="results-bucket" type="button" data-category="automatic">
+                        <span class="results-bucket-count" id="resultsBucket-automatic">0</span>
+                        <span class="results-bucket-label">Automatic</span>
+                    </button>
+                    <button class="results-bucket" type="button" data-category="solid">
+                        <span class="results-bucket-count" id="resultsBucket-solid">0</span>
+                        <span class="results-bucket-label">Solid</span>
+                    </button>
+                    <button class="results-bucket" type="button" data-category="learning">
+                        <span class="results-bucket-count" id="resultsBucket-learning">0</span>
+                        <span class="results-bucket-label">Learning</span>
+                    </button>
+                    <button class="results-bucket" type="button" data-category="distracted">
+                        <span class="results-bucket-count" id="resultsBucket-distracted">0</span>
+                        <span class="results-bucket-label">Distracted</span>
+                    </button>
+                </div>
+                <div class="all-time-row">
+                    <div class="all-time-summary" id="allTimeSummary">All time: 0 seen · 0 correct · 0 not yet · 0 mastered · 0s</div>
+                    <button id="resetAllTimeBtn" class="btn btn-secondary" type="button">Reset all progress and stats</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="screen-settings" class="screen">
+            <div class="results-content">
+                <h2>Settings</h2>
+                <section class="image-section results-image-section">
+                    <div class="image-frame">
+                        <img id="settingsRewardImage" class="reward-image" src="default-image.svg" alt="Current reward image">
+                        <div id="settingsImageCover" class="image-cover" aria-hidden="true"></div>
+                    </div>
+                    <div class="image-caption" id="settingsImageCaption">Using the default image.</div>
+                </section>
+
+                <section class="settings-panel">
+                    <label class="settings-label" for="imageUrlsInput">Image URLs (one per line)</label>
+                    <textarea id="imageUrlsInput" class="settings-textarea" rows="6" placeholder="https://example.com/image-1.jpg&#10;https://example.com/image-2.jpg"></textarea>
+                    <div class="image-controls">
+                        <button id="saveImageUrlsBtn" class="btn btn-primary" type="button">Save image list</button>
+                    </div>
+                </section>
+
+                <div class="gameplay-row results-gameplay-row">
+                    <label class="toggle-option" for="progressSolidToggle">
+                        <input id="progressSolidToggle" type="checkbox" checked>
+                        Progress based on solid or better
+                    </label>
+                    <label class="toggle-option" for="keepLearningToggle">
+                        <input id="keepLearningToggle" type="checkbox" checked>
+                        Keep learning in rotation
+                    </label>
+                    <label class="toggle-option" for="keepDistractedToggle">
+                        <input id="keepDistractedToggle" type="checkbox" checked>
+                        Keep distracted in rotation
+                    </label>
+                    <label class="toggle-option" for="pickCardModeToggle">
+                        <input id="pickCardModeToggle" type="checkbox">
+                        Pick a card mode
+                    </label>
+                </div>
+                <div class="settings-footer-actions">
+                    <button id="restartBtn" class="btn btn-secondary" type="button">Restart</button>
+                    <button id="shareImageBtn" class="btn btn-secondary" type="button">Share setup</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="detailsModal" class="details-modal" style="display: none;">
+            <div class="details-panel" role="dialog" aria-modal="true" aria-labelledby="detailsTitle">
+                <div class="details-header">
+                    <h3 id="detailsTitle">Results</h3>
+                    <button id="detailsCloseBtn" class="btn btn-secondary" type="button" aria-label="Close details">Close</button>
+                </div>
+                <div class="details-subtitle">Slowest first</div>
+                <div id="detailsList" class="details-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="times-tables.js?v=11"></script>
+</body>
+
+</html>
