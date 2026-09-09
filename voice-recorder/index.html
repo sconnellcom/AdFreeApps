@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Voice Recorder - record from your microphone, play clips in your browser, and download them with no ads or trackers.">
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="../manifest.json">
+    <link rel="apple-touch-icon" href="../icons/icon-152x152.png">
+    <title>Voice Recorder</title>
+    <link rel="stylesheet" href="style.css?v=1">
+</head>
+
+<body>
+    <div class="container">
+        <div class="header-row">
+            <div class="header-left">
+                <span class="app-icon">🎙️</span>
+                <h1>Voice Recorder</h1>
+            </div>
+            <div class="header-right">
+                <button id="menuBtn" class="menu-btn" type="button" title="Menu" aria-label="Menu">
+                    <span class="hamburger-icon">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </span>
+                </button>
+                <div id="menuDropdown" class="menu-dropdown" style="display: none;">
+                    <a href="../" class="menu-item">
+                        <span class="menu-icon">💎</span>
+                        <span class="menu-label">Apps</span>
+                    </a>
+                    <button id="themeMenuItem" class="menu-item menu-item-button" type="button">
+                        <span class="menu-icon" id="themeMenuIcon">💜</span>
+                        <span class="menu-label">Change Theme</span>
+                    </button>
+                    <div id="themeSubmenu" class="theme-submenu" style="display: none;">
+                        <button class="theme-btn theme-default" data-theme="default" title="Purple Theme"></button>
+                        <button class="theme-btn theme-black" data-theme="black" title="Black Theme"></button>
+                        <button class="theme-btn theme-blue" data-theme="blue" title="Blue Theme"></button>
+                        <button class="theme-btn theme-blue-dark" data-theme="blue-dark" title="Dark Blue Theme"></button>
+                        <button class="theme-btn theme-light" data-theme="light" title="Olive Theme"></button>
+                        <button class="theme-btn theme-dark" data-theme="dark" title="Dark Olive Theme"></button>
+                        <button class="theme-btn theme-warm-light" data-theme="warm-light" title="Warm Light Theme"></button>
+                        <button class="theme-btn theme-warm-dark" data-theme="warm-dark" title="Warm Dark Theme"></button>
+                        <button class="theme-btn theme-red" data-theme="red" title="Red Theme"></button>
+                        <button class="theme-btn theme-red-dark" data-theme="red-dark" title="Dark Red Theme"></button>
+                        <button class="theme-btn theme-pink" data-theme="pink" title="Pink Theme"></button>
+                        <button class="theme-btn theme-pink-dark" data-theme="pink-dark" title="Dark Pink Theme"></button>
+                    </div>
+                    <a href="about/" class="menu-item">
+                        <span class="menu-icon">ⓘ</span>
+                        <span class="menu-label">About This App</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <section class="hero-card">
+            <p class="eyebrow">Simple browser recording</p>
+            <p class="hero-text">Capture short notes, ideas, or practice takes right in your browser. Your clips stay on your device unless you download them yourself.</p>
+            <div class="format-pill" id="formatPill">Checking recording support…</div>
+        </section>
+
+        <section class="panel recorder-panel" aria-labelledby="recorderControlsTitle">
+            <div class="panel-heading">
+                <div>
+                    <h2 id="recorderControlsTitle">Recorder Controls</h2>
+                    <p class="panel-subtitle">Grant microphone access when prompted, then record and save clips below.</p>
+                </div>
+                <div class="status-indicator" id="stateBadge">Idle</div>
+            </div>
+
+            <div class="control-row">
+                <button id="recordBtn" class="btn btn-primary" type="button" aria-label="Start recording">⏺ Record</button>
+                <button id="stopBtn" class="btn btn-danger" type="button" aria-label="Stop recording" disabled>⏹ Stop</button>
+            </div>
+
+            <div class="recording-visual" id="recordingVisual" aria-hidden="true">
+                <span></span><span></span><span></span>
+            </div>
+
+            <div class="status-message" id="statusMessage" role="status" aria-live="polite">Ready to check microphone support.</div>
+            <div class="status-help" id="statusHelp">If recording is unavailable, check browser permissions, HTTPS, and microphone access.</div>
+        </section>
+
+        <section class="panel" aria-labelledby="clipsTitle">
+            <div class="panel-heading clips-heading">
+                <div>
+                    <h2 id="clipsTitle">Saved Clips</h2>
+                    <p class="panel-subtitle">Play back your recordings in the browser or download them to keep.</p>
+                </div>
+                <div class="clip-count" id="clipCount">0 clips</div>
+            </div>
+
+            <p class="empty-state" id="emptyState">No recordings yet. Your saved clips will appear here after you stop recording.</p>
+            <ol class="clip-list" id="clipList" aria-label="Recorded audio clips"></ol>
+        </section>
+    </div>
+
+    <script src="voice-recorder.js?v=1"></script>
+</body>
+
+</html>

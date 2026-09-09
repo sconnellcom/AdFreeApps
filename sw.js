@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ad-free-apps-v16';
+const CACHE_NAME = 'ad-free-apps-v17';
 const urlsToCache = [
     '/',
     '/index.html',
@@ -39,6 +39,10 @@ const urlsToCache = [
     '/times-tables/style.css?v=8',
     '/times-tables/times-tables.js?v=11',
     '/times-tables/default-image.svg',
+    '/voice-recorder/',
+    '/voice-recorder/index.html',
+    '/voice-recorder/style.css?v=1',
+    '/voice-recorder/voice-recorder.js?v=1',
     '/scrollfix/',
     '/scrollfix/index.html',
     '/scrollfix/scrollfix.js?v=3',
