@@ -8,7 +8,7 @@ class Metronome {
         this.intervalId = null;
         this.audioContext = null;
         this.beatTimes = [];
-        this.soundType = 'beep'; // 'beep', 'bass', 'cymbal', 'tock', 'riff4', 'riff8', 'voice4', 'vibrate', 'silent'
+        this.soundType = 'beep'; // Sound selected in the metronome controls
         this.beatCount = 0; // For tracking position in drum riffs
         this.sensitivityPercent = 50; // User-facing percentage (0-100)
 
@@ -693,6 +693,9 @@ class Metronome {
             case 'tock':
                 this.playTock(time);
                 break;
+            case 'riff2':
+                this.playDrumRiff(2, time);
+                break;
             case 'riff4':
                 this.playDrumRiff(4, time);
                 break;
@@ -701,6 +704,15 @@ class Metronome {
                 break;
             case 'voice4':
                 this.playVoiceCount(4, time);
+                break;
+            case 'voice2':
+                this.playVoiceCount(2, time);
+                break;
+            case 'voice2High':
+                this.playVoiceCount(2, time, 1.5);
+                break;
+            case 'voice4High':
+                this.playVoiceCount(4, time, 1.5);
                 break;
             case 'vibrate':
                 this.playVibrate(time);
@@ -1183,7 +1195,13 @@ class Metronome {
         // Calculate position in the riff pattern (1-based)
         const position = ((this.beatCount - 1) % count) + 1;
 
-        if (count === 4) {
+        if (count === 2) {
+            if (position === 2) {
+                this.playCymbal(time);
+            } else {
+                this.playBassDrum(time);
+            }
+        } else if (count === 4) {
             // 4-count pattern: Bass on 1, 2, 3; Cymbal on 4
             if (position === 4) {
                 this.playCymbal(time);
@@ -1211,7 +1229,7 @@ class Metronome {
         }
     }
 
-    playVoiceCount(count, time) {
+    playVoiceCount(count, time, pitch = 1.0) {
         // Calculate position in the count pattern (1-based)
         const position = ((this.beatCount - 1) % count) + 1;
         
@@ -1236,7 +1254,7 @@ class Metronome {
             
             // Configure for quick, crisp counting
             utterance.rate = 1.2;  // Slightly faster for responsiveness
-            utterance.pitch = 1.0;
+            utterance.pitch = pitch;
             utterance.volume = 0.8;
             
             // Speak the number
