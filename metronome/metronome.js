@@ -1274,19 +1274,23 @@ class Metronome {
         if (!word || !this.speechSynthesis || !this.audioContext) return;
 
         const delay = Math.max(0, (time - this.audioContext.currentTime) * 1000);
+        const scheduleWord = (text, wordDelay) => {
+            setTimeout(() => {
+                if (!this.speechSynthesis) return;
+                if (this.speechSynthesis.speaking) {
+                    this.speechSynthesis.cancel();
+                }
 
-        setTimeout(() => {
-            if (!this.speechSynthesis) return;
-            if (this.speechSynthesis.speaking) {
-                this.speechSynthesis.cancel();
-            }
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.rate = 1.5;
+                utterance.pitch = 1.5;
+                utterance.volume = 0.8;
+                this.speechSynthesis.speak(utterance);
+            }, wordDelay);
+        };
 
-            const utterance = new SpeechSynthesisUtterance(`${word} and`);
-            utterance.rate = 1.5;
-            utterance.pitch = 1.5;
-            utterance.volume = 0.8;
-            this.speechSynthesis.speak(utterance);
-        }, delay);
+        scheduleWord(word, delay);
+        scheduleWord('and', delay + (60 / this.bpm) * 500);
     }
 
     handleMotion(event) {
