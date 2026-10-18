@@ -715,10 +715,10 @@ class Metronome {
                 this.playVoiceCount(4, time, 1.5);
                 break;
             case 'voice2AndHighFast':
-                this.playVoiceRiff(2, 'one and two and', time);
+                this.playVoiceRiff(2, time);
                 break;
             case 'voice4AndHighFast':
-                this.playVoiceRiff(4, 'one and two and three and four and', time);
+                this.playVoiceRiff(4, time);
                 break;
             case 'vibrate':
                 this.playVibrate(time);
@@ -1268,9 +1268,10 @@ class Metronome {
         }, delay);
     }
 
-    playVoiceRiff(count, phrase, time) {
+    playVoiceRiff(count, time) {
         const position = ((this.beatCount - 1) % count) + 1;
-        if (position !== 1 || !this.speechSynthesis || !this.audioContext) return;
+        const word = this.VOICE_COUNT_WORDS[position];
+        if (!word || !this.speechSynthesis || !this.audioContext) return;
 
         const delay = Math.max(0, (time - this.audioContext.currentTime) * 1000);
 
@@ -1280,7 +1281,7 @@ class Metronome {
                 this.speechSynthesis.cancel();
             }
 
-            const utterance = new SpeechSynthesisUtterance(phrase);
+            const utterance = new SpeechSynthesisUtterance(`${word} and`);
             utterance.rate = 1.5;
             utterance.pitch = 1.5;
             utterance.volume = 0.8;
