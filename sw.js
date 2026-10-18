@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ad-free-apps-v17';
+const CACHE_NAME = 'ad-free-apps-v18';
 const urlsToCache = [
     '/',
     '/index.html',
@@ -6,7 +6,7 @@ const urlsToCache = [
     '/metronome/',
     '/metronome/index.html',
     '/metronome/style.css?v=3',
-    '/metronome/metronome.js?v=4',
+    '/metronome/metronome.js?v=5',
     '/timer/',
     '/timer/index.html',
     '/timer/timer.js?v=3',
