@@ -714,6 +714,12 @@ class Metronome {
             case 'voice4High':
                 this.playVoiceCount(4, time, 1.5);
                 break;
+            case 'voice2AndHighFast':
+                this.playVoiceRiff(2, 'one and two and', time);
+                break;
+            case 'voice4AndHighFast':
+                this.playVoiceRiff(4, 'one and two and three and four and', time);
+                break;
             case 'vibrate':
                 this.playVibrate(time);
                 break;
@@ -1258,6 +1264,26 @@ class Metronome {
             utterance.volume = 0.8;
             
             // Speak the number
+            this.speechSynthesis.speak(utterance);
+        }, delay);
+    }
+
+    playVoiceRiff(count, phrase, time) {
+        const position = ((this.beatCount - 1) % count) + 1;
+        if (position !== 1 || !this.speechSynthesis || !this.audioContext) return;
+
+        const delay = Math.max(0, (time - this.audioContext.currentTime) * 1000);
+
+        setTimeout(() => {
+            if (!this.speechSynthesis) return;
+            if (this.speechSynthesis.speaking) {
+                this.speechSynthesis.cancel();
+            }
+
+            const utterance = new SpeechSynthesisUtterance(phrase);
+            utterance.rate = 1.5;
+            utterance.pitch = 1.5;
+            utterance.volume = 0.8;
             this.speechSynthesis.speak(utterance);
         }, delay);
     }
